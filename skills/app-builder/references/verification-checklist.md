@@ -1,101 +1,62 @@
 # Builder Verification Checklist
 
-Use this checklist before reporting a generated app or substantial change as
-complete.
+Use this before reporting a generated app or substantial change as complete.
 
-## Product Verification
+## Product
 
-- The app's main workflow is reachable from `/` or the intended entry route.
-- For first release work, the visible app covers the user's main business map:
-  primary modules, key supporting modules, status surfaces, realistic records,
-  and entry actions form a coherent product slice rather than one isolated
-  happy path.
-- The first release feels substantially complete to the user: the main
-  business map is visible, core workflows are operable, supporting workflows
-  are lighter but usable, and realistic records make the system feel alive.
-- Required lifecycle coverage is present. When the app manages resources,
-  inventory, orders, assets, tasks, cases, suppliers, customers, projects, or
-  similar objects, the relevant intake/create, current-state, downstream
-  use/issue/dispatch/fulfillment or closure, and exception/recommendation paths
-  are visible and operable when requested or necessary for first-version
-  coherence.
-- Implementation produced visible product surface proportional to the time
-  spent: routes, data, services, actions, example records, and verification all
-  line up as a working app rather than a narrow demo plus hidden plumbing.
-- The first screen reflects the user's domain and business, not a generic KPI
-  dashboard.
-- The first screen has one clear visual center. It is not an all-white,
-  equal-weight set of cards, filters, and tables.
-- Required actions are connected to real state, service logic, API handlers, or
-  route navigation.
-- Core workflows have enough depth to operate; supporting workflows may be
-  simpler but remain usable and do not appear as dead tabs, fake actions, or
-  future-promise copy.
-- Recommended, automatic, optimized, or rule-based actions show what records,
-  quantities, statuses, dates, owners, or assignments will change before the
-  user confirms execution.
-- Required create/edit flows have validation, pending, success, and error
-  states.
-- Placeholder copy, TODOs, dead screens, and disconnected buttons are removed.
+- `/` or the intended entry route opens the actual app experience.
+- Every SRS First-Version Commitment has:
+  - visible primary entry
+  - executable user path
+  - real service/API/state behavior
+  - example record or visible status proof
+- Hidden routes do not count unless linked from the primary workspace.
+- The app covers the main business map, not one isolated happy path.
+- Core workflows are operable; supporting workflows may be lighter but usable.
+- Lifecycle coverage is present for the domain object: intake/create, current
+  state, downstream use/issue/dispatch/fulfillment or closure, and
+  exception/alert/recommendation when requested or necessary.
+- Required create/edit/receive/issue/approve/configure/resolve flows validate,
+  mutate state, and show success/error feedback.
+- Recommendations, automatic actions, rule-based actions, and bulk actions
+  show basis and affected records before mutation.
+- Example data covers the statuses users need to inspect.
+- No committed capability is listed as "next step" or future work.
 
-## UI Verification
+## UI
 
-- Visible copy follows one product language unless bilingual output was
-  explicitly requested.
-- Business/management workspaces use visible hierarchy, layered surfaces,
-  active navigation, semantic accents, and focal contrast. Shop-floor,
-  station, monitor, and safety-critical pages may stay more severe or
-  high-contrast when the context justifies it.
-- Page shells, dialogs, drawers, and forms have no accidental horizontal
-  overflow.
-- Dialog bodies use vertical scroll, not page/dialog horizontal scroll, unless
-  an explicit internal data viewport is intentionally wide.
-- Labels, required markers, controls, helper text, and errors align as a stable
-  field group.
-- Form grids do not squeeze three intrinsic-width controls into a narrow
-  overlay row; controls wrap or stack before clipping.
-- Selects, comboboxes, and dropdown options do not hide critical identifiers,
-  units, quantities, or statuses needed to make the choice.
-- Text does not overlap controls, counters, cards, table cells, or footer
-  actions.
-- Tables, Gantt boards, and timelines use intentional internal scroll when
-  wide; the page/dialog shell itself does not become the scroll surface.
-- Dense business tables keep status badges, row actions, quantities, and dates
-  readable. Long object names and identifiers wrap, clamp, or truncate
-  intentionally inside their cells instead of forcing adjacent columns to break.
-- Charts have explicit height and are not blank.
-- Responsive behavior is checked at 375px, 768px, and desktop. PDA/scanner
-  flows are also checked at 360-480px portrait.
+- One product language unless bilingual output was requested.
+- Main pages have a clear visual center and enough hierarchy/accent to avoid a
+  flat all-white admin surface.
+- Business workspaces feel like modern enterprise software; station/monitor
+  severity is reserved for task-first or safety-critical contexts.
+- Forms keep labels, required marks, controls, helper text, and errors aligned.
+- Dialogs/drawers have fixed header/footer, vertical body scroll, and no
+  accidental horizontal scroll.
+- Selects and dropdowns show enough metadata to pick the correct record.
+- Dense tables use internal viewport/responsive layout; status/action cells
+  remain readable.
+- No overlapping text, clipped controls, broken status wrapping, or page-level
+  horizontal overflow.
 
-## Code Verification
+## Code And Runtime
 
-- Build output exists when a build was run.
-- TypeScript, lint, tests, or project-specific checks pass when available.
-- No unsafe HTML rendering, hardcoded secrets, or user-facing credential pages
-  are added without an explicit requirement.
-- Runtime effects avoid render-created request dependencies that can cause
-  fetch loops.
-- Raw SQL `db.execute()` / `tx.execute()` results are not treated as arrays
-  directly; generated service code uses the scaffold normalizer before array
-  operations.
-- Repeated polling uses a shared/single-flight pattern when available.
-- Event listeners, timers, and subscriptions have cleanup where needed.
+- TypeScript, lint, tests, build, and postbuild verification pass when
+  available.
+- Preview or route smoke confirms the entry route loads without "Page failed
+  to load" or equivalent route-level runtime errors when a preview URL exists.
+- Visible links/actions resolve to implemented routes or in-page behavior.
+- Raw SQL results are normalized before array operations.
+- No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
+  unbounded client trust are introduced.
+- Polling/timers/subscriptions use shared patterns or clean up correctly.
 
-## Reporting
+## Report
 
-Report:
+Report in this shape:
 
-- what app slice was implemented
-- for first release work, how the main business map and core workflow depth are
-  covered
-- what checks were run
-- what could not be verified, if anything
-- whether the preview or entry route loaded successfully; do not report
-  completion if the visible app still shows "Page failed to load" or an
-  equivalent runtime error. In this scaffold, run
-  `npm run smoke:routes -- <preview-url>` when a preview URL is available
-- whether `specs/spec.md` was updated for durable follow-up product changes,
-  or why no product-memory update was needed
+| FC | Visible entry | User path | Status |
+|---|---|---|---|
 
-If preview startup, port reuse, process cleanup, or health checks fail, use
-`$preview-runtime-stability` when it is available.
+Then list checks run and preview/runtime result. Put any undelivered committed
+FC at the top as an explicit open decision, not in casual future suggestions.
