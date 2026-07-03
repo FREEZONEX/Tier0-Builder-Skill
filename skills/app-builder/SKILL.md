@@ -82,6 +82,23 @@ Rules:
 - If an FC cannot be delivered in this run, say so before implementation or at
   the top of the completion report. Do not silently downgrade it to future work.
 
+## Page Differentiation
+
+Primary navigation pages must feel like different modules, not tabs over the
+same screen.
+
+- Do not reuse one full-page workspace component for multiple primary routes
+  with only title, filter, or small section changes.
+- Each primary page needs a distinct page purpose, primary object view,
+  information hierarchy, and primary action.
+- Sharing services, loaders, hooks, table primitives, cards, dialogs, and row
+  components is encouraged. Sharing the whole page composition is not.
+- Home/overview pages aggregate and route work; module pages own the work:
+  list, queue, ledger, risk board, approval desk, issue station, or detail
+  workspace depending on the module.
+- If two pages cannot be made meaningfully different, merge them or make one a
+  subsection/link instead of a first-level navigation item.
+
 ## Scope Balance
 
 First release is neither a minimum demo nor the full long-term product. It
@@ -184,6 +201,8 @@ tabs, page titles, dashboard cards, primary actions, and row actions. Verify:
 - Every FC in the Delivery Map has a visible primary entry and executable user
   path.
 - Hidden routes do not count unless linked from the primary workspace.
+- Primary navigation pages are differentiated; they do not all render the same
+  full-page workspace with superficial text changes.
 - All visible links/actions resolve to implemented routes or intentional
   in-page behavior.
 - Core lifecycle states and example records are visible.

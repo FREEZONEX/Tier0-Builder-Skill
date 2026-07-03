@@ -12,6 +12,9 @@ Use this before reporting a generated app or substantial change as complete.
   - example record or visible status proof
 - Hidden routes do not count unless linked from the primary workspace.
 - The app covers the main business map, not one isolated happy path.
+- Primary navigation pages have distinct page purpose, primary object view,
+  information hierarchy, and primary action; they are not shallow variants of
+  one reused full-page workspace.
 - Core workflows are operable; supporting workflows may be lighter but usable.
 - Lifecycle coverage is present for the domain object: intake/create, current
   state, downstream use/issue/dispatch/fulfillment or closure, and

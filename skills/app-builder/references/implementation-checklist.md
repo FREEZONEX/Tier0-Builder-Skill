@@ -36,9 +36,12 @@ expansion. Do not turn it into a long planning phase.
 3. Core data/service/API path behind the main workflow.
 4. Visible forms, lists, queues, row actions, and dashboard links for every FC.
 5. Supporting workflows with lighter but operable paths.
-6. UI quality pass: visual center, table layout, overlay/form safety,
+6. Page differentiation pass: each primary route has a distinct page purpose,
+   primary object view, information hierarchy, and primary action. Do not reuse
+   one full-page workspace component for all tabs.
+7. UI quality pass: visual center, table layout, overlay/form safety,
    responsive sanity, one product language.
-7. Runtime and build verification.
+8. Runtime and build verification.
 
 For inventory/resource/order/task/asset/case/supplier/customer/project apps,
 do not stop at intake/listing when the SRS or domain implies downstream use,
@@ -61,6 +64,9 @@ issue, dispatch, fulfillment, closure, approval, or exception handling.
 
 - Every FC is visible from the primary app surface and has a user path.
 - Every visible nav item, tab, card link, primary action, and row action works.
+- Primary navigation pages are not shallow variants of the same full-page
+  workspace; shared services/components are fine, shared whole-page experience
+  is not.
 - Core workflow mutates state and shows feedback.
 - Example data demonstrates declared statuses.
 - Recommendations/actions show affected records before mutation.
