@@ -1,0 +1,4 @@
+interface:
+  display_name: "App SRS"
+  short_description: "Compile app requests into build-ready specs"
+  default_prompt: "Use $app-srs before first industrial-enterprise app generation to create a bounded specs/spec.md with workflow closure, checkpoints, roles, validations, exceptions, and records, then continue to $app-builder by default unless clarification or requirements-only output is required."
