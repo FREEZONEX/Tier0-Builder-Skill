@@ -1,0 +1,7 @@
+interface:
+  display_name: "Migrate Node-RED MES App"
+  short_description: "Node-RED WMS/MES migration subskill"
+  default_prompt: "Use $migrate-node-red-mes-app to migrate a legacy Node-RED plus React WMS/MES app into the platform-standard shape."
+
+policy:
+  allow_implicit_invocation: true

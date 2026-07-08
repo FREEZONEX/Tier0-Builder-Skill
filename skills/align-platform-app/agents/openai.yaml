@@ -1,0 +1,4 @@
+interface:
+  display_name: "Align Platform App"
+  short_description: "Migrate or update Tier0 platform apps"
+  default_prompt: "Use $align-platform-app to migrate an imported app or update an existing Tier0 platform scaffold app to the latest monoapptemplate contract."
