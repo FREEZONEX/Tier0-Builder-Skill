@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Repair"
+  short_description: "Debug and repair frontend UI issues"
+  default_prompt: "Use $ui-repair when an existing app has UI defects such as form misalignment, overflow, accidental horizontal scroll, select/dropdown clipping, responsive breakage, clipped controls, flat all-white pages, weak visual hierarchy, or mixed product copy."
