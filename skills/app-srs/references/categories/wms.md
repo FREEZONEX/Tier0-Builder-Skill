@@ -1,10 +1,12 @@
 # Category Archetype: WMS (Warehouse Management System)
 
-Load this reference when the user names WMS, warehouse management, 仓库管理,
-仓储, inventory management as the product category. It defines the canonical
-module set, standard entities, status taxonomies, and the professional surface
-domain users expect. The archetype is the scope floor for a category request;
-user-named special requirements are additive.
+This file is a **calibration example** for the Category Archetype Expansion
+rule — the first of the category references. The expansion mechanism is the
+model's own domain reasoning; consult this file when the recognized category is
+warehouse/inventory management (however the user phrased it) to calibrate
+module tiers, field conventions, status taxonomies, and the professional
+surface domain users expect. It is neither a prerequisite nor a limit: reason
+first, use this to check and refine.
 
 Scale calibration: this archetype targets single-warehouse first versions
 (including R&D / lab stores). Multi-warehouse, waves, labor management, and
