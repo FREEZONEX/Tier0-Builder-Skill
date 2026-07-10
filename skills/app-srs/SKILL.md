@@ -76,6 +76,37 @@ Treat source documents titled "Spec", "App Spec", "PRD", "Feature Brief", "Requi
   balanced first release plus the relevant workflow checkpoints. Do not expand
   a simple request into a full enterprise program.
 
+### Category Archetype Expansion
+
+When the user names a recognized application category (WMS, CRM, MES, QMS,
+EAM, SRM, ERP, ...) — especially with phrasing like "based on standard
+<category> knowledge" — the category itself is a scope commitment. Domain
+users judge the product against the category's canonical shape: an app
+missing its master-data and core-flow modules reads as incomplete no matter
+how well the named special features work.
+
+- Expand the category's canonical module set into named modules in the SRS
+  as First-Version Commitments, and present them in the blueprint for
+  confirmation. The user trims the archetype; the system never silently trims
+  it. This is not "inventing unrelated modules": category-implied modules are
+  related by definition — the no-invention rule applies to capabilities
+  outside the named category.
+- User-named special requirements (e.g. pre-receipt, expiry alerts, FIFO) are
+  additive to the archetype, never a substitute for it.
+- Load the matching category reference from `references/categories/` when one
+  exists (currently: `wms.md`). When none exists, expand from general category
+  knowledge and note in the SRS that no category reference was available.
+- Record a depth tier per module in the SRS so the builder inherits the
+  calibration instead of re-deciding scope:
+  - **core-flow**: the workflows the user emphasized plus the category's
+    primary loop — fully operable end to end;
+  - **master-data**: standard CRUD with realistic seeds;
+  - **supporting**: minimal but real and operable — never a stub, never fake.
+- Use the category's standard terminology, entities, field sets, and status
+  taxonomies from the reference. Industry-standard vocabulary and status
+  models are part of looking professional; generic names ("items", "records")
+  read as amateur to domain users.
+
 ### PRD-to-SRS Conversion
 
 - Treat the provided PRD, requirements draft, notes, or pasted source material as the source of truth.
