@@ -193,6 +193,23 @@ Do not expose these words in product UI unless the loop works.
   `tx.execute()` results with `rowsOf()` before `.map()`, `.filter()`,
   `.length`, or index access.
 
+## Roles And Permissions
+
+- Derive roles from the SRS. Never deliver template/demo/test roles; replace
+  them with the product's real business roles as part of the first slice.
+- Register every role in ALL of the role surfaces the scaffold contract
+  (AGENTS) lists — permission matrix, role metadata, and the platform role
+  mirror when the scaffold provides one — in a single pass. Partial
+  registration produces roles that can log in but see nothing, or platform
+  roles the app rejects.
+- Keep the scaffold's built-in admin role on full access. It backs preview
+  fallback and must be able to reach every delivered capability.
+- Use ASCII snake_case role keys for new roles; the platform matches role
+  strings exactly.
+- Permission differences must appear as real effects — menu visibility,
+  action availability, data scope — never as explanatory role copy in page
+  bodies.
+
 ## Completion Gate
 
 Before reporting completion, enumerate visible capabilities from navigation,
@@ -214,11 +231,15 @@ tabs, page titles, dashboard cards, primary actions, and row actions. Verify:
   overlap, accidental horizontal overflow, and broken status/action wrapping.
 - Build, lint, tests, postbuild, and preview/route smoke have run when
   available, or the blocker is stated clearly.
+- Walk the Delivery Map once per defined role: admin reaches every FC; each
+  business role reaches the workflows the SRS assigns to it; no role lands on
+  an empty workspace unless the SRS says so.
 
 Completion report must include:
 
 - implemented app slice
 - each committed FC with visible entry and user path
 - checks run
+- roles verified (which roles, what each can reach)
 - runtime/preview result
 - any undelivered committed FC at the top, not as a casual future suggestion
