@@ -39,8 +39,8 @@ Structural constraints:
 
 ## 2.3 First-Version Commitments
 
-| FC ID | Capability | Minimum User Path | Related US |
-|---|---|---|---|
+| FC ID | Capability | Depth Tier | Minimum User Path | Related US |
+|---|---|---|---|---|
 
 # 3. Data Models
 
@@ -113,6 +113,12 @@ Structural constraints:
 - `Capability` uses the user's domain language (e.g. "FIFO recommendation with
   exception recording", "supplier qualification approval", "equipment alert
   acknowledgement") — never generic labels like "CRUD" or "management".
+- `Depth Tier` is one of `core-flow` / `master-data` / `supporting` and is the
+  implementation calibration the Builder inherits (see Category Archetype
+  Expansion): core-flow is fully operable end to end; master-data is standard
+  CRUD with realistic seeds; supporting is minimal but real and operable. For
+  apps without a category archetype, assign tiers by the same semantics — the
+  workflows the user emphasized are core-flow.
 - `Minimum User Path` names the first-release delivery depth in one line:
   entry point -> input/reason -> saved record -> visible state change. For a
   core workflow, include the adjacent list, status, example data, or follow-up

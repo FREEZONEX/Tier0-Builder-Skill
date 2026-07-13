@@ -24,6 +24,13 @@ Use this before reporting a generated app or substantial change as complete.
 - Recommendations, automatic actions, rule-based actions, and bulk actions
   show basis and affected records before mutation.
 - Example data covers the statuses users need to inspect.
+- When the SRS carries a category archetype, the full confirmed module
+  surface is in navigation and each module meets its SRS depth tier
+  (core-flow operable end to end; master-data CRUD with seeds; supporting
+  minimal but real).
+- List/ledger pages meet the professional density baseline: search, status
+  filter chips with live counts, status badges, remaining-days annotations on
+  risk-carrying dates, and a risk banner when the data contains risk states.
 - No committed capability is listed as "next step" or future work.
 
 ## UI
@@ -53,6 +60,19 @@ Use this before reporting a generated app or substantial change as complete.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
 - Polling/timers/subscriptions use shared patterns or clean up correctly.
+
+## Roles
+
+- Real business roles from the SRS are registered across every role surface
+  the scaffold contract lists (permission matrix, role metadata, platform
+  role mirror) in one pass.
+- Template/demo/test roles are replaced, not shipped.
+- The scaffold's built-in admin role keeps full access and reaches every FC.
+- Walk the Delivery Map once per defined role: each business role reaches the
+  workflows the SRS assigns to it; no role lands on an empty workspace unless
+  the SRS says so.
+- Permission differences appear as real effects (menu visibility, action
+  availability, data scope), never as explanatory role copy in page bodies.
 
 ## Report
 

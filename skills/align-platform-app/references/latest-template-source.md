@@ -14,8 +14,15 @@ Default branch: `main`.
 The latest verified snapshot while this reference was written was:
 
 ```text
-c220054caa868de35be901f5ef2e73373b6d00f4  refs/heads/main
+afecc70 (2026-07-13)  refs/heads/main
 ```
+
+Notable since the previous snapshot (c220054): overlay focus fix, write-path
+reachability and role-sync contract gates, and gate integrity — most contract
+tests and verification scripts are now hash-locked (`scripts/gate-integrity.mjs`);
+the ONE adaptable contract file is `src/lib/template-state.test.mjs`. Migration
+work must not edit locked gates — adapt `template-state.test.mjs` only, and run
+alignment against the current gate list.
 
 Do not treat that SHA as permanently current. Re-check it before doing migration
 work that depends on latest template behavior.
