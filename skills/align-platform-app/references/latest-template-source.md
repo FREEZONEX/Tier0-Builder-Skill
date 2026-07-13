@@ -6,7 +6,7 @@ Use the public Tier0 platform app template repository as the live source of
 truth:
 
 ```text
-https://github.com/FREEZONEX/monoapptemplate.git
+https://github.com/FREEZONEX/Tier0-App-Scaffold.git
 ```
 
 Default branch: `main`.
@@ -14,7 +14,7 @@ Default branch: `main`.
 The latest verified snapshot while this reference was written was:
 
 ```text
-c220054caa868de35be901f5ef2e73373b6d00f4  refs/heads/main
+afecc70fd40b5250e72d7ee4542aa46157a28b8b  refs/heads/main
 ```
 
 Do not treat that SHA as permanently current. Re-check it before doing migration
@@ -25,24 +25,24 @@ work that depends on latest template behavior.
 Prefer non-destructive inspection first:
 
 ```bash
-git ls-remote https://github.com/FREEZONEX/monoapptemplate.git HEAD refs/heads/main
+git ls-remote https://github.com/FREEZONEX/Tier0-App-Scaffold.git HEAD refs/heads/main
 ```
 
 To inspect the latest template in a throwaway location:
 
 ```bash
-git clone --depth 1 https://github.com/FREEZONEX/monoapptemplate.git /tmp/monoapptemplate
+git clone --depth 1 https://github.com/FREEZONEX/Tier0-App-Scaffold.git /tmp/tier0-app-scaffold
 ```
 
 If cloning is unavailable, inspect raw files directly:
 
 ```text
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/AGENTS.md
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/README.md
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/package.json
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/artifact.toml
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/vite.config.ts
-https://raw.githubusercontent.com/FREEZONEX/monoapptemplate/main/docs/platform-integration.md
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/AGENTS.md
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/README.md
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/package.json
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/artifact.toml
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/vite.config.ts
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/docs/platform-integration.md
 ```
 
 ## Files To Compare First

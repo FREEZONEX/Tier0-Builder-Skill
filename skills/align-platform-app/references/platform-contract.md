@@ -3,7 +3,7 @@
 ## Target Shape
 
 The target is the existing Tier0 TanStack Start scaffold, aligned to the latest
-`FREEZONEX/monoapptemplate` `main` branch unless the user explicitly asks to pin
+`FREEZONEX/Tier0-App-Scaffold` `main` branch unless the user explicitly asks to pin
 an older template. Keep the scaffold's platform contract intact while importing
 or updating app functionality.
 
