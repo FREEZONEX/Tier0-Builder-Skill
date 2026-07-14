@@ -2,7 +2,7 @@
 name: align-platform-app
 description: >-
   Align applications to the Tier0 platform-standard TanStack Start scaffold
-  (FREEZONEX/monoapptemplate). Use when migrating an imported legacy SPA, Vite,
+  (FREEZONEX/Tier0-App-Scaffold). Use when migrating an imported legacy SPA, Vite,
   CRA, Next.js, static HTML, React Router, fullstack Node/React, MonoApp, or
   mixed frontend/backend bundle into the platform app shape; also use when an
   app was already built on the Tier0 platform scaffold but the latest template
@@ -22,7 +22,7 @@ It covers two related situations:
 1. Importing or migrating a non-platform app into the Tier0 platform app
    shape.
 2. Updating an app that already uses the Tier0 platform scaffold when the
-   upstream `FREEZONEX/monoapptemplate` template has changed and the user
+   upstream `FREEZONEX/Tier0-App-Scaffold` template has changed and the user
    chooses to bring the local app forward.
 
 Treat both as standards-gap closure: preserve product behavior first, then move
@@ -31,7 +31,7 @@ scaffold files, and build/runtime behavior into the latest scaffold-native
 patterns.
 
 The canonical platform template is:
-`https://github.com/FREEZONEX/monoapptemplate.git`.
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`.
 Before changing migration constraints, fetch or inspect that repository's latest
 `main` branch and reconcile the local skill guidance against it.
 
@@ -58,7 +58,7 @@ Before changing migration constraints, fetch or inspect that repository's latest
      environment variables, static assets, public paths, auth assumptions, and
      API/data access.
    - For already-platform apps, identify local scaffold drift against the latest
-     `FREEZONEX/monoapptemplate`: package scripts/dependencies, `artifact.toml`,
+     `FREEZONEX/Tier0-App-Scaffold`: package scripts/dependencies, `artifact.toml`,
      `vite.config.ts`, routing/root files, auth/session code, SDK loading,
      preview behavior, health/manifest routes, and docs.
    - Read source route definitions, navigation config, layout shells, global
@@ -163,4 +163,4 @@ A migration is not complete until current evidence proves all of the following:
 - Packaging/import guidance is specific to the actual target environment, not a
   generic ZIP assumption.
 - Any claim about the "latest template" is backed by a fresh check of
-  `FREEZONEX/monoapptemplate` rather than memory.
+  `FREEZONEX/Tier0-App-Scaffold` rather than memory.
