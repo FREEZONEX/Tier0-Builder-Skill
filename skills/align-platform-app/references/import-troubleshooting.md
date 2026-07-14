@@ -1,5 +1,41 @@
 # Import And Runtime Troubleshooting
 
+## Contents
+
+- [Browser Shows `fs` Externalized](#browser-shows-fs-externalized)
+- [`document is not defined` From BrowserRouter](#document-is-not-defined-from-browserrouter)
+- [Vite Is Ready But The Page Loads Forever](#vite-is-ready-but-the-page-loads-forever)
+- [Build Passes, Runtime Fails](#build-passes-runtime-fails)
+- [Route Missing Or 404](#route-missing-or-404)
+- [Assets Missing](#assets-missing)
+- [Auth Or API Calls Fail](#auth-or-api-calls-fail)
+- [Role Appears Changed But Permissions Did Not](#role-appears-changed-but-permissions-did-not)
+- [Migrated App Still Shows Logout](#migrated-app-still-shows-logout)
+- [Database Startup Or Schema Fails](#database-startup-or-schema-fails)
+- [Migrated Business Rows Reappear Automatically](#migrated-business-rows-reappear-automatically)
+- [Build Passes But A Promise Is Used As A Map](#build-passes-but-a-promise-is-used-as-a-map)
+- [Import Package Fails](#import-package-fails)
+
+## Browser Shows `fs` Externalized
+
+A warning such as `Module "fs" has been externalized for browser compatibility`
+means a client or mixed route, router, component, shared wrapper, or transitive
+dependency statically imports Node-only code. Move `fs`/`path`/`url`/`pg` and
+bootstrap/seed work into the scaffold's server-only boundaries or services. Keep
+`src/start.ts`, API handlers, and `createServerFn` handler bodies server-only; do
+not make the client graph depend on their implementations.
+
+## `document is not defined` From BrowserRouter
+
+`react-router-dom` `BrowserRouter` was evaluated during SSR. Mount the legacy
+router subtree inside `ClientOnly`, or complete its conversion to TanStack Router.
+
+## Vite Is Ready But The Page Loads Forever
+
+Vite `ready` and HTTP 200 do not prove hydration. Check SSR output and the browser
+console separately, then inspect browser-only import failures, hydration mismatch,
+and rejected startup promises. After the page hydrates, exercise an interaction.
+
 ## Build Passes, Runtime Fails
 
 Check:
@@ -9,6 +45,8 @@ Check:
   `/api/health`.
 - Build output exists where the runtime expects it.
 - Browser-only libraries are not executed during SSR.
+- Client and mixed modules do not statically pull Node-only dependencies into the
+  browser build graph.
 - Source project globals were not imported before required providers.
 - Environment variables used by imported code are available or removed.
 - `SESSION_SECRET` is present in production; local-only auto generation should
@@ -44,6 +82,61 @@ Check:
 - User-editable settings were not created for platform-injected credentials.
 - `VITE_BASE_PATH` / `NEXT_PUBLIC_BASE_PATH` behavior was preserved so `apiUrl()`
   and router base paths work behind platform routing.
+
+## Role Appears Changed But Permissions Did Not
+
+First determine whether the source app actually had a business-role model. A
+roleless source should remain roleless: do not invent role gates, and do not treat
+a missing role as an error. For a role-aware source, confirm that every source
+role definition, user-role and permission mapping, menu/page/action guard, API
+authorization rule, and related metadata entry was migrated.
+
+Check that the role was changed through Tier0 platform controls, then issue a new
+request or refresh. Verify the current precedence: preview runtime role, active
+role, preview-role fallback, legacy `X-App-User-Role`, then JSON `user.role`. If
+`X-Tier0-Business-Roles` is present, treat it only as an available-role set.
+Remove stale client stores, query/body/header overrides, optimistic role state,
+and user-triggerable role-cookie writes. Recompute menus, default route, page
+guards, and API authorization from the newly read role. In a role-aware app, an
+explicitly supplied unknown gateway role must fail closed; a missing role must
+follow the scaffold session/admin/login fallback chain and deny protected
+capabilities only after those fallbacks are exhausted. Fail Closed is a runtime
+guard, not a substitute for migrating missing source-role mappings.
+
+## Migrated App Still Shows Logout
+
+For an imported/migrated app, remove user-visible logout/sign-out buttons,
+personal-menu entries, pages, routes, and custom logout helpers. Do not delete a
+protected scaffold auth/session bridge endpoint required by the current platform,
+but do not expose that endpoint as a product logout entry. This check is specific
+to migration and does not prohibit logout in a separately generated 0-to-1 app
+whose requirements explicitly include it.
+
+## Database Startup Or Schema Fails
+
+- `permission denied for database ...` during `CREATE SCHEMA` means platform
+  provisioning or the injected `DB_SCHEMA` may not match the runtime account.
+  Verify the prepared session schema and environment before changing application
+  code; do not add a privileged admin connection to the app.
+- Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
+  the same platform-injected `DB_SCHEMA`, with `public` only as the documented
+  fallback when it is absent.
+
+## Migrated Business Rows Reappear Automatically
+
+Keep the current scaffold's idempotent schema/table/index bootstrap, but remove
+seed callbacks that insert demo, sample, or baseline rows for migrated durable
+business entities during normal startup or a first request. Retained legacy rows
+must enter through an explicit validated import; development/test fixtures must
+run only through an explicit development or test action.
+
+## Build Passes But A Promise Is Used As A Map
+
+A helper likely changed from sync to async while callers still invoke `.get`,
+`.map`, iteration, spread, or render it directly. Audit the full caller graph,
+including `useMemo` and render functions. Resolve the Promise at an async boundary;
+do not hide the mismatch with `@ts-nocheck`, and runtime-smoke every suppressed
+path.
 
 ## Import Package Fails
 
