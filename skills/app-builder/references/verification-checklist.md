@@ -49,6 +49,13 @@ Use this before reporting a generated app or substantial change as complete.
 - No overlapping text, clipped controls, broken status wrapping, or page-level
   horizontal overflow.
 
+- Design-system primitives used where the scaffold provides them (buttons,
+  status badges, page headers, filter chips, risk banner, empty states); no
+  hand-styled primary buttons or ad hoc badge shapes.
+- Entity lists are tables/compact rows, not sparse card grids; identifiers in
+  mono; one language everywhere including eyebrows/kickers; the scaffold's
+  locale constant is set so native date inputs localize.
+
 ## Code And Runtime
 
 - TypeScript, lint, tests, build, and postbuild verification pass when

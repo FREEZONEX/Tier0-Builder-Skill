@@ -62,6 +62,8 @@ Tier semantics (inherited by the builder):
 
 Per-module furniture domain users expect — this is the difference between
 "professional" and "bare":
+(Compose the scaffold's filter-chip / risk-banner / status-badge / stat-card
+primitives for this furniture rather than hand-rolling it.)
 
 - **Inventory ledger**: search box + status filter chips **with live counts**
   (全部 6 / 正常 3 / 临期 2 / 过期 1 / 冻结 0), colored status badges, expiry

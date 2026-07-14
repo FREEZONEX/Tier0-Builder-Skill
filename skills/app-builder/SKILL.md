@@ -171,6 +171,20 @@ Do not expose these words in product UI unless the loop works.
 - Do not make every card, table, filter, and panel equal white boxes.
 - Use shared form, overlay, record-select, table, and action-transparency
   primitives when the scaffold provides them.
+- When the scaffold ships design-system primitives — button variants, status
+  badge, card/panel, page header, filter chips, risk banner, empty state,
+  stat card (the scaffold contract lists them) — compose them instead of
+  hand-styling those shapes. Hand-rolled buttons and badges drift off the
+  design system.
+- Entity collections (batches, documents, alerts, orders, tasks) default to
+  dense tables or compact list rows; cards are for dashboard summaries and
+  detail groupings, not for lists users scan.
+- Identifiers (document numbers, lot/batch numbers, location codes, SKUs)
+  render in the scaffold's mono type.
+- Decorative eyebrows/kickers and all microcopy use the app locale, and set
+  the scaffold's locale constant so native date inputs localize.
+- The brand highlight color is a fill (selected/active/progress states),
+  never small text.
 - Forms keep labels, required markers, controls, helper text, and errors in
   stable field groups.
 - Dialogs/drawers keep header/footer fixed, body vertically scrollable, and no
