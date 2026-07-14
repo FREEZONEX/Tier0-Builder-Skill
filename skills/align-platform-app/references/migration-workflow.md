@@ -15,7 +15,8 @@ contract details.
 
 Inspect these source areas before editing target code:
 
-- `package.json`: scripts, dependencies, framework, module type, package manager.
+- `package.json` and lockfiles: scripts, dependencies, framework, module type,
+  package manager, peer requirements, and lockfile ownership.
 - Entry points: `index.html`, `src/main.*`, `src/App.*`, framework app folders.
 - Routing: route arrays, router providers, file routes, dynamic params, redirects.
 - Layout: shells, sidebars, top bars, providers, auth guards, error boundaries.
@@ -37,6 +38,9 @@ Inspect these source areas before editing target code:
 - Assets: public paths, imported images, fonts, CSS resets, CDN references.
 - Environment: `.env*`, `import.meta.env`, `process.env`, hard-coded hosts.
 - i18n/theme: locale files, RTL/LTR logic, theme tokens, CSS variables.
+- Legacy runtime/deployment assets: containers, reverse proxies, old ports/base
+  paths/hosts, schedulers, credentials, reset endpoints, and retired backend
+  documentation. Inventory first; do not delete based on a keyword match alone.
 
 For every local or mock state source, record its keys/store names, data shape,
 identifier generation, readers, writers, initialization, reset behavior, and
@@ -49,6 +53,8 @@ Write a short migration map when the source is non-trivial:
 - source route -> target route file
 - source provider -> target provider/boundary
 - source API/server helper -> target service/API/external dependency
+- compatibility API -> method, request, response, errors, auth, side effects,
+  implementation status, external dependencies, and verification evidence
 - source data model -> target schema/runtime-bootstrap-or-`db:push`/service/API/
   client path or external system
 - source local/mock data -> PostgreSQL cutover, optional legacy import, or an
@@ -76,6 +82,11 @@ Use a compatibility boundary when:
 A compatibility boundary may temporarily read legacy durable state for explicit
 import, but it must not legitimize new durable local writes or database-failure
 fallback.
+
+A JSON or JSONB compatibility container may complete authoritative-storage
+cutover without completing domain normalization. Record which invariants,
+relationships, constraints, indexes, transactions, and query fields remain to be
+modeled. Do not report storage cutover as full domain migration.
 
 ## 3. Migration Order
 
@@ -122,6 +133,14 @@ Prefer this sequence:
 13. Treat every retained or introduced `@ts-nocheck` as a runtime-contract risk.
     Add focused runtime smoke coverage for the suppressed module and its callers;
     a successful build is not evidence that values have the expected shape.
+14. When compatibility API routes remain, maintain a behavior matrix covering
+    method, input, output envelope, pagination, errors, authorization, business
+    side effects, backing persistence, external execution, implementation status,
+    and verification evidence. Route reachability is not behavioral equivalence.
+15. Classify legacy runtime and deployment assets as active dependency, obsolete
+    deployment artifact, historical documentation, intentional retirement
+    record, or false positive. Remove or replace active-delivery residue only
+    after its target behavior and rollback implications are understood.
 
 ## 4. Verification Checklist
 
@@ -142,6 +161,9 @@ For each migrated route, verify:
 - Durable data survives reload, another client session, and server restart.
 - Database/network failures are visible and never trigger local/mock fallback.
 - Empty, loading, error, and success states are real.
+- When historical data is intentionally not imported, reads from a clean schema
+  return a genuine empty state with real creation/onboarding actions; they do not
+  fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
 - Imported/migrated menus, personal menus, pages, routes, and modals contain no
   user-visible logout/sign-out or app-managed role-switch, role-picker, or
@@ -151,9 +173,13 @@ For each migrated route, verify:
 
 For the whole app, verify:
 
-- Typecheck/build/post-build checks pass.
+- Typecheck/build/post-build checks pass. Migration-introduced and runtime-risk
+  failures block completion; genuine historical lint/dead-code findings require
+  baseline evidence and a concrete follow-up.
 - `/api/health` and `/api/manifest` still work.
 - Production start path is still valid.
+- Production host/port binding is verified from the runtime/startup-probe network
+  namespace, not inferred from Vite dev readiness.
 - Current scaffold runtime bootstrap / `db:push` succeeds against a clean schema.
 - Normal startup and first-request paths do not auto-insert demo, sample, or
   baseline rows for migrated durable business entities; retained legacy data and
@@ -162,6 +188,14 @@ For the whole app, verify:
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
 - Required legacy imports are validated, idempotent, and reconciled by result
   counts and conflicts.
+- If historical data is intentionally reset, the reset decision, rollback source
+  or explicit lack of one, clean-schema result, and expected empty-state behavior
+  are recorded in project-local migration documentation.
+- Compatibility endpoints have current behavior/status/evidence rows; `partial`
+  and `queued-only` behavior is not reported as complete.
+- Legacy runtime/deployment scan findings are classified, and no obsolete active
+  dependency, credential, destructive reset endpoint, host, proxy, or scheduler
+  remains in the delivery path without an explicit decision.
 - Repository search finds no user-visible logout/sign-out or app-managed
   role-switch/role-picker/impersonation UI or navigation entry, no custom logout
   helper, and no user-triggerable role storage/cookie write.

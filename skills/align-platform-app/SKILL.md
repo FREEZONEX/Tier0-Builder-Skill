@@ -97,6 +97,9 @@ Before changing migration constraints, fetch or inspect that repository's latest
      root/router files intact.
    - Confirm managed preview rules: do not manually install dependencies for
      preview startup, and use the platform preview workflow when available.
+   - When managed preview installation, port/process ownership, health timeout,
+     or HMR fails, use `preview-runtime-stability`; keep this skill focused on
+     migration and platform-contract alignment.
 
 3. **Choose a migration path**
    - Use a compatibility boundary when the source app is large, route-heavy,
@@ -213,8 +216,11 @@ Before changing migration constraints, fetch or inspect that repository's latest
   routing, preview, auth, persistence boundaries, or packaging behavior.
 - Read `references/compatibility-boundary.md` when preserving a large imported
   app before native refactoring.
-- Read `references/import-troubleshooting.md` when build, preview, health,
-  manifest, route generation, assets, or package import fails.
+- Read `references/import-troubleshooting.md` when migrated code causes SSR,
+  build, routing, assets, auth/API, database, production runtime, or package
+  import failures.
+- Use `preview-runtime-stability` when managed preview installation,
+  port/process lifecycle, readiness timeout, or HMR fails.
 
 ## App-Shape Child Skills
 
@@ -222,12 +228,11 @@ Use child skills as specializations under this parent workflow. They are not a
 separate runtime inheritance mechanism; they are routing rules that keep
 domain/app-shape details out of the generic migration skill.
 
-- `migrate-node-red-mes-app`: use when the source project is a legacy
-  Node-RED + React WMS/MES application, especially when it includes `flow.json`
-  APIs, Node-RED function CRUD, production/warehouse/quality/PDA workflows,
-  legacy stores, and entity/page migration mapping. This child skill keeps
-  app-shape-specific analysis and migration rules out of the generic parent
-  workflow.
+- `migrate-node-red-app`: use together with this parent when Node-RED acts as a
+  backend, API layer, state store, workflow engine, scheduler, or external-
+  integration orchestrator. It covers flow analysis, context/data mapping,
+  behavior-preserving replacement, layered cutover, and retirement evidence
+  across application domains.
 
 ## Completion Criteria
 
@@ -266,6 +271,11 @@ A migration is not complete until current evidence proves all of the following:
   controllable—restart durability, clean-schema bootstrap / `db:push`,
   validation/authorization, DB failure behavior, and any required legacy-data
   import reconciliation.
+- When historical data is intentionally not imported, clean-schema reads return
+  genuine empty states with real actions and no browser/mock/retired-backend
+  fallback; the reset and rollback decisions are recorded project-locally.
+- Compatibility JSON/JSONB storage is not reported as normalized-domain
+  completion, and retained compatibility APIs have behavior/status/evidence rows.
 - For persistence migrations, run a real HTTP CRUD smoke through the running
   app/API rather than calling services directly: create a uniquely identified
   record, read it, update it, and verify the change. When the environment is
@@ -274,8 +284,12 @@ A migration is not complete until current evidence proves all of the following:
   expected final state. Clean up when the domain contract allows it, and exercise
   at least one expected validation, authorization, conflict, or not-found failure
   path.
-- Build/typecheck/post-build verification passes, or every remaining failure is
-  documented with a concrete next action.
+- Build/typecheck/post-build verification passes. Migration-introduced or
+  runtime-risk failures block completion; genuine pre-existing non-blocking
+  findings require baseline evidence and a concrete next action.
+- Production host/port binding is verified in the target runtime network
+  namespace, and obsolete runtime/deployment assets are removed, replaced, or
+  intentionally documented outside the active delivery path.
 - Packaging/import guidance is specific to the actual target environment, not a
   generic ZIP assumption.
 - Any claim about the "latest template" is backed by a fresh check of

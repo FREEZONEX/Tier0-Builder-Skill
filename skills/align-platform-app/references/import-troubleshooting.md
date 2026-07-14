@@ -1,5 +1,10 @@
 # Import And Runtime Troubleshooting
 
+Use `preview-runtime-stability` instead when logs show managed dependency
+installation, port/process ownership, preview readiness timeout, or HMR
+problems. This reference owns failures caused by migrated application code,
+platform-contract drift, production runtime behavior, or import packaging.
+
 ## Contents
 
 - [Browser Shows `fs` Externalized](#browser-shows-fs-externalized)

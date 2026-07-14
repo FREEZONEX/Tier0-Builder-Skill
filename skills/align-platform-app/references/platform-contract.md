@@ -3,13 +3,17 @@
 ## Contents
 
 - [Target Shape](#target-shape)
+- [Dependency And Lockfile Compatibility](#dependency-and-lockfile-compatibility)
 - [Routing Contract](#routing-contract)
 - [Identity And Active Role Contract](#identity-and-active-role-contract)
+- [Authentication Verification Environments](#authentication-verification-environments)
 - [Data And Server Boundary](#data-and-server-boundary)
 - [Server, Client, And Node-Only Module Boundary](#server-client-and-node-only-module-boundary)
 - [Database Schema And Runtime Bootstrap Contract](#database-schema-and-runtime-bootstrap-contract)
 - [Build And Preview Contract](#build-and-preview-contract)
+- [Migration Quality Gate](#migration-quality-gate)
 - [Artifact Contract](#artifact-contract)
+- [Production Start And Network Binding](#production-start-and-network-binding)
 - [Packaging Contract](#packaging-contract)
 
 ## Target Shape
@@ -37,8 +41,32 @@ Required target invariants:
   through user-editable forms.
 - Keep Node `>=22.12.0` and the latest template script contract, including
   `postbuild -> npm run build:verify`.
-- Keep `@tier0/sdk` at least `0.1.3` and access it through server-side lazy
-  helpers rather than SSR/page-startup imports.
+- Keep the `@tier0/sdk` version and loading contract from the freshly inspected
+  template, and access it through server-side lazy helpers rather than
+  SSR/page-startup imports.
+
+## Dependency And Lockfile Compatibility
+
+Treat the latest platform template dependency set as the target baseline. Before
+merging a legacy frontend dependency graph into it:
+
+- Identify the package manager and authoritative lockfile. Do not create a
+  second lockfile for convenience.
+- Inspect peer requirements for React, React DOM, Vite, the React plugin,
+  TanStack Start/Router, UI libraries, browser-only packages, and build plugins.
+- Verify that every proposed version exists and that the complete dependency
+  graph resolves. Use package-manager-native inspection commands; treat commands
+  that regenerate a lockfile as mutations, not read-only checks.
+- Upgrade or replace incompatible legacy packages, or isolate them behind a
+  compatibility boundary. Do not silently downgrade the platform baseline or
+  hide an unresolved graph with force/legacy-peer flags.
+- After changing dependency manifests, regenerate the authoritative lockfile in
+  a controlled environment and verify an exact install from it.
+
+When a legacy package cannot support the current scaffold baseline, document the
+decision and evidence for replacement, isolation, or an explicitly approved
+platform pin. A previously working source lockfile is evidence about the source,
+not proof that its versions satisfy the target scaffold.
 
 ## Routing Contract
 
@@ -96,6 +124,26 @@ entries, pages, routes, and custom logout helpers, plus role-selection and
 impersonation flows. Preserve only the protected scaffold auth/session bridge and
 fallback behavior required by the current platform; protected endpoints must not
 remain exposed as a product logout entry.
+
+## Authentication Verification Environments
+
+Preview middleware may inject gateway identity headers and a signed session, so
+a successful request in preview does not prove the unauthenticated path. Separate
+these verification surfaces:
+
+- Use managed preview to verify current-template preview identity injection,
+  known-role behavior, rendering, and normal authorization.
+- Use a production-mode server, an independent test server, or a dedicated test
+  entry with preview injection disabled to verify no-identity behavior and
+  session fallback.
+- Derive exact headers, cookies, precedence, and status codes from the freshly
+  inspected template rather than freezing a historical matrix in the app.
+
+For a role-aware app, cover at least: recognized platform role, explicitly
+unknown platform role failing closed, valid-session fallback when the active
+role is absent, no gateway identity plus no session, and same-origin protection
+for browser mutations when the current scaffold provides it. Apply roleless-app
+rules from the preceding section instead of inventing protected capabilities.
 
 ## Data And Server Boundary
 
@@ -167,6 +215,9 @@ app.
 Use the scaffold's existing scripts and managed preview behavior:
 
 - Do not manually install dependencies just to start managed preview.
+- If managed preview already owns dependency installation, wait for it and do
+  not launch a concurrent install. Restore dependencies manually only in a local
+  or otherwise unmanaged environment, using the authoritative lockfile.
 - Run typecheck/build verification after meaningful migration steps.
 - Keep post-build verification active.
 - If route files change, let the TanStack Router plugin regenerate the route
@@ -177,11 +228,29 @@ Use the scaffold's existing scripts and managed preview behavior:
   `NEXT_PUBLIC_BASE_PATH` only as a legacy fallback.
 - Preserve preview gateway header/session injection when aligning
   `vite.config.ts` with the latest template.
+- Use `preview-runtime-stability` for managed install, port/process lifecycle,
+  readiness timeout, and HMR failures. Diagnose the logged failure before
+  restarting preview.
 
 For persistence cutovers, build success is insufficient. Verify clean-schema
 runtime bootstrap / `db:push`, supported API lifecycle operations and constraints,
 reload/restart durability, and visible failure without local fallback when
 PostgreSQL is unavailable.
+
+## Migration Quality Gate
+
+Use the freshly inspected scaffold scripts rather than assuming historical
+script names. Before declaring migration complete:
+
+- Run typecheck, build, and the scaffold's post-build verifier.
+- Treat migration-introduced failures and type errors that can affect runtime
+  behavior as blockers.
+- Baseline genuine pre-existing failures before the migration. Historical lint
+  or dead-code findings may be recorded as follow-up only when they do not hide
+  migration or runtime defects.
+- Record each accepted remaining failure with evidence, impact, and a concrete
+  next action. Do not describe the platform migration as fully complete while a
+  blocking class remains.
 
 ## Artifact Contract
 
@@ -198,6 +267,24 @@ shape:
   `SESSION_SECRET`
 
 Do not replace this with source-project-specific dev server assumptions.
+
+## Production Start And Network Binding
+
+Run the production entry with the target runtime's host, port, and environment
+contract. Verify from the same network namespace used by the startup probe and,
+when possible, through the platform-facing route:
+
+- the process binds to the interface and injected port expected by the current
+  scaffold and `artifact.toml`;
+- `/api/health` and `/api/manifest` respond;
+- an SSR page, static client asset, and representative API route respond;
+- host selection through `HOST`, `HOSTNAME`, or another runtime variable behaves
+  correctly in the actual container/runtime environment.
+
+Do not infer deployability from Vite dev readiness or from a process that merely
+stays alive. If loopback and container-network probes behave differently, record
+the binding evidence and reconcile it with the latest scaffold instead of
+silently inventing a second production entry.
 
 ## Packaging Contract
 
