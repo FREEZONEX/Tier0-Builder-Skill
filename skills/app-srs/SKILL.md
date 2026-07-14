@@ -76,6 +76,50 @@ Treat source documents titled "Spec", "App Spec", "PRD", "Feature Brief", "Requi
   balanced first release plus the relevant workflow checkpoints. Do not expand
   a simple request into a full enterprise program.
 
+### Category Archetype Expansion
+
+Users rarely name their product category cleanly. They describe a warehouse to
+manage, a customer-and-order workflow, an inspection process — in any wording,
+any language. Category recognition is an **inference from the whole request**,
+never a keyword match on how the user happened to phrase it.
+
+- When the requested product recognizably belongs to an application category a
+  domain practitioner would name (warehouse management, CRM, MES, quality,
+  asset maintenance, procurement, ...), treat the category as part of the
+  requested scope. The user is asking for "a <category> product with my
+  specifics" — this holds whether they name the category, merely describe the
+  work ("一个管理仓库物料和领料的系统"), or lean on standard/general domain
+  knowledge in any phrasing.
+- **Reason out the archetype yourself**: what module set would a practitioner
+  expect a product in this category to contain? Which master data, core flows,
+  entities, status models, and vocabulary are standard? Expand that reasoning
+  into named modules in the SRS as First-Version Commitments and present them
+  in the blueprint for confirmation. The user trims the archetype; the system
+  never silently trims it. This is not "inventing unrelated modules":
+  category-implied modules are related by definition — the no-invention rule
+  applies to capabilities outside the recognized category.
+- User-named special requirements (e.g. pre-receipt, expiry alerts, FIFO) are
+  additive to the archetype, never a substitute for it.
+- Record a depth tier per module in the SRS so the builder inherits the
+  calibration instead of re-deciding scope:
+  - **core-flow**: the workflows the user emphasized plus the category's
+    primary loop — fully operable end to end;
+  - **master-data**: standard CRUD with realistic seeds;
+  - **supporting**: minimal but real and operable — never a stub, never fake.
+- `references/categories/` holds **calibration examples**, not a lookup table
+  (currently `wms.md`). When one matches the recognized category, use it to
+  calibrate module tiers, field conventions, and professional surface
+  expectations. The expansion itself always comes from your domain reasoning —
+  a missing reference never weakens or skips the expansion.
+- Not every request has a category. Single-workflow tools, one-off utilities,
+  and genuinely novel products must NOT be inflated into an archetype — if a
+  practitioner would not recognize a standard product shape behind the request,
+  skip expansion and scope from the request alone.
+- Use the category's standard terminology, entities, field sets, and status
+  taxonomies. Industry-standard vocabulary and status models are part of
+  looking professional; generic names ("items", "records") read as amateur to
+  domain users.
+
 ### PRD-to-SRS Conversion
 
 - Treat the provided PRD, requirements draft, notes, or pasted source material as the source of truth.

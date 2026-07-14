@@ -25,6 +25,12 @@ expansion. Do not turn it into a long planning phase.
   FC.
 - Identify data models, statuses, validations, seed records, service actions,
   and API handlers needed to make visible paths real.
+- Read the SRS Depth Tier per commitment and order the build accordingly:
+  core-flow first and fully operable, master-data as standard CRUD with seeds,
+  supporting modules minimal but real.
+- Plan role registration as one pass across every role surface the scaffold
+  contract lists (permission matrix, role metadata, platform role mirror),
+  replacing template test roles with the SRS roles.
 - Identify high-risk actions: recommended, automatic, optimized, rule-based,
   bulk, approval, exception, dispatch, issue, freeze, release, or adjustment.
   Plan impact preview/confirmation before mutation.
