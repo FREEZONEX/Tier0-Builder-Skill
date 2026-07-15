@@ -1,9 +1,11 @@
 ---
 name: preview-runtime-stability
 description: >-
-  Use when managed preview startup fails for TanStack Start or Vite apps, including "Failed to load preview",
-  preview timeouts, "dev server exited: exit status 1", port 5173 conflicts, /api/health failures,
-  missing dependencies, stale npm/node processes, broken HMR, or Vite reload issues.
+  Use when managed preview startup fails for TanStack Start or Vite apps,
+  including install failures, ERESOLVE or lockfile errors, "Failed to load
+  preview", preview timeouts, "dev server exited: exit status 1", port 5173
+  conflicts, /api/health failures, missing dependencies, stale npm/node
+  processes, broken HMR, or Vite reload issues.
 ---
 
 # Preview Runtime Stability
@@ -12,7 +14,9 @@ description: >-
 
 Use this skill when the user says `Failed to load preview`, `Preview loading timed out`, or when a managed preview is stuck, repeatedly times out, or reports port conflicts such as `Port 5173 is already in use`. The goal is to make preview start/stop idempotent inside one executor Pod.
 
-This skill also covers two adjacent runtime concerns: restoring dependencies when an uploaded project ships without `node_modules` (the preview cannot start until they are installed), and fixing frequent full page reloads (broken HMR) during development.
+This skill also covers dependency-install diagnosis and frequent full page
+reloads during development. Read the install or preview logs before retrying;
+do not treat every exit status as a port or Vite startup problem.
 
 ## Core Diagnosis
 
@@ -58,14 +62,45 @@ Detect:
 Fix sequence:
 
 1. Confirm you are at the project root (the directory holding `package.json`).
-2. If a managed install is already running, wait for it to finish; do not start a second install that writes `node_modules` concurrently.
-3. Restore dependencies: run `npm ci` when `package-lock.json` exists (clean, lockfile-exact), otherwise `npm install`.
+2. If a managed install owns dependency restoration, wait for it to finish; do
+   not start a second install that writes `node_modules` concurrently.
+3. In a local or otherwise unmanaged environment, restore dependencies with the
+   project's package manager and authoritative lockfile. For npm, run `npm ci`
+   when a valid `package-lock.json` exists; use `npm install` only when the
+   project intentionally has no lockfile or is regenerating it.
 4. Always restore **before** `npm run build` or starting preview; build/preview keeps failing until install completes.
 5. After install succeeds, run the preflight and start preview normally.
 
 ```bash
 [ -f package-lock.json ] && npm ci || npm install
 ```
+
+### Managed dependency install failed
+
+Error examples:
+
+```text
+install failed: install exited: exit status 1
+ERESOLVE unable to resolve dependency tree
+No matching version found for <package>@<version>
+Failed to resolve import "<package>"
+```
+
+Fix sequence:
+
+1. Read the managed install/task log before restarting preview.
+2. Classify the failure as peer-dependency conflict, unavailable version,
+   manifest/lockfile drift, missing dependency, interrupted install, or network/
+   registry failure.
+3. For a peer conflict, inspect the legacy package peer requirements and the
+   target scaffold versions. Resolve, replace, or isolate the incompatible
+   package; do not hide the conflict with force or legacy-peer flags.
+4. For an unavailable or missing package, verify the intended package name and
+   published version before editing the manifest.
+5. Regenerate the authoritative lockfile only in a controlled, unmanaged install
+   step, then verify an exact install from it.
+6. Restart preview once after the dependency graph resolves so Vite can rebuild
+   its dependency cache. Do not loop preview restarts while install still fails.
 
 ### Dev server exited with status 1
 
@@ -83,7 +118,8 @@ Common causes, in order:
 
 1. Stale preview process still owns port `5173`. This is the most common cause when `vite.config.ts` uses `server.strictPort = true`; Vite exits immediately instead of drifting to `5174`.
 2. Route tree or file-route compile error after adding, renaming, or deleting files under `src/routes`.
-3. Missing dependency or stale import after removing component libraries, for example imports from deleted `@/components/ui` or `@/components/mes`.
+3. Missing dependency or stale import after removing component libraries, for
+   example imports from deleted shared or legacy component folders.
 4. CSS/Tailwind startup failure, especially stale `@import` entries for deleted packages.
 5. Server-only imports leaking into client-bundled route/component files, such as using `@tanstack/react-start/server` outside a server handler, middleware, or `createServerFn().handler(...)` body.
 
@@ -91,7 +127,9 @@ Fix sequence:
 
 1. Check preview logs. If the log contains `Port 5173 is already in use`, run the preflight cleanup and restart preview. Do not change application code for a stale-port failure.
 2. If the log shows a route-generation or import error, fix the exact file path in the stack trace, then restart preview.
-3. If the log shows a deleted UI/MES component import, replace it with scaffold-native Tailwind/local components. Do not restore the removed component library unless the user explicitly asks.
+3. If the log shows a deleted shared/legacy component import, replace it with
+   scaffold-native or intentionally retained local components. Do not restore a
+   removed component library unless it belongs in the target dependency plan.
 4. If the log shows a CSS import error, remove the stale import from `src/styles/globals.css` or add the missing package only when it is intentionally part of the template.
 5. If the log shows `does not provide an export named` from `@tanstack/react-start/server`, move that call inside a valid server boundary.
 6. When logs are unavailable or ambiguous, first verify port ownership and `/api/health`; then run `npm run build` only if dependencies are installed and the managed install is not running.
@@ -100,7 +138,7 @@ Useful checks:
 
 ```bash
 PREVIEW_PORT=5173 HEALTH_PATH=/api/health ./.agents/skills/preview-runtime-stability/scripts/preview_preflight.sh --cleanup
-rg -n '@/components/(ui|mes)' src --glob '!routeTree.gen.ts'
+rg -n '@/components/(ui|legacy)' src --glob '!routeTree.gen.ts'
 rg -n '@tanstack/react-start/server|from "motion/react"' src --glob '!routeTree.gen.ts'
 rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
 ```
@@ -119,10 +157,11 @@ ReferenceError: exports is not defined in ES module scope
 ```
 
 When the stack points at `@tier0/sdk`, `@tier0/sdk/mq`, or `mqtt` during SSR,
-separate SDK package format failures from app-code eager loading failures. The
-current template uses `@tier0/sdk@0.1.3`, which ships dual ESM/CJS output. It
-still must remain external in SSR and be loaded from server code through
-`@/lib/tier0` so optional platform I/O does not run during page initialization.
+separate SDK package/export failures from app-code eager loading failures. Read
+the freshly inspected scaffold and installed package metadata instead of
+assuming a historical SDK version. Preserve the current scaffold's SSR external
+and server-side lazy-loading contract so optional platform I/O does not run
+during page initialization.
 
 Fix sequence:
 
@@ -179,9 +218,15 @@ Fix sequence:
 1. Identify the request path that returned the JSON error. Do not assume it is `/api/health`.
 2. For `src/routes/api/**`, wrap every handler in `withErrors(...)` and keep the route body thin: auth, parse, service call, `Response.json`.
 3. Keep `HttpError` throwing in services and route handlers only when a `withErrors` boundary will catch it. In page loaders or `createServerFn` calls, return `null`, throw `redirect(...)`, or map the error locally.
-4. Verify preview env in `artifact.toml`: `SESSION_SECRET`, `PREVIEW_USER_ID`, `PREVIEW_USER_NAME`, and `PREVIEW_USER_ROLE` are set.
-5. Verify `PREVIEW_USER_ROLE` exactly matches a key in `PERMISSION_MATRIX`; the scaffold default is `admin`.
-6. Verify `vite.config.ts` keeps the preview gateway header plugin before `tanstackStart(...)`, so preview requests receive `X-App-User-*` headers and a signed `mes-session` cookie.
+4. Inspect the effective managed preview environment and the latest scaffold.
+   Verify the required session secret and any preview-user fields expected by
+   the current gateway-header plugin; do not assume they must all be committed
+   in `artifact.toml`.
+5. If an effective preview role is supplied, verify that it exactly matches the
+   migrated permission matrix.
+6. Verify `vite.config.ts` keeps the current preview gateway header plugin before
+   `tanstackStart(...)`, so preview requests receive the scaffold's identity
+   headers and signed session cookie.
 7. Keep `/api/health`, `/api/manifest`, and `/api/auth/**` public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
 
 Useful checks:
@@ -258,7 +303,10 @@ To keep generated apps clean from the start, enforce both as code conventions: c
 
 Before every preview start:
 
-1. Ensure dependencies are installed. If `node_modules` is missing or incomplete (uploaded projects may ship without it), run `npm ci` when `package-lock.json` exists, otherwise `npm install`, before any build or preview.
+1. Ensure dependency restoration succeeded. In managed preview, wait for the
+   managed install and inspect its failure log; do not run a concurrent install.
+   In local/unmanaged preview, restore with the project's package manager and
+   authoritative lockfile before build or preview.
 2. Check whether the declared preview port is already listening.
 3. If occupied, probe `http://127.0.0.1:${PREVIEW_PORT}/api/health`.
 4. If health is 2xx, reuse the running preview and return ready instead of starting a second process.

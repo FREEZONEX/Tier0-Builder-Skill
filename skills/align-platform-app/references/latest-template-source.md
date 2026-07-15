@@ -75,8 +75,10 @@ As of the verified snapshot, the template requires:
 - `package.json` scripts: `dev`, `dev:local`, `dev:force`, `build`,
   `postbuild`, `typecheck`, `build:verify`, `build:check`, `start`, `lint`,
   `db:push`, `db:seed`, and `db:studio`.
-- `@tier0/sdk` at least `0.1.3`, loaded through `src/lib/tier0.ts` lazy helpers;
-  do not top-level import SDK submodules on SSR/page startup paths.
+- `@tier0/sdk` `^0.2.7` in this verified snapshot, loaded through
+  `src/lib/tier0.ts` lazy helpers; do not top-level import SDK submodules on
+  SSR/page-startup paths. Re-read `package.json` instead of treating this version
+  as permanently current.
 - Vite base path from `VITE_BASE_PATH` with `NEXT_PUBLIC_BASE_PATH` as legacy
   fallback.
 - Vite SSR external policy: `["pg", "@tier0/sdk", "mqtt"]`.
