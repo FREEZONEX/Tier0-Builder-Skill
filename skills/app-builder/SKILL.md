@@ -53,7 +53,9 @@ return here automatically unless clarification is required.
    depth behind those visible paths.
 7. Run available checks. For first release, typecheck/lint are not enough when
    preview or route smoke is available.
-8. Report concrete user paths, checks, and any undelivered commitment at the
+8. For first release or rebranding, complete the App Identity Closeout after
+   local assets and preview are ready.
+9. Report concrete user paths, checks, and any undelivered commitment at the
    top. Do not bury missing committed work in "next steps."
 
 ## FC Delivery Map
@@ -207,6 +209,25 @@ Do not expose these words in product UI unless the loop works.
   `tx.execute()` results with `rowsOf()` before `.map()`, `.filter()`,
   `.length`, or index access.
 
+## App Identity Closeout
+
+First Release Mode and any rename/rebrand must finish application identity in
+both the generated UI and the Tier0 project before completion is reported.
+The user should not need to ask why the project card still shows a placeholder.
+
+- Set the scaffold's app name, locale, and in-app icon source. Use one dedicated
+  PNG/JPEG icon file for both the app shell and the platform project.
+- Prepare a concise product description from the implemented scope.
+- After the local icon exists, call `update_app_info` once with `name`,
+  `description`, and `icon_path`. Include `cover_path` when a designed cover
+  file exists; otherwise use `capture_cover` after the live preview is ready.
+- Treat the successful tool result as part of delivery. A local `APP_ICON`
+  change does not prove the project icon was updated.
+- If `update_app_info` is unavailable or fails, report App Identity as
+  undelivered at the top. Do not claim that the project name/icon/cover is
+  synchronized, and do not wait for the user to notice the stale metadata.
+- Repeat the closeout whenever later work renames or rebrands the app.
+
 ## Category Surface And Professional Density
 
 - When the SRS carries a category archetype (WMS, CRM, MES, ...), deliver the
@@ -270,6 +291,9 @@ tabs, page titles, dashboard cards, primary actions, and row actions. Verify:
 - Walk the Delivery Map once per defined role: admin reaches every FC; each
   business role reaches the workflows the SRS assigns to it; no role lands on
   an empty workspace unless the SRS says so.
+- For first release/rebrand, the same icon asset is used in-app and passed to a
+  successful `update_app_info` call together with the final name and
+  description; cover is explicitly set or captured when available.
 
 Completion report must include:
 
@@ -278,4 +302,5 @@ Completion report must include:
 - checks run
 - roles verified (which roles, what each can reach)
 - runtime/preview result
+- App Identity result (name, description, icon, and cover synchronization)
 - any undelivered committed FC at the top, not as a casual future suggestion

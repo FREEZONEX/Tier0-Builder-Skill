@@ -37,7 +37,9 @@ expansion. Do not turn it into a long planning phase.
 
 ## Build Order
 
-1. App identity, shell, navigation, and `/` experience.
+1. App identity, shell, navigation, and `/` experience. For first release,
+   prepare the final name, description, and one PNG/JPEG icon asset that can be
+   used by both the shell and `update_app_info`.
 2. Example records and lifecycle states.
 3. Core data/service/API path behind the main workflow.
 4. Visible forms, lists, queues, row actions, and dashboard links for every FC.
@@ -48,6 +50,10 @@ expansion. Do not turn it into a long planning phase.
 7. UI quality pass: visual center, table layout, overlay/form safety,
    responsive sanity, one product language.
 8. Runtime and build verification.
+9. App Identity Closeout: after local assets and preview are ready, call
+   `update_app_info` with the final name, description, and same icon path;
+   include a designed cover path or capture the live preview. Do not report
+   platform identity synchronization from local code changes alone.
 
 For inventory/resource/order/task/asset/case/supplier/customer/project apps,
 do not stop at intake/listing when the SRS or domain implies downstream use,
@@ -82,3 +88,6 @@ issue, dispatch, fulfillment, closure, approval, or exception handling.
 - Forms, overlays, dense tables, and responsive layouts do not clip, overlap,
   or create accidental horizontal page/dialog scroll.
 - Durable product changes update only the affected SRS lines.
+- First release/rebrand has a successful `update_app_info` result for the final
+  name, description, and in-app icon asset; cover is explicitly set or captured
+  when available. Tool failure is reported as undelivered, not silently skipped.

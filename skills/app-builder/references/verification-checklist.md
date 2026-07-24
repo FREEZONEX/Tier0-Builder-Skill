@@ -36,6 +36,9 @@ Use this before reporting a generated app or substantial change as complete.
 ## UI
 
 - One product language unless bilingual output was requested.
+- For first release/rebrand, the final app name and icon are set in the app
+  shell, and the icon points to the same PNG/JPEG file prepared for the
+  platform project.
 - Main pages have a clear visual center and enough hierarchy/accent to avoid a
   flat all-white admin surface.
 - Business workspaces feel like modern enterprise software; station/monitor
@@ -68,6 +71,17 @@ Use this before reporting a generated app or substantial change as complete.
   unbounded client trust are introduced.
 - Polling/timers/subscriptions use shared patterns or clean up correctly.
 
+## App Identity
+
+- `update_app_info` succeeded with the final `name`, `description`, and the
+  same `icon_path` used by the generated app.
+- A designed `cover_path` was included when available; otherwise the ready live
+  preview was captured for the cover.
+- The completion report does not infer platform synchronization from
+  `APP_NAME` / `APP_ICON` source changes alone.
+- Any unavailable or failed App Info tool call is listed as an undelivered item
+  at the top instead of being deferred until the user notices.
+
 ## Roles
 
 - Real business roles from the SRS are registered across every role surface
@@ -90,3 +104,4 @@ Report in this shape:
 
 Then list checks run and preview/runtime result. Put any undelivered committed
 FC at the top as an explicit open decision, not in casual future suggestions.
+Include the App Identity synchronization result.
