@@ -1,0 +1,4 @@
+interface:
+  display_name: "Responsive Craft"
+  short_description: "Build, repair, and preview responsive layouts"
+  default_prompt: "Use $responsive-craft to build or repair responsive layouts, choose explicit breakpoint and sticky-scroll behavior, and preview the result across viewport widths."
