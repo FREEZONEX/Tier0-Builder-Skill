@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preview Runtime Stability"
+  short_description: "Diagnose and stabilize managed app previews"
+  default_prompt: "Use $preview-runtime-stability to diagnose and stabilize managed TanStack Start or Vite previews, including dependency install, port 5173, health checks, process cleanup, and HMR failures."
