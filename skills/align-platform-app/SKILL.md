@@ -10,7 +10,7 @@ description: >-
   Drizzle/PostgreSQL persistence; or when updating,
   rebasing, syncing, upgrading, or reconciling an existing platform app's
   scaffold files, build/runtime contracts, API/service boundaries, database
-  setup, preview behavior, auth/session boundaries, assets, routing,
+  setup, preview behavior, Gateway identity/role boundaries, assets, routing,
   artifact.toml, Vite config, or platform integration requirements.
 ---
 
@@ -50,6 +50,9 @@ Before changing migration constraints, fetch or inspect that repository's latest
 - Make the target project platform-deployable, not merely buildable. Verify
   runtime entry, health route, manifest route, build output, preview behavior,
   and package/import shape.
+- Treat login, logout, identity, and role assignment as platform-owned. Do not
+  create App-local authentication sessions, logout endpoints, role pickers, or
+  credential configuration for Gateway-managed concerns.
 - Avoid placeholder screens and "coming soon" states. Empty states should offer
   real actions or route to migrated functionality.
 - For app-owned durable business data, use PostgreSQL as the single source of
@@ -78,8 +81,9 @@ Before changing migration constraints, fetch or inspect that repository's latest
      inventing roles during migration.
    - For already-platform apps, identify local scaffold drift against the latest
      `FREEZONEX/Tier0-App-Scaffold`: package scripts/dependencies, `artifact.toml`,
-     `vite.config.ts`, routing/root files, auth/session code, SDK loading,
-     preview behavior, health/manifest routes, and docs.
+     `vite.config.ts`, `server.mjs`, routing/root files, Gateway auth/role code,
+     role registration, SDK loading, App identity, design primitives, verification
+     gates, preview behavior, health/manifest routes, and docs.
    - Read source route definitions, navigation config, layout shells, global
      styles, state stores, and any runtime/server files.
    - If the source has back-end-like code in client handlers or framework routes,
@@ -89,8 +93,7 @@ Before changing migration constraints, fetch or inspect that repository's latest
 2. **Compare against the platform contract**
    - Load `references/latest-template-source.md` before relying on remembered
      template details. Verify the current `main` commit and inspect at least
-     `AGENTS.md`, `README.md`, `package.json`, `artifact.toml`,
-     `vite.config.ts`, and `docs/platform-integration.md`.
+     the volatile contract surfaces listed there.
    - Load `references/platform-contract.md` when checking required target shape.
    - Confirm the target app keeps scaffold files such as `server.mjs`,
      `vite.config.ts`, `artifact.toml`, `/api/health`, `/api/manifest`, and
@@ -98,8 +101,9 @@ Before changing migration constraints, fetch or inspect that repository's latest
    - Confirm managed preview rules: do not manually install dependencies for
      preview startup, and use the platform preview workflow when available.
    - When managed preview installation, port/process ownership, health timeout,
-     or HMR fails, use `preview-runtime-stability`; keep this skill focused on
-     migration and platform-contract alignment.
+     or HMR fails, use `preview-runtime-stability` when the platform has injected
+     it; keep this skill focused on migration and platform-contract alignment.
+     Never copy platform-managed Skill content into the target App.
 
 3. **Choose a migration path**
    - Use a compatibility boundary when the source app is large, route-heavy,
@@ -126,7 +130,11 @@ Before changing migration constraints, fetch or inspect that repository's latest
      requires.
    - When temporarily preserving `react-router-dom`, mount `BrowserRouter` inside
      `ClientOnly`; importing or rendering it through SSR can access `document`.
-   - Move reusable UI into `src/components/<domain>/` or route-local modules.
+   - Before changing frontend UI, read the target scaffold's current `DESIGN.md`.
+     Compose its shared UI, form, overlay, table, and data-state primitives
+     instead of recreating them in migrated routes. Render scaffold request-hook
+     results through its `AsyncView` contract so first-load failures remain
+     visible and retryable.
    - For app-owned durable data, migrate in dependency order: schema -> current
      scaffold `bootstrapModule()` / `db:push` contract -> service -> thin API route
      -> client request/cache invalidation. Keep database access in services and
@@ -143,26 +151,34 @@ Before changing migration constraints, fetch or inspect that repository's latest
      not let normal startup or a first request auto-insert demo, sample, or
      baseline rows for migrated durable business entities. Retained legacy data
      enters through an explicit import; development/test fixtures require an
-     explicit development or test action.
+     explicit development or test action. Where retained runtime baseline data
+     is valid, use current scaffold seed helpers and typed Drizzle writes rather
+     than raw SQL writes or mutating `Date` setter return values.
    - Map source environment variables to platform/runtime injection. Do not add
      user-facing credential pages for platform-provided SDK credentials.
    - For imported/migrated apps, remove legacy custom login/register and all
      user-visible logout/sign-out buttons, personal-menu entries, pages, routes,
      and custom logout helpers, together with role-switching, role-picking, and
-     impersonation flows. Protected scaffold auth/session bridge endpoints may
-     remain when the current platform requires them, but they must not remain as
-     a product logout entry. This logout-removal rule does not prohibit a
-     separately generated 0-to-1 app from implementing logout when its own
-     requirements ask for it.
+     impersonation flows. Remove obsolete App-local session, logout, and
+     role-selection code when reconciling with the current Gateway-only
+     scaffold. Logout remains platform-owned for every App; do not clear the
+     Gateway Cookie or create an App-local substitute.
    - If the source app is roleless, do not invent business roles or role-gated
      behavior. If the source has roles, migrate the complete role model:
      definitions, user-role and permission mappings, menu/page/action guards,
-     API authorization, and related metadata. The client must not select or
-     override the active role through storage, cookies, query parameters,
-     request bodies, or headers.
+     API authorization, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json`.
+     Use the current platform `role_key` format. Authorize with the complete
+     Gateway-assigned role set and permission union; never authorize with the
+     primary display role. The client must not write role state through storage,
+     cookies, query parameters, request bodies, or headers.
    - Integrate assets through the scaffold's public/static asset conventions.
+     Preserve or finish the real App name, locale, and icon through current
+     `app-chrome` conventions. When generating or rebranding an icon, use the
+     same platform-ready image in-App and in platform App metadata.
    - Preserve localization and directionality when present; normalize
      user-facing copy with the project copy rules.
+   - Keep `.agents/skills/` empty of vendored guidance. Builder Skills are
+     selected and injected by the platform orchestrator, not packaged in Apps.
 
 4a. **Update an existing scaffold-based app**
    - Treat upstream template changes as platform-contract drift, not as a reason
@@ -176,7 +192,10 @@ Before changing migration constraints, fetch or inspect that repository's latest
      or replacing locally customized shell/auth/runtime files.
 
 5. **Verify behavior and deployability**
-   - Run typecheck/build and any post-build verifier available in the scaffold.
+   - Run the current scaffold's normal completion build command and let its full
+     post-build verifier finish; do not replace it with a direct bundler command.
+     When preview returns a local URL, run the scaffold route-smoke command
+     against `/` plus every changed key route.
    - Treat Vite `ready` and HTTP 200 as transport checks only. Inspect both SSR
      output and the browser console, wait for hydration, and exercise interactive
      controls before declaring a route rendered.
@@ -185,14 +204,12 @@ Before changing migration constraints, fetch or inspect that repository's latest
      consumed as a `Map`, array, render value, or synchronous `useMemo` result.
    - Verify key migrated routes render, navigation works, assets load, and API
      calls do not fall back to local-only state.
-   - For role-aware apps, verify preview and deployed active-role precedence and
-     fallback behavior against `references/platform-contract.md`; an explicitly
-     supplied unknown role must fail closed, while a missing role first follows
-     the scaffold fallback chain and denies protected capabilities only after
-     fallbacks are exhausted. A platform role change takes effect only after a
-     new request or refresh recomputes menus, default routing, and page/API
-     access. For roleless apps, verify that a missing role is accepted and no
-     business-role requirement was invented.
+   - For role-aware apps, verify preview single-role view-as and deployed
+     multi-role permission-union behavior against
+     `references/platform-contract.md`. Cover mixed known/unknown trusted roles,
+     explicit deployed empty roles, legacy untrusted unknown roles, and preview
+     admin fallback. For roleless apps, verify that no business roles were
+     invented.
    - For persistence migrations, prove supported lifecycle operations through
      the API, reload and—when the environment is controllable—restart durability,
      current scaffold bootstrap / `db:push` behavior on a clean schema,
@@ -219,8 +236,8 @@ Before changing migration constraints, fetch or inspect that repository's latest
 - Read `references/import-troubleshooting.md` when migrated code causes SSR,
   build, routing, assets, auth/API, database, production runtime, or package
   import failures.
-- Use `preview-runtime-stability` when managed preview installation,
-  port/process lifecycle, readiness timeout, or HMR fails.
+- Use `preview-runtime-stability` when the orchestrator injected it and managed
+  preview installation, port/process lifecycle, readiness timeout, or HMR fails.
 
 ## App-Shape Child Skills
 
@@ -249,15 +266,16 @@ A migration is not complete until current evidence proves all of the following:
 - For imported/migrated apps, repository search finds no user-visible
   logout/sign-out button, personal-menu entry, page, route, or custom logout
   helper, and no app-managed role-switch/role-picker/impersonation UI or
-  navigation entry. Protected scaffold auth/session bridge endpoints may remain
-  only when required by the current platform and expose no product logout entry.
+  navigation entry. No App-local session/logout/select-role implementation or
+  Gateway Cookie mutation remains.
 - A roleless source remains roleless, with no invented business-role requirement.
   For a role-aware source, every source role, mapping, menu/page/action guard, API
-  authorization rule, and related metadata entry is migrated. Header tests cover
-  the current precedence and fallback chain; a platform role change is reflected
-  after refresh/new request, an explicitly supplied unknown role fails closed,
-  and missing role input denies protected capabilities only after the scaffold
-  fallbacks are exhausted. No app exposes a user-triggerable role write.
+  authorization rule, and related metadata entry is migrated across
+  `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json`. Role keys satisfy the
+  current platform validator. Header tests prove preview view-as, deployed
+  assigned-role union, trusted unknown-role zero permissions, explicit deployed
+  empty roles, and legacy unknown-role rejection. No App exposes a
+  user-triggerable role write or authorizes with a display-only primary role.
 - Every app-owned durable entity has PostgreSQL as its single source of truth,
   with schema, current scaffold runtime bootstrap / `db:push`, service, API, and
   client paths connected.
@@ -287,6 +305,14 @@ A migration is not complete until current evidence proves all of the following:
 - Build/typecheck/post-build verification passes. Migration-introduced or
   runtime-risk failures block completion; genuine pre-existing non-blocking
   findings require baseline evidence and a concrete next action.
+- First-load request failures render an error/retry state rather than endless
+  loading. Retained runtime seed values use current typed helpers and encoders.
+- App name, locale, icon, and platform metadata follow the current scaffold
+  identity contract; icon/platform synchronization is not inferred from source
+  changes alone.
+- Locked scaffold gates remain intact, and preview route smoke covers `/` plus
+  changed key routes when a local preview URL is available.
+- No platform-managed Skill content is vendored into the App package.
 - Production host/port binding is verified in the target runtime network
   namespace, and obsolete runtime/deployment assets are removed, replaced, or
   intentionally documented outside the active delivery path.
