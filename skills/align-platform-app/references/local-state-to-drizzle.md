@@ -56,13 +56,19 @@ Use this order for each durable entity:
    relevant, representative existing rows. Preserve this idempotent DDL
    bootstrap, but remove runtime seed callbacks that auto-insert demo, sample, or
    baseline rows for migrated durable business entities during normal startup or
-   a first request.
+   a first request. Where retained runtime baseline data is valid, use
+   `seedDate()` / `seedTimestamp()` for Drizzle date/timestamp columns and typed
+   transactional Drizzle writes; do not use raw SQL data writes or mutating
+   `Date` setter return values.
 3. **Service:** implement reads, writes, invariants, authorization inputs, and
    multi-step transactions in `src/services/**`. Database access stays here.
 4. **API:** add thin `src/routes/api/**` handlers for auth, parsing, service
    delegation, and consistent error responses.
-5. **Client:** replace local CRUD with API requests, loading/error/success states,
-   cache invalidation or refetch, and stable server-issued identifiers.
+5. **Client:** replace local CRUD with base-path-aware API requests,
+   loading/error/success states, cache invalidation or refetch, and stable
+   server-issued identifiers. Render current scaffold request results through
+   `AsyncView` so first-load failures expose error/retry instead of endless
+   loading.
 
 Cut over complete vertical slices. Do not switch the client to an API before its
 schema, runtime bootstrap / `db:push`, and service behavior are ready.
@@ -112,6 +118,8 @@ Collect current evidence for every migrated durable entity:
   rollback behave as designed.
 - Network and database failures show errors and create no local authoritative
   records or fixture/mock fallback.
+- First-load request failure renders an error/retry state rather than an
+  indefinite loading shell.
 - Repository search finds no production durable CRUD writes to browser storage,
   persisted Zustand slices, IndexedDB, memory repositories, or fixtures.
 - Legacy import, when required, has idempotency and reconciliation evidence with

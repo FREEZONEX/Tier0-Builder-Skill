@@ -5,8 +5,10 @@
 - [Target Shape](#target-shape)
 - [Dependency And Lockfile Compatibility](#dependency-and-lockfile-compatibility)
 - [Routing Contract](#routing-contract)
-- [Identity And Active Role Contract](#identity-and-active-role-contract)
+- [Gateway Identity And Assigned Roles](#gateway-identity-and-assigned-roles)
+- [Platform Role Registration](#platform-role-registration)
 - [Authentication Verification Environments](#authentication-verification-environments)
+- [App Identity And Design Contract](#app-identity-and-design-contract)
 - [Data And Server Boundary](#data-and-server-boundary)
 - [Server, Client, And Node-Only Module Boundary](#server-client-and-node-only-module-boundary)
 - [Database Schema And Runtime Bootstrap Contract](#database-schema-and-runtime-bootstrap-contract)
@@ -32,18 +34,21 @@ Required target invariants:
 - Keep `/api/health` and `/api/manifest` route behavior intact.
 - Do not edit generated `src/routeTree.gen.ts` directly.
 - Do not add Next.js framework patterns.
-- Do not create product login/register, app-managed role-switch, role-picker, or
-  impersonation flows when identity and active role are platform/gateway managed.
-  During import/migration, also remove user-visible logout/sign-out product
-  entries. This logout-removal rule does not prohibit a separately generated
-  0-to-1 app from implementing logout when its own requirements ask for it.
+- Do not create product login/register, App-local sessions or logout endpoints,
+  app-managed role-switch, role-picker, or impersonation flows. Remove imported
+  equivalents. Login, logout, identity, and role assignment are platform-owned;
+  the App must not read, write, or clear the Gateway login Cookie.
+- Keep only auth surfaces present in the freshly inspected template. At the
+  verified snapshot, `/api/auth/me` remains and `/login` is a hidden auth-error
+  bridge; App-local logout and select-role routes do not exist.
 - Do not expose platform-provided API keys, hosts, tokens, or MQTT credentials
   through user-editable forms.
-- Keep Node `>=22.12.0` and the latest template script contract, including
-  `postbuild -> npm run build:verify`.
+- Keep Node `>=22.12.0` and the latest template script and verification contract.
 - Keep the `@tier0/sdk` version and loading contract from the freshly inspected
   template, and access it through server-side lazy helpers rather than
   SSR/page-startup imports.
+- Keep `.agents/skills/` free of vendored Skill content. Platform Builder
+  guidance is selected and injected by the App Builder orchestrator.
 
 ## Dependency And Lockfile Compatibility
 
@@ -81,69 +86,110 @@ Use TanStack Router file routes:
 Do not import from `next/link`, `next/navigation`, `next/image`, or
 `next/headers`. Use TanStack Router APIs and scaffold helpers.
 
-## Identity And Active Role Contract
+## Gateway Identity And Assigned Roles
 
-Identity and active role are read-only platform/gateway runtime inputs. Resolve
-gateway-provided roles in the current scaffold order:
+Identity and roles are read-only Gateway inputs resolved on every request. The
+App does not own an authentication session.
 
-1. `X-Tier0-Runtime: preview` + `X-Tier0-Preview-Role`
-2. `X-Tier0-Active-Role`
-3. `X-Tier0-Preview-Role`
-4. `X-App-User-Role`
-5. JSON `user.role`
+Resolve roles by runtime:
 
-- If the platform also supplies `X-Tier0-Business-Roles`, treat it only as an
-  available-role set, never as the active role.
-- First determine whether the source app is roleless or role-aware. A roleless
-  source remains roleless: do not invent role definitions, permission matrices,
-  or role-gated behavior, and do not treat a missing role as an error. For a
-  role-aware source, migrate every source role definition, user-role and
-  permission mapping, menu/page/action guard, API authorization rule, and related
-  manifest or metadata entry before calling the migration complete.
-- Do not treat `X-App-User-Role` or a scaffold session cookie as a user-editable
-  role switch. Do not add app-managed role pickers, impersonation, or client role
-  writes. The client must not select or override active role through localStorage,
+1. Preview: use `X-Tier0-Preview-Role` as the single developer-selected view-as
+   role.
+2. Deployed: use every comma-separated `X-Tier0-Business-Roles` value.
+   Deduplicate roles and keep `X-Tier0-Active-Role` first only as primary display
+   metadata.
+3. Legacy fallback: `X-Tier0-Active-Role`, `X-Tier0-Preview-Role`,
+   `X-App-User-Role`, then JSON `user.role`. These legacy sources remain
+   single-role and matrix-gated.
+
+Authorization rules:
+
+- Use `AppUser.roles` for authorization. Effective actions are the union of
+  `PERMISSION_MATRIX` actions across all assigned roles. Never authorize with
+  `AppUser.primaryRole`.
+- Do not rank roles or choose a "highest" role. A known assigned role still
+  grants its actions when another trusted assigned role is unknown.
+- A trusted Tier0 runtime role missing from `PERMISSION_MATRIX` enters with zero
+  permissions. It does not fail the request and does not elevate.
+- An unknown role from a forgeable legacy source fails closed.
+- An explicit deployed empty role set stays empty and never receives admin
+  fallback.
+- A preview Gateway identity with no selected role may use the built-in admin
+  role for that request only. It must not create a Cookie; if the App has no
+  internal admin fallback, fail according to the current scaffold.
+- Gateway identity with no applicable role context is denied. No Gateway
+  identity is unauthenticated.
+- The client must not select or write roles through localStorage,
   sessionStorage, cookies, query parameters, request bodies, or request headers.
-- Role changes occur only in Tier0 platform controls. After a platform change,
-  read the new active role on a new request or refresh, then recompute menus,
-  default route, page guards, API authorization, and active-role filtering. Never
-  optimistically switch role inside the app.
-- In a role-aware app, fail closed when the gateway explicitly supplies a role
-  that is unknown to the migrated permission matrix. When no gateway role is
-  present, preserve the current scaffold fallback chain through the signed
-  session, admin fallback, and hidden `/login` bridge; deny protected
-  capabilities only after those fallbacks are exhausted. This runtime fail-closed
-  rule is distinct from migration completeness: it must not be used to excuse a
-  missing source-role mapping. A roleless app does not fail merely because no
-  role was supplied.
+  Platform assignment or preview view-as changes take effect on the next request
+  or refresh.
 
-Do not blindly delete protected scaffold auth routes or files used by the current
-platform template for gateway/session bridging. During import/migration, remove
-legacy custom login, all user-visible logout/sign-out buttons, personal-menu
-entries, pages, routes, and custom logout helpers, plus role-selection and
-impersonation flows. Preserve only the protected scaffold auth/session bridge and
-fallback behavior required by the current platform; protected endpoints must not
-remain exposed as a product logout entry.
+First determine whether the source is roleless or role-aware. Do not invent
+business roles for a roleless source. For a role-aware source, migrate all roles,
+permission mappings, navigation/page/action guards, API authorization, and
+registration metadata before calling alignment complete.
+
+During import or update, remove custom login/register, App-local session code,
+user-visible logout/sign-out, logout/select-role endpoints, role pickers,
+impersonation, and Gateway Cookie mutation. Keep `/api/auth/me` and the hidden
+`/login` error bridge when they are present in the current template. Logout is
+platform-owned for every App.
+
+## Platform Role Registration
+
+Keep every business role aligned across:
+
+1. `src/lib/permissions.ts` — `ACTIONS` and `PERMISSION_MATRIX`.
+2. `src/lib/role-metadata.ts` — label, description, and default route.
+3. Root `roles.json` — platform registration records.
+
+`role_key` must exactly equal the matrix/metadata key and satisfy
+`^[a-z]+(_[a-z]+)*$`: lowercase letters separated by single underscores. Digits,
+hyphens, uppercase, leading/trailing underscores, and double underscores are
+invalid and cause platform import registration to fail.
+
+Keep `roles.json` as `{ "roles": [] }` for a roleless App. Do not put the
+App-internal admin fallback or demo/test roles in it. On import, the platform
+uses `roles.json` to create/reuse and bind roles. On export, the platform
+regenerates it from registered state; do not treat a hand-edited exported copy
+as the durable platform source.
 
 ## Authentication Verification Environments
 
-Preview middleware may inject gateway identity headers and a signed session, so
-a successful request in preview does not prove the unauthenticated path. Separate
-these verification surfaces:
+Managed preview injects Gateway identity and may provide one view-as role, so a
+successful preview request does not prove deployed or unauthenticated behavior.
+Separate these surfaces:
 
-- Use managed preview to verify current-template preview identity injection,
-  known-role behavior, rendering, and normal authorization.
-- Use a production-mode server, an independent test server, or a dedicated test
-  entry with preview injection disabled to verify no-identity behavior and
-  session fallback.
-- Derive exact headers, cookies, precedence, and status codes from the freshly
-  inspected template rather than freezing a historical matrix in the app.
+- Preview: selected role, no selected role with internal admin fallback, and
+  missing internal admin behavior.
+- Deployed: two known assigned roles with permission union; known plus trusted
+  unknown; explicit empty assigned-role set; active-role display ordering.
+- Legacy: recognized single role and unknown untrusted role failing closed.
+- No identity: unauthenticated behavior.
+- Browser mutations: same-origin protection when the current scaffold provides
+  it.
 
-For a role-aware app, cover at least: recognized platform role, explicitly
-unknown platform role failing closed, valid-session fallback when the active
-role is absent, no gateway identity plus no session, and same-origin protection
-for browser mutations when the current scaffold provides it. Apply roleless-app
-rules from the preceding section instead of inventing protected capabilities.
+Use the current scaffold tests and exact headers/statuses. Do not freeze a
+historical Cookie, precedence, or status matrix in migrated code.
+
+## App Identity And Design Contract
+
+Before frontend changes, read the current `DESIGN.md`. Compose the shared
+button, badge, card, page-header, filter, risk, empty-state, stat, form, overlay,
+table, and async-state primitives where the scaffold provides them. Do not fork
+token values or hand-roll equivalent primitives in migrated routes.
+
+Keep App identity centralized in `src/lib/app-chrome.ts`:
+
+- Set `APP_NAME` to the real business App name.
+- Set `APP_LOCALE` with the name so document language, native inputs, and shared
+  copy stay consistent.
+- Replace placeholder product and shell copy.
+- A generated or rebranded App uses `APP_ICON = "/app-icon.png"` with
+  `public/app-icon.png`: a 512x512 PNG no larger than 2 MB.
+- Synchronize the same image to platform App metadata with `update_app_info` when
+  that tool is available. A local source change alone does not prove platform
+  synchronization; report an unavailable/failed sync as undelivered.
 
 ## Data And Server Boundary
 
@@ -158,7 +204,17 @@ handlers, custom middleware, or Node server files. Reclassify that code:
 - HTTP handlers belong in `src/routes/api/**` and stay thin.
 - Business logic, invariants, and transactions belong in `src/services/**`.
 - Database access belongs behind services only.
-- External platform I/O should use scaffold SDK lazy loaders when available.
+- External platform I/O uses the scaffold SDK lazy loaders: at the verified
+  snapshot these include `loadTier0OpenApi`, `loadTier0Files`,
+  `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi`, and `loadTier0Mq`.
+  Invoke loaders inside the concrete server action that needs I/O. Do not
+  top-level import `@tier0/sdk/openapi`, `@tier0/sdk/files`, or
+  `@tier0/sdk/mq`, and do not replace the SDK with hand-written REST/MQ
+  fallbacks.
+- Do not derive Tier0 resource namespaces from the default
+  `package.json` name `scaffold`. Resolve the human App name from requirements
+  or branding; use `APP_ID` or `/api/manifest` `appId` only as the distinct
+  technical identifier.
 - App-owned durable business data uses PostgreSQL as its single source of truth
   and migrates in this order: Drizzle schema -> current scaffold
   `bootstrapModule()` / `db:push` contract -> service -> API -> client.
@@ -210,6 +266,12 @@ fixtures run only through an explicit development or test action. This migration
 constraint does not define the seed behavior of a separately generated 0-to-1
 app.
 
+When retained runtime baseline data is appropriate, use `seedDate()` for Drizzle
+`date()` columns and `seedTimestamp()` for `timestamp()` columns. Write seed data
+through typed transactional `tx.insert()` / `tx.update()` / `tx.delete()`
+builders. Do not use raw SQL for data writes or pass the numeric return value of
+mutating `Date` setters.
+
 ## Build And Preview Contract
 
 Use the scaffold's existing scripts and managed preview behavior:
@@ -218,19 +280,24 @@ Use the scaffold's existing scripts and managed preview behavior:
 - If managed preview already owns dependency installation, wait for it and do
   not launch a concurrent install. Restore dependencies manually only in a local
   or otherwise unmanaged environment, using the authoritative lockfile.
-- Run typecheck/build verification after meaningful migration steps.
-- Keep post-build verification active.
+- Run `npm run build` for normal completion and let its automatic `postbuild`
+  verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
+  `auth:union:test`, and `runtime:audit`; the verifier also covers typecheck,
+  lint, contract tests, and runtime safety. Do not substitute `vite build`.
 - If route files change, let the TanStack Router plugin regenerate the route
   tree through dev/build tooling.
 - Do not treat a static build success as deployability unless production start,
   health, and manifest behavior are also covered.
 - Preserve Vite base path support through `VITE_BASE_PATH`, with
   `NEXT_PUBLIC_BASE_PATH` only as a legacy fallback.
-- Preserve preview gateway header/session injection when aligning
-  `vite.config.ts` with the latest template.
+- Preserve preview Gateway header injection when aligning `vite.config.ts`; do
+  not add App-session injection.
+- When preview returns a local URL, run
+  `npm run smoke:routes -- <url> [/changed-route ...]`. Treat the URL as a local
+  self-check address, not a user-facing link.
 - Use `preview-runtime-stability` for managed install, port/process lifecycle,
-  readiness timeout, and HMR failures. Diagnose the logged failure before
-  restarting preview.
+  readiness timeout, and HMR failures when the orchestrator injected it. Never
+  copy that Skill into `.agents/skills/`.
 
 For persistence cutovers, build success is insufficient. Verify clean-schema
 runtime bootstrap / `db:push`, supported API lifecycle operations and constraints,
@@ -242,7 +309,7 @@ PostgreSQL is unavailable.
 Use the freshly inspected scaffold scripts rather than assuming historical
 script names. Before declaring migration complete:
 
-- Run typecheck, build, and the scaffold's post-build verifier.
+- Run the current normal build command and its complete post-build verifier.
 - Treat migration-introduced failures and type errors that can affect runtime
   behavior as blockers.
 - Baseline genuine pre-existing failures before the migration. Historical lint
@@ -251,6 +318,15 @@ script names. Before declaring migration complete:
 - Record each accepted remaining failure with evidence, impact, and a concrete
   next action. Do not describe the platform migration as fully complete while a
   blocking class remains.
+- Keep invariant tests and scripts named by `scripts/gate-integrity.json`
+  unchanged. At the verified snapshot, only
+  `src/lib/template-state.test.mjs` is App-adaptable. If a locked gate reports an
+  intentional external caller or read-only surface, use its documented marker
+  or restructure the App; editing the gate is not the fix.
+- Every mutation API route must have a reachable UI caller through `apiUrl()`,
+  or a documented external caller marker. First-load request state must render
+  through the current async-state primitive so failures do not masquerade as
+  endless loading.
 
 ## Artifact Contract
 
@@ -263,10 +339,20 @@ shape:
 - service `localPort = 5173`
 - startup health path is `/api/health`
 - preview runs `npm run dev -- --host 0.0.0.0 --port 5173`
-- preview env includes `NODE_ENV`, `HOST`, `BROWSER`, `VITE_ALLOWED_HOSTS`, and
-  `SESSION_SECRET`
+- preview env includes `NODE_ENV`, `HOST`, `BROWSER`, and `VITE_ALLOWED_HOSTS`
 
 Do not replace this with source-project-specific dev server assumptions.
+
+Every `args` array is literal argv under POSIX `execve` semantics:
+
+- Shell behavior must be explicit, for example
+  `["sh", "-c", "npm ci && npm run build"]`.
+- Plain commands remain tokenized argv, for example
+  `["npm", "prune", "--omit=dev"]` and `["node", "server.mjs"]`.
+- Legacy join-era shell-operator tokens and single-element whole commands may be
+  normalized by the platform with a warning, but new or aligned files use the
+  canonical forms.
+- Do not change build/deploy args unless the task actually requires it.
 
 ## Production Start And Network Binding
 
@@ -297,3 +383,5 @@ Packaging rules depend on the target import environment. The stable baseline is:
   explicitly supports preinstalled dependencies without reinstalling them.
 - Exclude local caches, git metadata, editor metadata, and generated temporary
   folders.
+- Do not package platform-managed Skill content in `.agents/skills/`; the
+  orchestrator owns Skill selection and injection.
