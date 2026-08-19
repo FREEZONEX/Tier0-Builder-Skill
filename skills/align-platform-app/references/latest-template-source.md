@@ -23,20 +23,21 @@ Default branch: `main`.
 The latest verified snapshot while this reference was written was:
 
 ```text
-36e995f9da4f02cdb2e75d334db0e0257b2e6380 (2026-07-31)  refs/heads/main
+7521b677a4bf6ae603fa4a66bd3771428e26b1ae (2026-08-19)  refs/heads/main
 ```
 
-Notable since the previous verified snapshot (`afecc70`):
+Notable since the previous verified snapshot (`36e995f`):
 
-- Gateway-only authentication replaced App-owned authentication sessions.
-- Deployed authorization now unions all `X-Tier0-Business-Roles`; the active
-  role is display metadata only.
-- Platform role registration now rejects keys outside
-  `^[a-z]+(_[a-z]+)*$`.
-- App identity, design primitives, first-load error handling, runtime seed
-  safety, route smoke, and locked build gates are stronger.
-- `@tier0/sdk` includes the server-only Files loader, and the scaffold no longer
-  vendors platform-managed Skills.
+- Locked route-nesting and 375px responsive gates now fail the normal build for
+  invalid list/detail shapes and page-level overflow risks.
+- Navigation, lifecycle/read-only, role-cap, and product-copy contracts are now
+  enforced by locked tests. The first version permits built-in `admin` plus at
+  most two business roles.
+- `@tier0/sdk` moved to `^0.2.12`, with the authoritative lockfile updated.
+- Production artifact creation now prunes development dependencies after the
+  verified build, and Vite ignores `.tier0` runtime/session files for watching.
+- The scaffold added the `FileUpload` form primitive and strengthened App icon,
+  navigation, lifecycle, responsive, and page-copy guidance.
 
 Do not treat that SHA as permanently current. Re-check it before doing migration
 work that depends on latest template behavior.
@@ -60,6 +61,7 @@ If cloning is unavailable, inspect raw files directly:
 ```text
 https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/AGENTS.md
 https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/README.md
+https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/.gitignore
 https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/package.json
 https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/artifact.toml
 https://raw.githubusercontent.com/FREEZONEX/Tier0-App-Scaffold/main/vite.config.ts
@@ -77,6 +79,7 @@ editing business code:
 - `AGENTS.md`: task rules, preview workflow, scaffold ownership, hard constraints.
 - `DESIGN.md`: current tokens, primitives, layout, form, table, and visual rules.
 - `README.md`: current stack, environment model, route conventions, build contract.
+- `.gitignore`: generated/runtime state that must stay outside source control.
 - `package.json`: Node engine, scripts, dependency versions, `@tier0/sdk` version.
 - `artifact.toml`: production build/run image, health path, preview command/env.
 - `server.mjs`: production request/response bridge and stream-abort behavior.
@@ -89,8 +92,11 @@ editing business code:
   `src/lib/{auth,gateway,users,permissions,role-metadata}.ts`: Gateway roles,
   permission union, role registration, and internal fallback.
 - `src/lib/{app-chrome,tier0}.ts`: App identity and SDK lazy-loader contracts.
-- `scripts/{post-build-verify,gate-integrity,runtime-audit,route-smoke}.mjs` and
-  `scripts/gate-integrity.json`: current completion gates and locked files.
+- `scripts/{post-build-verify,gate-integrity,runtime-audit,route-smoke,route-nesting,responsive-contract}.mjs`,
+  `scripts/gate-integrity.json`, `src/lib/permissions.test.mjs`, and
+  `src/lib/{navigation,content,route-nesting,responsive}-contracts.test.mjs`:
+  current completion gates, locked files, navigation/lifecycle/role limits,
+  route nesting, and 375px responsiveness.
 
 ## Latest Template Constraints To Preserve
 
@@ -102,13 +108,16 @@ As of the verified snapshot, the template requires:
   `postbuild`, `typecheck`, `build:verify`, `build:check`, `runtime:audit`,
   `auth:union:test`, `smoke:routes`, `start`, `lint`, `db:push`, `db:seed`, and
   `db:studio`. `npm run build` is the completion path; its `postbuild` runs
-  verification, multi-role auth tests, and runtime audit.
-- `@tier0/sdk` `^0.2.10` in this verified snapshot, loaded through
+  verification, multi-role auth tests, and runtime audit. The verifier includes
+  locked `route-nesting-contracts` and `responsive-contracts` tests.
+- `@tier0/sdk` `^0.2.12` in this verified snapshot, loaded through
   `src/lib/tier0.ts` lazy helpers including `loadTier0Files`. Do not top-level
   import `@tier0/sdk/openapi`, `@tier0/sdk/files`, or `@tier0/sdk/mq` on
   SSR/page-startup paths. Re-read `package.json` instead of freezing this version.
 - Vite base path from `VITE_BASE_PATH` with `NEXT_PUBLIC_BASE_PATH` as legacy
   fallback.
+- Vite watcher ignore for `**/.tier0/**` so sandbox session state does not cause
+  application reloads.
 - Vite SSR external policy: `["pg", "@tier0/sdk", "mqtt"]`.
 - Preview Gateway header injection in `vite.config.ts` using `PREVIEW_USER_ID`,
   `PREVIEW_USER_NAME`, `PREVIEW_USER_EMAIL`, and `PREVIEW_USER_ROLE`. The App
@@ -120,20 +129,34 @@ As of the verified snapshot, the template requires:
   the primary display role.
 - Root `roles.json` registers business roles with
   `role_key` matching `^[a-z]+(_[a-z]+)*$`; the built-in admin fallback is not
-  registered as a platform business role.
+  registered as a platform business role. The first version permits at most two
+  materially distinct business roles in addition to built-in `admin`.
+- Resource list/detail routes use either a nested parent with an outlet plus
+  sibling `.index.tsx` and `.$param.tsx` routes, or a trailing-`_` segment for a
+  standalone detail. The locked route-nesting gate rejects other shapes.
+- Workspace navigation uses `defineNavigationModules`; every clickable leaf has
+  a unique `href` resolving to a real non-API route.
+- Management routes complete an applicable lifecycle. Intentional read-only
+  monitor/report/audit/derived-result surfaces use
+  `READ_ONLY_SURFACE: <reason>`.
+- Interactive pages stay usable at 375px: flexible form controls have a maximum
+  or fixed width, and widths above 375px sit inside a local horizontal-scroll
+  region. Page introductions do not repeat the title or explain navigation.
 - `artifact.toml` production service running `node server.mjs` on
   `node:22-alpine`, health path `/api/health`, local port `5173`, and
-  `deploymentTarget = "autoscale"`. Every `args` array is literal argv; shell
-  semantics use an explicit `["sh", "-c", "..."]`.
+  `deploymentTarget = "autoscale"`. Production build runs
+  `npm ci && npm run build && npm prune --omit=dev`. Every `args` array is
+  literal argv; shell semantics use an explicit `["sh", "-c", "..."]`.
 - Platform env injection owns `DATABASE_URL`, `DB_SCHEMA`, `APP_ID`,
   `VITE_BASE_PATH`, and Tier0 SDK host/key/MQ variables.
 - `APP_NAME`, `APP_LOCALE`, and `APP_ICON` are centralized in
   `src/lib/app-chrome.ts`. A generated App replaces the icon placeholder with
   `public/app-icon.png` (512x512 PNG, no more than 2 MB) and synchronizes the
   same image to platform App metadata.
-- Frontend changes read `DESIGN.md` and compose scaffold primitives. Request
-  results render through `AsyncView`; valid runtime baseline dates use
-  `seedDate()` / `seedTimestamp()` and typed Drizzle writes.
+- Frontend changes read `DESIGN.md` and compose scaffold primitives, including
+  `FileUpload` for file inputs. Request results render through `AsyncView`; valid
+  runtime baseline dates use `seedDate()` / `seedTimestamp()` and typed Drizzle
+  writes.
 - All invariant tests and verification scripts listed by
   `scripts/gate-integrity.json` are locked. Only
   `src/lib/template-state.test.mjs` is App-adaptable.

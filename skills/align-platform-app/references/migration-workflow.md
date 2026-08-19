@@ -18,8 +18,12 @@ Inspect these source areas before editing target code:
 - `package.json` and lockfiles: scripts, dependencies, framework, module type,
   package manager, peer requirements, and lockfile ownership.
 - Entry points: `index.html`, `src/main.*`, `src/App.*`, framework app folders.
-- Routing: route arrays, router providers, file routes, dynamic params, redirects.
+- Routing: route arrays, router providers, file routes, dynamic params, redirects,
+  each resource's list/detail nesting intent, and whether detail should replace
+  the list or render inside a parent/master-detail surface.
 - Layout: shells, sidebars, top bars, providers, auth guards, error boundaries.
+- Navigation: every clickable leaf, its target, visibility rule, and whether the
+  target is a real non-API route.
 - Auth/role surface: search legacy login, logout/sign-out, switch-role,
   role-picker, and impersonation in navigation buttons, personal menus, pages,
   modals, API helpers, localStorage/sessionStorage, and cookie role writes.
@@ -55,7 +59,10 @@ local or mocked.
 
 Write a short migration map when the source is non-trivial:
 
-- source route -> target route file
+- source route -> target route file, layout posture, and nesting mode: parent
+  outlet plus `.index.tsx`/`.$param.tsx`, intentional master-detail outlet, or
+  trailing-`_` standalone detail
+- source navigation leaf -> unique target route and permission visibility
 - source provider -> target provider/boundary
 - source API/server helper -> target service/API/external dependency
 - compatibility API -> method, request, response, errors, auth, side effects,
@@ -101,7 +108,12 @@ Prefer this sequence:
 1. Stabilize the platform shell and build/runtime contract.
 2. Read current `DESIGN.md`; bring in assets, global styles, and source
    providers behind an explicit boundary while composing scaffold primitives.
-3. Mount primary routes and navigation.
+3. Mount primary routes and navigation. For every list/detail resource, choose
+   the nested parent/outlet plus sibling `.index.tsx` and `.$param.tsx` shape, an
+   intentional master-detail parent with an outlet, or a trailing-`_`
+   non-nested detail. Define real workspace modules through
+   `defineNavigationModules`; every clickable leaf has a unique `href` resolving
+   to an existing non-API route.
 4. Classify local/mock state and define PostgreSQL as the source of truth for
    durable entities.
 5. Replace durable local/mock CRUD in vertical slices using
@@ -127,7 +139,10 @@ Prefer this sequence:
    authorization rule, and registration entry across `PERMISSION_MATRIX`,
    `ROLE_METADATA`, and `roles.json`. Validate role keys against
    `^[a-z]+(_[a-z]+)*$`; authorize with `user.roles` permission union, never the
-   primary display role.
+   primary display role. The first version allows built-in `admin` plus at most
+   two materially distinct business roles. If the source exceeds that cap, stop
+   for an explicit user/platform-approved consolidation or phased migration;
+   never silently drop, broaden, collapse, or zero-permission a source role.
 10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
     removed, and—when generated or rebranded—the same platform-ready
     `public/app-icon.png` used in-App and synchronized to platform metadata.
@@ -165,6 +180,11 @@ For each migrated route, verify:
 - If preserving `react-router-dom`, render `BrowserRouter` only inside
   `ClientOnly`; do not let SSR evaluate its `document`-dependent setup.
 - It is reachable by URL and navigation.
+- Its list/detail behavior matches the recorded nesting mode: every nested
+  detail renders through an outlet, and every standalone detail uses an explicit
+  trailing-`_` opt-out.
+- Every clickable navigation leaf has a unique `href` resolving to a real
+  non-API route.
 - It renders without hydration/runtime errors.
 - Browser-only libraries are guarded or loaded client-side.
 - Server-side logic runs through scaffold API/service boundaries.
@@ -180,6 +200,14 @@ For each migrated route, verify:
   return a genuine empty state with real creation/onboarding actions; they do not
   fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
+- Page content does not repeat the title or explain navigation in an
+  introduction subtitle.
+- A management route completes its applicable lifecycle, or an intentional
+  monitor/report/audit/derived-result route carries an accurate
+  `READ_ONLY_SURFACE: <reason>` marker.
+- At 375px, interactive content stays usable without page-level horizontal
+  overflow. Flexible form controls are bounded, and widths above 375px remain
+  inside a local horizontal-scroll region.
 - Imported/migrated menus, personal menus, pages, routes, and modals contain no
   user-visible logout/sign-out or app-managed role-switch, role-picker, or
   impersonation entry. Custom logout helpers, App-local auth sessions,
@@ -192,7 +220,9 @@ For the whole app, verify:
   historical non-blocking findings require baseline evidence and a concrete
   follow-up.
 - Locked tests and verification scripts remain unchanged. App-specific template
-  assertions are confined to the current adaptable template-state test.
+  assertions are confined to the current adaptable template-state test. Locked
+  route-nesting and responsive-contract gates pass with App code fixes, not gate
+  edits.
 - `/api/health` and `/api/manifest` still work.
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
@@ -222,7 +252,10 @@ For the whole app, verify:
   source, every source role, mapping, menu/page/action guard, API authorization
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
-  `^[a-z]+(_[a-z]+)*$`; internal admin is absent from `roles.json`.
+  `^[a-z]+(_[a-z]+)*$`; internal admin is absent from `roles.json`. The result
+  fits built-in `admin` plus at most two materially distinct business roles, or
+  has a traceable user/platform-approved consolidation or phased migration with
+  no silently lost, broadened, collapsed, or zero-permission source role.
 - Role tests cover preview single-role view-as; deployed permission union across
   all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
   unknown roles; explicit deployed empty roles; preview admin fallback; legacy
@@ -234,7 +267,9 @@ For the whole app, verify:
   A generated icon is a 512x512 PNG no larger than 2 MB and the same image is
   used in-App and for platform synchronization.
 - No prohibited framework imports were added.
-- Route tree generation is handled by tooling, not manual edits.
+- Route tree generation is handled by tooling, not manual edits. Resource
+  list/detail shapes, navigation target uniqueness, lifecycle/read-only
+  markers, and 375px behavior satisfy the current locked contracts.
 - `artifact.toml`, `vite.config.ts`, `package.json`, and platform integration
   behavior still match the latest template baseline or have an intentional,
   documented reason to differ.

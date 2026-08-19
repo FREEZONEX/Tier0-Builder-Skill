@@ -83,6 +83,24 @@ Use TanStack Router file routes:
 - Passive wallboards and large-screen displays go under `monitor`.
 - Create a custom layout only when none of the built-in layout postures fit.
 
+A resource with list and detail pages uses one of two explicit shapes:
+
+- Nested: the parent renders `<Outlet />` only, the default list lives in a
+  sibling `.index.tsx`, and the detail lives in `.$param.tsx`. A component-less
+  parent may provide the outlet automatically. A deliberate master-detail parent
+  may render its own content plus `<Outlet />`.
+- Non-nested: append `_` to the parent segment so the detail renders standalone
+  while the list remains a plain route, for example `_app.reports_.$id.tsx`.
+
+Do not put a nested detail behind a parent that renders no outlet. The locked
+`route-nesting-contracts` gate fails `npm run build` for invalid shapes, including
+arbitrary dynamic parameter names; fix route structure rather than editing the
+gate.
+
+Declare workspace navigation through `defineNavigationModules`. Each clickable
+leaf must have a unique `href` that resolves to an existing non-API workspace
+route. Do not add a generic Overview item unless the product actually needs it.
+
 Do not import from `next/link`, `next/navigation`, `next/image`, or
 `next/headers`. Use TanStack Router APIs and scaffold helpers.
 
@@ -154,6 +172,15 @@ uses `roles.json` to create/reuse and bind roles. On export, the platform
 regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
 
+Default the first version to no more than three effective roles total: built-in
+`admin` plus at most two business roles with materially different permission
+scopes. Do not create one role per page, action, or job title. When a source App
+has more materially distinct roles, do not silently omit them, merge them into
+broader access, or register them with zero permissions. Stop and obtain an
+explicit user/platform decision for a safe consolidation or phased migration,
+then keep the approved mapping traceable across permissions, metadata,
+navigation, API guards, and `roles.json`.
+
 ## Authentication Verification Environments
 
 Managed preview injects Gateway identity and may provide one view-as role, so a
@@ -175,9 +202,26 @@ historical Cookie, precedence, or status matrix in migrated code.
 ## App Identity And Design Contract
 
 Before frontend changes, read the current `DESIGN.md`. Compose the shared
-button, badge, card, page-header, filter, risk, empty-state, stat, form, overlay,
-table, and async-state primitives where the scaffold provides them. Do not fork
-token values or hand-roll equivalent primitives in migrated routes.
+button, badge, card, page-header, filter, risk, empty-state, stat, form—including
+`FileUpload`—overlay, table, and async-state primitives where the scaffold
+provides them. Do not fork token values or hand-roll equivalent primitives in
+migrated routes.
+
+Complete the applicable business-object lifecycle on management routes. A
+workspace route is intentionally read-only only when it is a monitor, report,
+audit, or derived result and carries `READ_ONLY_SURFACE: <reason>`. Lifecycle
+actions must connect reachable UI, validation, permission checks, service/API
+mutation, persistence, and visible success/error feedback.
+
+Do not add a page-introduction subtitle that repeats the title or explains
+navigation. Put actionable rules and risk beside the affected record or control;
+keep role summaries out of page content.
+
+Interactive pages must remain usable at 375px without page-level horizontal
+overflow. An `input`, `select`, or `textarea` using `flex-1`, `grow`, or
+`flex-auto` needs a maximum or fixed width. A hard minimum width above 375px must
+sit inside a local horizontal-scroll region, such as `TableViewport`. The locked
+`responsive-contracts` gate enforces these rules during `npm run build`.
 
 Keep App identity centralized in `src/lib/app-chrome.ts`:
 
@@ -283,13 +327,18 @@ Use the scaffold's existing scripts and managed preview behavior:
 - Run `npm run build` for normal completion and let its automatic `postbuild`
   verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
   `auth:union:test`, and `runtime:audit`; the verifier also covers typecheck,
-  lint, contract tests, and runtime safety. Do not substitute `vite build`.
+  lint, contract tests, and runtime safety. Locked contract coverage includes
+  route nesting, navigation, lifecycle/read-only content, role limits, and 375px
+  responsiveness. Do not substitute `vite build` or edit locked gates to make
+  App code pass.
 - If route files change, let the TanStack Router plugin regenerate the route
   tree through dev/build tooling.
 - Do not treat a static build success as deployability unless production start,
   health, and manifest behavior are also covered.
 - Preserve Vite base path support through `VITE_BASE_PATH`, with
   `NEXT_PUBLIC_BASE_PATH` only as a legacy fallback.
+- Preserve `server.watch.ignored: ["**/.tier0/**"]`; platform session-state
+  writes are not application source and must not amplify into reloads.
 - Preserve preview Gateway header injection when aligning `vite.config.ts`; do
   not add App-session injection.
 - When preview returns a local URL, run
@@ -334,7 +383,7 @@ The current upstream template's `artifact.toml` defines the platform service
 shape:
 
 - `deployment.deploymentTarget = "autoscale"`
-- production build runs `npm ci && npm run build`
+- production build runs `npm ci && npm run build && npm prune --omit=dev`
 - production run uses `node server.mjs` on `node:22-alpine`
 - service `localPort = 5173`
 - startup health path is `/api/health`
@@ -346,7 +395,7 @@ Do not replace this with source-project-specific dev server assumptions.
 Every `args` array is literal argv under POSIX `execve` semantics:
 
 - Shell behavior must be explicit, for example
-  `["sh", "-c", "npm ci && npm run build"]`.
+  `["sh", "-c", "npm ci && npm run build && npm prune --omit=dev"]`.
 - Plain commands remain tokenized argv, for example
   `["npm", "prune", "--omit=dev"]` and `["node", "server.mjs"]`.
 - Legacy join-era shell-operator tokens and single-element whole commands may be

@@ -84,8 +84,10 @@ Before changing migration constraints, fetch or inspect that repository's latest
      `vite.config.ts`, `server.mjs`, routing/root files, Gateway auth/role code,
      role registration, SDK loading, App identity, design primitives, verification
      gates, preview behavior, health/manifest routes, and docs.
-   - Read source route definitions, navigation config, layout shells, global
-     styles, state stores, and any runtime/server files.
+   - Read source route definitions, list/detail nesting intent, navigation
+     targets, layout shells, global styles, state stores, and any runtime/server
+     files. Record whether each resource detail should replace the list or render
+     inside a parent/master-detail surface.
    - If the source has back-end-like code in client handlers or framework routes,
      classify whether it belongs in `src/routes/api/**`, `src/services/**`, or
      an external API.
@@ -121,7 +123,14 @@ Before changing migration constraints, fetch or inspect that repository's latest
      criteria.
 
 4. **Migrate into scaffold-native shape**
-   - Convert routing to TanStack Router file routes under `src/routes/`.
+   - Convert routing to TanStack Router file routes under `src/routes/`. For a
+     resource with list and detail routes, choose one explicit shape: nested
+     routes use a parent with `<Outlet />`, a sibling `.index.tsx` list, and a
+     `.$param.tsx` detail; a component-less parent may provide the outlet
+     automatically, and an intentional master-detail parent may render content
+     plus `<Outlet />`. A standalone detail opts out of nesting with a trailing
+     `_` on the parent segment. Do not leave a detail child behind a parent that
+     renders no outlet.
    - Respect the scaffold's server/client boundary. Client and mixed route,
      component, router, and shared-wrapper modules must not statically pull
      Node-only `fs`, `path`, `url`, `pg`, bootstrap, or seed code into the browser
@@ -135,6 +144,17 @@ Before changing migration constraints, fetch or inspect that repository's latest
      instead of recreating them in migrated routes. Render scaffold request-hook
      results through its `AsyncView` contract so first-load failures remain
      visible and retryable.
+   - Declare real workspace navigation with `defineNavigationModules`. Every
+     clickable leaf needs a unique `href` that resolves to a real non-API route.
+     Do not add a page-introduction subtitle that repeats the title or explains
+     navigation.
+   - Complete each management object's applicable lifecycle end to end. Use an
+     intentional read-only workspace only for a monitor, report, audit, or
+     derived result, and mark it `READ_ONLY_SURFACE: <reason>`.
+   - Keep interactive pages usable at 375px without page-level horizontal
+     overflow. Bound `input`, `select`, and `textarea` controls that use
+     `flex-1`, `grow`, or `flex-auto`; place any hard minimum width above 375px
+     inside a local horizontal-scroll region.
    - For app-owned durable data, migrate in dependency order: schema -> current
      scaffold `bootstrapModule()` / `db:push` contract -> service -> thin API route
      -> client request/cache invalidation. Keep database access in services and
@@ -170,7 +190,11 @@ Before changing migration constraints, fetch or inspect that repository's latest
      Use the current platform `role_key` format. Authorize with the complete
      Gateway-assigned role set and permission union; never authorize with the
      primary display role. The client must not write role state through storage,
-     cookies, query parameters, request bodies, or headers.
+     cookies, query parameters, request bodies, or headers. The first version is
+     capped at the built-in `admin` plus at most two materially distinct business
+     roles. If the source has more distinct roles, do not silently drop, collapse,
+     or map them to zero permissions; stop and obtain a user/platform-approved
+     consolidation or phased migration decision.
    - Integrate assets through the scaffold's public/static asset conventions.
      Preserve or finish the real App name, locale, and icon through current
      `app-chrome` conventions. When generating or rebranding an icon, use the
@@ -202,8 +226,11 @@ Before changing migration constraints, fetch or inspect that repository's latest
    - Audit runtime contracts whenever migration uses `@ts-nocheck` or changes a
      helper from synchronous to asynchronous. Trace every caller so no Promise is
      consumed as a `Map`, array, render value, or synchronous `useMemo` result.
-   - Verify key migrated routes render, navigation works, assets load, and API
-     calls do not fall back to local-only state.
+   - Verify key migrated routes render, list/detail nesting behaves as chosen,
+     every clickable navigation leaf resolves uniquely, assets load, and API
+     calls do not fall back to local-only state. Exercise management lifecycle
+     actions or verify an accurate `READ_ONLY_SURFACE` reason, and inspect the
+     affected routes at 375px.
    - For role-aware apps, verify preview single-role view-as and deployed
      multi-role permission-union behavior against
      `references/platform-contract.md`. Cover mixed known/unknown trusted roles,
@@ -256,13 +283,24 @@ domain/app-shape details out of the generic migration skill.
 A migration is not complete until current evidence proves all of the following:
 
 - Source routes and primary workflows are reachable in the target app.
-- The app follows TanStack Start routing and scaffold file conventions.
+- The app follows TanStack Start routing and scaffold file conventions. Every
+  list/detail resource uses a valid nested parent/index/detail shape with an
+  outlet, an intentional master-detail outlet, or an explicit trailing-`_`
+  non-nested detail.
 - Platform entry points, health, manifest, preview, and production start paths
   are intact.
 - For scaffold-update work, local platform files are reconciled with the latest
   template or intentionally documented as app-specific divergence.
 - Source assets, styles, i18n, and navigation behavior are preserved or
-  intentionally replaced.
+  intentionally replaced. `defineNavigationModules` has one unique real
+  non-API route per clickable leaf.
+- Management surfaces complete their applicable business lifecycle. Intentional
+  read-only monitor/report/audit/derived-result routes carry an accurate
+  `READ_ONLY_SURFACE: <reason>` marker.
+- Interactive pages remain usable at 375px without page-level horizontal
+  overflow; flexible form controls are bounded and widths above 375px stay
+  inside local horizontal-scroll regions. Page content does not repeat its title
+  or explain navigation in an introduction subtitle.
 - For imported/migrated apps, repository search finds no user-visible
   logout/sign-out button, personal-menu entry, page, route, or custom logout
   helper, and no app-managed role-switch/role-picker/impersonation UI or
@@ -272,7 +310,11 @@ A migration is not complete until current evidence proves all of the following:
   For a role-aware source, every source role, mapping, menu/page/action guard, API
   authorization rule, and related metadata entry is migrated across
   `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json`. Role keys satisfy the
-  current platform validator. Header tests prove preview view-as, deployed
+  current platform validator, and the effective model fits built-in `admin` plus
+  at most two materially distinct business roles. Any source model that exceeds
+  that cap has an explicit user/platform-approved consolidation or phased
+  migration decision; no role is silently dropped, collapsed, or left with zero
+  permissions. Header tests prove preview view-as, deployed
   assigned-role union, trusted unknown-role zero permissions, explicit deployed
   empty roles, and legacy unknown-role rejection. No App exposes a
   user-triggerable role write or authorizes with a display-only primary role.
