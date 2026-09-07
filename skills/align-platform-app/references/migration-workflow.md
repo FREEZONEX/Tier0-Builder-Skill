@@ -108,6 +108,8 @@ Prefer this sequence:
 1. Stabilize the platform shell and build/runtime contract.
 2. Read current `DESIGN.md`; bring in assets, global styles, and source
    providers behind an explicit boundary while composing scaffold primitives.
+   Apply workspace `page-shell` and asynchronous dialog migration as described
+   in `platform-contract.md`; preserve cancel/submit behavior and avoid double padding.
 3. Mount primary routes and navigation. For every list/detail resource, choose
    the nested parent/outlet plus sibling `.index.tsx` and `.$param.tsx` shape, an
    intentional master-detail parent with an outlet, or a trailing-`_`
@@ -117,11 +119,13 @@ Prefer this sequence:
 4. Classify local/mock state and define PostgreSQL as the source of truth for
    durable entities.
 5. Replace durable local/mock CRUD in vertical slices using
-   schema -> current scaffold `bootstrapModule()` / `db:push` contract -> service
+   `appSchema` declarations in `src/db/schema.ts` -> current scaffold
+   `bootstrapModule()` with declared table objects / guarded `db:push` -> service
    -> thin API -> client.
 6. Import legacy data through an explicit validated, idempotent process when
    retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for schemas, tables, and indexes, but
+7. Keep idempotent runtime DDL bootstrap for tables and indexes in the
+   platform-provisioned schema, but
    remove startup- or first-request seed callbacks that auto-insert demo, sample,
    or baseline rows for migrated durable business entities. Retain legacy data
    through the explicit import from step 6; run development/test fixtures only
@@ -139,13 +143,16 @@ Prefer this sequence:
    authorization rule, and registration entry across `PERMISSION_MATRIX`,
    `ROLE_METADATA`, and `roles.json`. Validate role keys against
    `^[a-z]+(_[a-z]+)*$`; authorize with `user.roles` permission union, never the
-   primary display role. The first version allows built-in `admin` plus at most
-   two materially distinct business roles. If the source exceeds that cap, stop
+   primary display role. The first version allows at most three materially
+   distinct business roles total, with no reserved or fallback role. If the source
+   exceeds that cap, stop
    for an explicit user/platform-approved consolidation or phased migration;
    never silently drop, broaden, collapse, or zero-permission a source role.
 10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
     removed, and—when generated or rebranded—the same platform-ready
-    `public/app-icon.png` used in-App and synchronized to platform metadata.
+    root `icon.png` copied byte-for-byte to `public/app-icon.png`, then
+    registered from the root path. Persist any registered cover as root
+    `cover.png`. Follow the identity section in `platform-contract.md`.
 11. Incrementally extract reusable components into scaffold-native folders.
 12. Remove compatibility shims and durable local stores only after equivalent
    native API-backed routes are verified.
@@ -252,13 +259,14 @@ For the whole app, verify:
   source, every source role, mapping, menu/page/action guard, API authorization
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
-  `^[a-z]+(_[a-z]+)*$`; internal admin is absent from `roles.json`. The result
-  fits built-in `admin` plus at most two materially distinct business roles, or
+  `^[a-z]+(_[a-z]+)*$`; every matrix role, including a business-defined
+  `admin`, appears in `roles.json`. The result fits at most three business roles, or
   has a traceable user/platform-approved consolidation or phased migration with
   no silently lost, broadened, collapsed, or zero-permission source role.
 - Role tests cover preview single-role view-as; deployed permission union across
   all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
-  unknown roles; explicit deployed empty roles; preview admin fallback; legacy
+  unknown roles; explicit deployed empty roles; preview without a selected role (zero
+  roles and permissions); legacy
   recognized and untrusted unknown roles. Authorization never uses
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or

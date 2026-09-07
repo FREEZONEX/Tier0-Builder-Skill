@@ -49,8 +49,13 @@ remain only for explicitly classified ephemeral state or a bounded legacy import
 Use this order for each durable entity:
 
 1. **Schema:** model stable IDs, ownership/tenant scope, constraints, relations,
-   timestamps, lifecycle status, and indexes in the scaffold Drizzle schema.
-2. **Scaffold data setup:** update the current scaffold `bootstrapModule()` table
+   timestamps, lifecycle status, and indexes in `src/db/schema.ts` through
+   `appSchema.table(...)` / `appSchema.enum(...)`, not bare declarations.
+2. **Scaffold data setup:** the schema is platform-provisioned; never run
+   `CREATE SCHEMA`. Pass declared table objects to `bootstrapModule()`, await
+   the module promise before querying, and use `db:push:check` before guarded
+   sync. Follow the destructive-plan boundary in `platform-contract.md`.
+   Update the current scaffold `bootstrapModule()` table
    and index setup, and use `db:push` only where the current template or target
    environment requires it. Test the contract against a clean schema and, when
    relevant, representative existing rows. Preserve this idempotent DDL
