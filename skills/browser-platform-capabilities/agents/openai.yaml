@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Platform Capabilities"
+  short_description: "Build apps with six basic browser capabilities"
+  default_prompt: "Use $browser-platform-capabilities to implement scanning, photo capture, geolocation, audio recording, file reading, or clipboard access with compatible APIs and fallbacks."
