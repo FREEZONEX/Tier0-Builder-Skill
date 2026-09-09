@@ -93,6 +93,12 @@ weaken a gate to reconcile contradictory guidance.
   modules lazily inside server actions through `@/lib/tier0`. Use runtime
   `resolveAppId()` for platform App identity, not the human name, schema name,
   or a hard-coded UUID. Application files use platform File Storage.
+- When updating SDK dependencies, reconcile the package range and lockfile with
+  the selected target. For SDK 0.5.1, preserve intentional silent notifications
+  with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
+  Read [the SDK upgrade contract](references/platform-contract.md#sdk-upgrades)
+  for channel, test-mode and MQTT migration details. Skill replacement alone
+  does not change the installed SDK.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
   duplicate outer insets. Station/review/monitor keep their own spacing.

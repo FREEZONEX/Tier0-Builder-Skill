@@ -50,6 +50,43 @@ Required target invariants:
 - Keep `.agents/skills/` free of vendored Skill content. Platform Builder
   guidance is selected and injected by the App Builder orchestrator.
 
+## SDK Upgrades
+
+The SDK 0.5.1 target is published on npm. Check the selected scaffold commit's
+`package.json` and lockfile as well as the installed version; an older `^0.3.4`
+range cannot resolve to 0.5.1. Update the range and authoritative lockfile together
+when the requested upgrade includes this target. Preserve an explicitly pinned
+user version and report unsupported behavior instead of silently overriding it.
+
+For notifications through SDK 0.5.1:
+
+- Omitted or `undefined` channels expand to `['web', 'mobile']`. `web` covers
+  Web & Desktop; there is no `desktop` value. Explicit arrays are deduplicated
+  without adding channels; `[]` creates only the inbox message.
+- Inspect existing send calls before upgrading from 0.4.0 or earlier. Change
+  intentional silent sends to `channels: []`; preserve explicit single-channel
+  choices. Generic notify intent can use the default, without inferring scope
+  from page type. If an existing call's intended scope is unclear, resolve that
+  concrete choice before changing its reminder behavior.
+- The expansion is SDK runtime behavior, not a Skill-only instruction or raw
+  backend API default. TypeScript restricts values; the SDK does not perform
+  runtime channel validation. Keep runtime input validation at the app boundary
+  when untyped user input supplies channels.
+- Preview/development sends use `mode: 'test'`; published sends use `'live'`.
+  Do not synthesize or detect a `[Test]` title prefix; use message mode.
+- Preserve recipient selection, business-event idempotency, and runtime App
+  identity. Verify request serialization with a stubbed transport; do not send
+  real notifications solely to validate an upgrade. Delivery requires separate
+  authorized environment verification.
+
+For MQTT, use the SDK's `toWebSocketUrl()` for a platform broker string and
+`parseMqttBroker()` when structured endpoint fields are needed. Preserve existing
+WebSocket URL scheme/port/path/query; never concatenate `wss://` with a TCP URL
+or reuse its TCP port. Non-WebSocket inputs use `wssPort` (default 8084). HTTPS
+browser/Worker contexts infer WSS, whereas server conversion needs explicit
+`secure: true` when WSS is required. Handle undefined results as configuration
+errors and preserve platform-injected settings and server-side lazy loading.
+
 ## Dependency And Lockfile Compatibility
 
 Treat the latest platform template dependency set as the target baseline. Before

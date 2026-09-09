@@ -3,18 +3,30 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-Verified on 2026-09-07 at `8a6ac304a12f74e9079afc0871f942017e4d1904`.
-This is a recorded source baseline, not evidence of any deployed runtime.
+The upstream `main` baseline verified on 2026-09-09 is
+`8a6ac304a12f74e9079afc0871f942017e4d1904`. The SDK upgrade target is
+`da7ebf85fb9352f6623671c5a214f02317eae0f5` on `codex/sdk-051` in the same repository.
+The target is a PR branch, not yet evidence of a merge to `main` or deployment.
+When aligning to default `main`, inspect its actual dependency version; use the
+upgrade target only when the requested scope selects it or it has merged.
 
-The September 7 review reconciled the Skill against this commit, including
-contracts omitted from its older August 19 reference snapshot:
+This Skill reconciles the current contracts:
 
 - No reserved roles or Preview admin fallback; at most three business roles.
 - Platform-owned schema, `appSchema` declarations, typed bootstrap table objects,
   and guarded local schema sync.
 - Runtime `resolveAppId()`, root icon/cover persistence, and File Storage.
-- `@tier0/sdk` range `^0.3.4`, with server-side lazy loading.
+- SDK upgrade target `^0.5.1`, locked to `0.5.1`, with server-side lazy loading.
+  The preceding main baseline uses `^0.3.4`, locked to `0.3.4`.
+- SDK default notification channels, explicit silent-send migration, message-mode
+  handling without a title prefix, and MQTT broker/WebSocket normalization.
 - Application-dialog guidance and responsive workspace `page-shell`.
+
+The SDK source is `FREEZONEX/Tier0-sdk` at
+`33dfa86f34d3ddad082d64fc0953f7fd6a64691f`; npm `latest` was verified as
+`0.5.1` on 2026-09-09. Its notification Skill is `1.5.5`. These are separate
+source/package facts, not evidence that Builder has loaded a matching Skill or
+that an existing App has upgraded. Recheck them when a task requires freshness.
 
 ## Verify A Target Commit
 

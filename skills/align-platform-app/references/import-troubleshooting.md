@@ -141,8 +141,9 @@ Check:
 
 ## Tier0 SDK Files Or SSR Import Fails
 
-Confirm the target uses the freshly inspected scaffold SDK version; the verified
-snapshot requires `@tier0/sdk` `^0.3.4` for the Files export. Import
+Confirm the target uses the selected scaffold SDK version and matching lockfile;
+the SDK upgrade target is `^0.5.1`. When migrating older notification calls,
+follow [SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends. Import
 `loadTier0Files` or other lazy helpers from `@/lib/tier0`, then await the loader
 inside the concrete server action. Do not top-level import
 `@tier0/sdk/openapi`, `@tier0/sdk/files`, or `@tier0/sdk/mq`; do not move the SDK
