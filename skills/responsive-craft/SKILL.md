@@ -1,7 +1,10 @@
 ---
 name: responsive-craft
-description: "Implement responsive design for websites and web apps — from standard mobile-first layouts to complex patterns (sticky elements, scroll coordination, data tables, dashboards). Three modes: transform existing sites, build responsive from scratch, or launch a live multi-breakpoint preview. Surfaces design forks where there's no single right answer. Use when building responsive layouts, fixing mobile issues, adding breakpoints, working with sticky/scroll patterns, previewing breakpoints, or when the user mentions responsive, mobile, breakpoints, viewport, adaptive design, or responsive preview."
-argument-hint: "[audit|build|preview]"
+description: >-
+  Handle complex responsive layout decisions, coordinated sticky and scroll
+  regions, or dedicated multi-viewport audits and previews. Use for explicit
+  breakpoint strategies and cross-viewport behavior; ordinary form overflow,
+  clipped controls, and isolated mobile UI defects belong to ui-repair.
 ---
 
 # Responsive Craft
@@ -101,8 +104,8 @@ After mode and interactivity are selected:
 | Mode | Read workflow | Load immediately |
 |------|-------------|-----------------|
 | Preview | `workflows/preview.md` | None |
-| Transform Existing | `workflows/transform-existing.md` | `references/ai-failure-patterns.md` |
-| Build Responsive | `workflows/build-responsive.md` | `references/modern-css-patterns.md`, `references/ai-failure-patterns.md` |
+| Transform Existing | `workflows/transform-existing.md` | None |
+| Build Responsive | `workflows/build-responsive.md` | None |
 
 Load other references on demand:
 - `references/sticky-scroll-patterns.md` — when sticky, scroll-snap, or independent scroll regions are involved

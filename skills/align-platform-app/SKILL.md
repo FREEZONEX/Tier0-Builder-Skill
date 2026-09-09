@@ -191,8 +191,8 @@ Before changing migration constraints, fetch or inspect that repository's latest
      Gateway-assigned role set and permission union; never authorize with the
      primary display role. The client must not write role state through storage,
      cookies, query parameters, request bodies, or headers. The first version is
-     capped at the built-in `admin` plus at most two materially distinct business
-     roles. If the source has more distinct roles, do not silently drop, collapse,
+     limited by the target scaffold role contract (currently no more than three
+     materially distinct business roles, with no reserved role). If the source has more distinct roles, do not silently drop, collapse,
      or map them to zero permissions; stop and obtain a user/platform-approved
      consolidation or phased migration decision.
    - Integrate assets through the scaffold's public/static asset conventions.
@@ -235,7 +235,7 @@ Before changing migration constraints, fetch or inspect that repository's latest
      multi-role permission-union behavior against
      `references/platform-contract.md`. Cover mixed known/unknown trusted roles,
      explicit deployed empty roles, legacy untrusted unknown roles, and preview
-     admin fallback. For roleless apps, verify that no business roles were
+     without a selected role yielding zero permissions. For roleless apps, verify that no business roles were
      invented.
    - For persistence migrations, prove supported lifecycle operations through
      the API, reload and—when the environment is controllable—restart durability,
@@ -310,8 +310,8 @@ A migration is not complete until current evidence proves all of the following:
   For a role-aware source, every source role, mapping, menu/page/action guard, API
   authorization rule, and related metadata entry is migrated across
   `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json`. Role keys satisfy the
-  current platform validator, and the effective model fits built-in `admin` plus
-  at most two materially distinct business roles. Any source model that exceeds
+  current platform validator, and the effective model follows the target
+  scaffold role limit without assuming any reserved role. Any source model that exceeds
   that cap has an explicit user/platform-approved consolidation or phased
   migration decision; no role is silently dropped, collapsed, or left with zero
   permissions. Header tests prove preview view-as, deployed
@@ -321,7 +321,8 @@ A migration is not complete until current evidence proves all of the following:
 - Every app-owned durable entity has PostgreSQL as its single source of truth,
   with schema, current scaffold runtime bootstrap / `db:push`, service, API, and
   client paths connected.
-- Current scaffold runtime bootstrap may create schemas, tables, and indexes, but
+- Runtime bootstrap creates tables and indexes in the platform-provisioned
+  schema; it never creates the schema. For migrated entities,
   normal startup and first-request paths do not auto-insert demo, sample, or
   baseline rows for migrated durable business entities. Retained legacy data and
   development/test fixtures enter only through their explicit flows.

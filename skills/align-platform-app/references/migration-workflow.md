@@ -121,7 +121,7 @@ Prefer this sequence:
    -> thin API -> client.
 6. Import legacy data through an explicit validated, idempotent process when
    retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for schemas, tables, and indexes, but
+7. Keep idempotent table/index bootstrap within the platform-provisioned schema, but
    remove startup- or first-request seed callbacks that auto-insert demo, sample,
    or baseline rows for migrated durable business entities. Retain legacy data
    through the explicit import from step 6; run development/test fixtures only
@@ -139,8 +139,8 @@ Prefer this sequence:
    authorization rule, and registration entry across `PERMISSION_MATRIX`,
    `ROLE_METADATA`, and `roles.json`. Validate role keys against
    `^[a-z]+(_[a-z]+)*$`; authorize with `user.roles` permission union, never the
-   primary display role. The first version allows built-in `admin` plus at most
-   two materially distinct business roles. If the source exceeds that cap, stop
+   primary display role. The current first-version default is at most three
+   materially distinct business roles, with no reserved role. If the source exceeds that cap, stop
    for an explicit user/platform-approved consolidation or phased migration;
    never silently drop, broaden, collapse, or zero-permission a source role.
 10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
@@ -252,13 +252,13 @@ For the whole app, verify:
   source, every source role, mapping, menu/page/action guard, API authorization
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
-  `^[a-z]+(_[a-z]+)*$`; internal admin is absent from `roles.json`. The result
-  fits built-in `admin` plus at most two materially distinct business roles, or
+  `^[a-z]+(_[a-z]+)*$`; every defined role is mirrored in `roles.json`. The result
+  fits the current default of at most three materially distinct business roles, or
   has a traceable user/platform-approved consolidation or phased migration with
   no silently lost, broadened, collapsed, or zero-permission source role.
 - Role tests cover preview single-role view-as; deployed permission union across
   all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
-  unknown roles; explicit deployed empty roles; preview admin fallback; legacy
+  unknown roles; explicit deployed empty roles; preview without a selected role yielding zero permissions; legacy
   recognized and untrusted unknown roles. Authorization never uses
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or

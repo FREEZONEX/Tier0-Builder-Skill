@@ -132,9 +132,8 @@ Authorization rules:
 - An unknown role from a forgeable legacy source fails closed.
 - An explicit deployed empty role set stays empty and never receives admin
   fallback.
-- A preview Gateway identity with no selected role may use the built-in admin
-  role for that request only. It must not create a Cookie; if the App has no
-  internal admin fallback, fail according to the current scaffold.
+- A preview Gateway identity with no selected role enters with zero roles
+  and zero permissions. Do not create a fallback role or Cookie.
 - Gateway identity with no applicable role context is denied. No Gateway
   identity is unauthenticated.
 - The client must not select or write roles through localStorage,
@@ -166,15 +165,15 @@ Keep every business role aligned across:
 hyphens, uppercase, leading/trailing underscores, and double underscores are
 invalid and cause platform import registration to fail.
 
-Keep `roles.json` as `{ "roles": [] }` for a roleless App. Do not put the
-App-internal admin fallback or demo/test roles in it. On import, the platform
+Keep `roles.json` as `{ "roles": [] }` for a roleless App. For role-aware apps,
+mirror every defined business role, including admin if the business needs it.
+Do not invent fallback or demo/test roles. On import, the platform
 uses `roles.json` to create/reuse and bind roles. On export, the platform
 regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
 
-Default the first version to no more than three effective roles total: built-in
-`admin` plus at most two business roles with materially different permission
-scopes. Do not create one role per page, action, or job title. When a source App
+Default the first version to no more than three business roles with materially
+different permission scopes. No role name is reserved. Do not create one role per page, action, or job title. When a source App
 has more materially distinct roles, do not silently omit them, merge them into
 broader access, or register them with zero permissions. Stop and obtain an
 explicit user/platform decision for a safe consolidation or phased migration,
@@ -187,8 +186,7 @@ Managed preview injects Gateway identity and may provide one view-as role, so a
 successful preview request does not prove deployed or unauthenticated behavior.
 Separate these surfaces:
 
-- Preview: selected role, no selected role with internal admin fallback, and
-  missing internal admin behavior.
+- Preview: selected role and no selected role yielding zero roles/permissions.
 - Deployed: two known assigned roles with permission union; known plus trusted
   unknown; explicit empty assigned-role set; active-role display ordering.
 - Legacy: recognized single role and unknown untrusted role failing closed.
@@ -295,14 +293,14 @@ fall back to `public` only when it is absent, as the current scaffold does. Runt
 queries, `bootstrapModule()`, and any `db:push` verification must resolve to the
 same schema.
 
-The platform is responsible for provisioning the project database and session
-schema. Preserve the current scaffold's idempotent runtime bootstrap behavior. If
-`CREATE SCHEMA` fails with a permission error, verify platform provisioning and
-the injected `DB_SCHEMA` before changing application code. Do not add a privileged
+The platform provisions the project database and session schema. Never run
+`CREATE SCHEMA` in the app. Use the target scaffold's table/index bootstrap
+inside the provisioned schema. If schema access fails, verify provisioning and
+the injected `DB_SCHEMA`. Do not add a privileged
 admin database connection to the application or invent a second schema-selection
 path.
 
-Runtime bootstrap is for idempotent DDL such as schemas, tables, and indexes. For
+Runtime bootstrap is for idempotent table and index DDL within the provisioned schema. For
 imported/migrated durable business entities, normal startup and first-request
 paths must not auto-insert demo, sample, or baseline business rows. Retained
 legacy rows enter through an explicit validated import, and development/test

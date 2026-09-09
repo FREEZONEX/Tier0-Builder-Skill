@@ -177,8 +177,8 @@ changes. Then verify:
   `primaryRole`.
 - A trusted unknown Tier0 role contributes zero permissions without erasing
   known-role permissions.
-- An explicit deployed empty role set stays empty. Preview may use the internal
-  admin fallback only when no view-as role is selected.
+- An explicit deployed empty role set stays empty. Preview without a selected
+  view-as role also enters with zero roles and zero permissions.
 - An unknown legacy/untrusted role fails closed.
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
@@ -186,8 +186,8 @@ every business role is synchronized across `PERMISSION_MATRIX`,
 `ROLE_METADATA`, and `roles.json`, and every `role_key` matches
 `^[a-z]+(_[a-z]+)*$`.
 
-The first version supports built-in `admin` plus at most two materially distinct
-business roles. If the source model exceeds that cap, stop and obtain an
+The current first-version default is at most three materially distinct
+business roles. No role name is reserved. If the source model exceeds that cap, stop and obtain an
 explicit user/platform-approved consolidation or phased migration. Do not make
 the build pass by silently removing roles, broadening access, merging distinct
 scopes without approval, or leaving a registered role with zero permissions.
@@ -202,10 +202,10 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 
 ## Database Startup Or Schema Fails
 
-- `permission denied for database ...` during `CREATE SCHEMA` means platform
-  provisioning or the injected `DB_SCHEMA` may not match the runtime account.
-  Verify the prepared session schema and environment before changing application
-  code; do not add a privileged admin connection to the app.
+- The app must not execute `CREATE SCHEMA`. If legacy bootstrap does so,
+  replace it with the target scaffold table/index bootstrap. Verify platform
+  provisioning and injected `DB_SCHEMA` separately; never add a privileged
+  database connection to work around missing schema access.
 - Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
   the same platform-injected `DB_SCHEMA`, with `public` only as the documented
   fallback when it is absent.
