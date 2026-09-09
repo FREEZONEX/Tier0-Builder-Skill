@@ -58,8 +58,8 @@ return here automatically unless clarification is required.
 
 ## Browser Platform Capabilities
 
-When a committed user path needs photo capture, scanning, location, recording,
-local files, notifications, sensors, or device access, use
+When a committed user path needs QR/barcode scanning, photo capture, geolocation,
+audio recording, file reading, or clipboard access, use
 [`browser-platform-capabilities`](../browser-platform-capabilities/SKILL.md)
 before selecting its browser API. Apply only the relevant capability guidance,
 including compatibility limits and fallbacks, to the current delivery map.
