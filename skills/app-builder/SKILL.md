@@ -56,6 +56,14 @@ return here automatically unless clarification is required.
 8. Report concrete user paths, checks, and any undelivered commitment at the
    top. Do not bury missing committed work in "next steps."
 
+## Browser Platform Capabilities
+
+When a committed user path needs photo capture, scanning, location, recording,
+local files, notifications, sensors, or device access, use
+[`browser-platform-capabilities`](../browser-platform-capabilities/SKILL.md)
+before selecting its browser API. Apply only the relevant capability guidance,
+including compatibility limits and fallbacks, to the current delivery map.
+
 ## FC Delivery Map
 
 For First Release Mode, map every SRS section 2.3 First-Version Commitment:
