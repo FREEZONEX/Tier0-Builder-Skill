@@ -1,4 +1,4 @@
 interface:
   display_name: "App Builder"
   short_description: "Build first versions and major app modules"
-  default_prompt: "Use $app-builder after specs/spec.md is available, or for substantial module expansion, to build a runnable first version with connected workflows, transparent recommended actions, visible hierarchy, built-in UI quality baselines, and verification."
+  default_prompt: "Use $app-builder after specs/spec.md is available, or for substantial module expansion, to build a runnable first version with visible user paths, connected workflows, and the delivery checklist."

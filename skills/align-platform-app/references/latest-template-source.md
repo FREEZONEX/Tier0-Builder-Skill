@@ -1,4 +1,4 @@
-# Latest Tier0 App Template Source
+# Inspect the Target Scaffold
 
 ## Canonical Repository
 

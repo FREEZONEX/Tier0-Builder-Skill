@@ -8,11 +8,14 @@ module tiers, field conventions, status taxonomies, and the professional
 surface domain users expect. It is neither a prerequisite nor a limit: reason
 first, use this to check and refine.
 
+Include only requested modules and required workflow dependencies in the SRS.
+Treat other modules below as optional suggestions, not automatic commitments.
+
 Scale calibration: this archetype targets single-warehouse first versions
 (including R&D / lab stores). Multi-warehouse, waves, labor management, and
 billing are explicitly out of the first-version archetype unless requested.
 
-## Canonical Module Set
+## Candidate Module Set
 
 | Module | Tier | Contents |
 |---|---|---|

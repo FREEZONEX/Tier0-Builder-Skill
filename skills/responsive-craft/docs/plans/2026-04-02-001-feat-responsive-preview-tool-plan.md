@@ -314,7 +314,7 @@ Test expectation: none — this unit modifies markdown documentation only, no be
 
 ## Sources & References
 
-- **Origin document:** [docs/brainstorms/2026-04-02-responsive-preview-tool-requirements.md](docs/brainstorms/2026-04-02-responsive-preview-tool-requirements.md)
+- **Origin document:** [docs/brainstorms/2026-04-02-responsive-preview-tool-requirements.md](../brainstorms/2026-04-02-responsive-preview-tool-requirements.md)
 - dev-browser: Kyle's sandboxed Playwright CLI for browser automation
 - Node.js `http.createServer`: https://nodejs.org/api/http.html
 - Skill spec `${CLAUDE_SKILL_DIR}`: https://code.claude.com/docs/en/skills

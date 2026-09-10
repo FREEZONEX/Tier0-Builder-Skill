@@ -4,7 +4,7 @@ Audit an existing codebase's responsive behavior, identify problems and design f
 
 ## Required Reading
 
-Load these references before proceeding:
+Read only the references needed for the affected layout:
 - `references/ai-failure-patterns.md` — pre-flight scan for quick wins
 - `references/responsive-design-forks.md` — loaded when ambiguous patterns are found
 - `references/sticky-scroll-patterns.md` — loaded when sticky/scroll issues are found

@@ -2,6 +2,15 @@
 
 Use this before reporting a generated app or substantial change as complete.
 
+## Before Implementation
+
+- Read the SRS and target scaffold; map all first-release commitments or only
+  affected commitments for an extension.
+- Identify required data models, state transitions, validation, seed behavior,
+  service/API paths, and applicable impact confirmation.
+- Register roles across the target scaffold surfaces together. Use installed
+  SDK/helpers and the current bootstrap contract; do not invent platform clients.
+
 ## Product
 
 - `/` or the intended entry route opens the actual app experience.
@@ -67,7 +76,8 @@ Use this before reporting a generated app or substantial change as complete.
   the scaffold contract lists (permission matrix, role metadata, platform
   role mirror) in one pass.
 - Template/demo/test roles are replaced, not shipped.
-- The scaffold's built-in admin role keeps full access and reaches every FC.
+- No reserved admin role or preview fallback is assumed. Verify current
+  empty-role behavior and each defined role's intended access.
 - Walk the Delivery Map once per defined role: each business role reaches the
   workflows the SRS assigns to it; no role lands on an empty workspace unless
   the SRS says so.

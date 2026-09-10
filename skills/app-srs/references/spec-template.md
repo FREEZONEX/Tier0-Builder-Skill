@@ -106,8 +106,8 @@ Structural constraints:
 
 ### 2.3 First-Version Commitments
 
-- List every capability the user explicitly confirmed, plus every capability
-  this SRS itself places in the balanced first release. This table is the
+- List user-requested capabilities and dependencies necessary for the core
+  workflow. Optional category suggestions enter only after acceptance. This is the
   first-release delivery contract for implementation, not a list of optional
   future ideas.
 - `Capability` uses the user's domain language (e.g. "FIFO recommendation with

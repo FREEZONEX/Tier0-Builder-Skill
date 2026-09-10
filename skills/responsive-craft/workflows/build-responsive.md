@@ -4,10 +4,10 @@ Build a new responsive site or component with responsive behavior designed in fr
 
 ## Required Reading
 
-Load these references before proceeding:
+Read only the references needed for the affected layout:
 - `references/modern-css-patterns.md` — CSS patterns for implementation
 - `references/responsive-design-forks.md` — loaded when ambiguous patterns arise
-- `references/ai-failure-patterns.md` — pre-flight scan before outputting code
+- `references/ai-failure-patterns.md` — when diagnosing a matching failure pattern
 
 ---
 
