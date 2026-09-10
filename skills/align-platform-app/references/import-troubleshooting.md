@@ -1,6 +1,6 @@
 # Import And Runtime Troubleshooting
 
-Use `preview-runtime-stability` instead when logs show managed dependency
+Use `preview-runtime-stability` when injected and logs show managed dependency
 installation, port/process ownership, preview readiness timeout, or HMR
 problems. This reference owns failures caused by migrated application code,
 platform-contract drift, production runtime behavior, or import packaging.
@@ -78,7 +78,8 @@ Check:
 Do not edit invariant tests, `scripts/post-build-verify.mjs`,
 `scripts/gate-integrity.mjs`, `scripts/runtime-audit.mjs`,
 `scripts/route-smoke.mjs`, or `scripts/gate-integrity.json` to make a migrated
-App pass. At the verified snapshot, only
+App pass. When the task is an upstream gate update, use the complete verified
+upstream file/hash set as explained in `platform-contract.md`. At this snapshot, only
 `src/lib/template-state.test.mjs` is App-adaptable.
 
 The locked verifier includes route-nesting, navigation, lifecycle/content, role,
@@ -131,15 +132,18 @@ Check:
 - Imported images moved with their components or into public assets.
 - Fonts are installed/imported through package or public paths.
 - CSS references do not point to deleted source directories.
-- A generated or rebranded App uses `APP_ICON = "/app-icon.png"` and a real
-  512x512 PNG at `public/app-icon.png`, no larger than 2 MB.
+- A generated or rebranded App has root `icon.png` (512x512, <=2 MB), an
+  identical `public/app-icon.png`, and `APP_ICON = "/app-icon.png"`.
+- Registered covers persist as root `cover.png` (PNG, <=8 MB); registration
+  uses root paths rather than temporary or public-only copies.
 - The same App icon was synchronized to platform metadata; a local file change
   alone does not prove that synchronization.
 
 ## Tier0 SDK Files Or SSR Import Fails
 
-Confirm the target uses the freshly inspected scaffold SDK version; the verified
-snapshot requires `@tier0/sdk` `^0.2.12` for the Files export. Import
+Confirm the target uses the selected scaffold SDK version and matching lockfile;
+the SDK upgrade target is `^0.5.1`. When migrating older notification calls,
+follow [SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends. Import
 `loadTier0Files` or other lazy helpers from `@/lib/tier0`, then await the loader
 inside the concrete server action. Do not top-level import
 `@tier0/sdk/openapi`, `@tier0/sdk/files`, or `@tier0/sdk/mq`; do not move the SDK
@@ -178,7 +182,7 @@ changes. Then verify:
 - A trusted unknown Tier0 role contributes zero permissions without erasing
   known-role permissions.
 - An explicit deployed empty role set stays empty. Preview without a selected
-  view-as role also enters with zero roles and zero permissions.
+  view-as role likewise has zero roles and permissions; never add a fallback.
 - An unknown legacy/untrusted role fails closed.
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
@@ -186,8 +190,9 @@ every business role is synchronized across `PERMISSION_MATRIX`,
 `ROLE_METADATA`, and `roles.json`, and every `role_key` matches
 `^[a-z]+(_[a-z]+)*$`.
 
-The current first-version default is at most three materially distinct
-business roles. No role name is reserved. If the source model exceeds that cap, stop and obtain an
+The first version supports at most three materially distinct business roles
+total, with no reserved role or implicit grant. If the source model exceeds that cap,
+stop and obtain an
 explicit user/platform-approved consolidation or phased migration. Do not make
 the build pass by silently removing roles, broadening access, merging distinct
 scopes without approval, or leaving a registered role with zero permissions.
@@ -214,6 +219,9 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
   `CREATE`, or remove `DB_SCHEMA` as a workaround.
 - If the injected schema is actually absent, report a platform provisioning or
   environment mismatch. Do not recreate it in App code or silently switch schemas.
+- Declare tables/enums through `appSchema` in `src/db/schema.ts` and pass table
+  objects to `bootstrapModule()`. Use `db:push:check` before guarded sync;
+  do not turn on destructive sync merely to get startup working.
 - Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
   the same platform-injected `DB_SCHEMA`, with `public` only as the documented
   fallback when it is absent.
@@ -225,8 +233,9 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 
 ## Migrated Business Rows Reappear Automatically
 
-Keep the current scaffold's idempotent table/index bootstrap in the existing
-schema, but remove seed callbacks that insert demo, sample, or baseline rows for migrated durable
+Keep the current scaffold's idempotent table/index bootstrap in the platform-provisioned
+schema, but remove
+seed callbacks that insert demo, sample, or baseline rows for migrated durable
 business entities during normal startup or a first request. Retained legacy rows
 must enter through an explicit validated import; development/test fixtures must
 run only through an explicit development or test action.
@@ -262,8 +271,11 @@ path.
 
 Check:
 
-- ZIP root is the app root, not a parent folder containing the app.
-- `package.json`, platform config, `server.mjs`, and build output are present.
+- Folder depth matches the actual importer; check whether an enclosing app
+  directory is supported.
+- `package.json`, lockfile, platform config, `server.mjs`, and root brand assets
+  are present. Require build output only for runtime artifacts, not source
+  imports that rebuild.
 - `node_modules` inclusion matches the target importer behavior.
 - Local caches, git metadata, editor folders, and temporary folders are excluded.
 - `.agents/skills/` contains no vendored platform Skill content.
