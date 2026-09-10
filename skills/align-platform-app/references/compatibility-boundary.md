@@ -82,7 +82,8 @@ Start removing the boundary only when:
   entry and no App-local session/logout/select-role implementation.
 - Role-aware Apps verify preview single-role view-as, deployed assigned-role
   union, known plus trusted unknown roles, explicit deployed empty roles, preview
-  without a selected role yielding zero permissions, and legacy untrusted unknown-role rejection. Authorization
+  without a selected role (zero roles and permissions), and legacy untrusted
+  unknown-role rejection. Authorization
   never uses the primary display role. Roleless Apps contain no invented
   business-role requirement.
 - Normal startup and first-request paths do not auto-insert demo, sample, or

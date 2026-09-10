@@ -50,6 +50,43 @@ Required target invariants:
 - Keep `.agents/skills/` free of vendored Skill content. Platform Builder
   guidance is selected and injected by the App Builder orchestrator.
 
+## SDK Upgrades
+
+The SDK 0.5.1 target is published on npm. Check the selected scaffold commit's
+`package.json` and lockfile as well as the installed version; an older `^0.3.4`
+range cannot resolve to 0.5.1. Update the range and authoritative lockfile together
+when the requested upgrade includes this target. Preserve an explicitly pinned
+user version and report unsupported behavior instead of silently overriding it.
+
+For notifications through SDK 0.5.1:
+
+- Omitted or `undefined` channels expand to `['web', 'mobile']`. `web` covers
+  Web & Desktop; there is no `desktop` value. Explicit arrays are deduplicated
+  without adding channels; `[]` creates only the inbox message.
+- Inspect existing send calls before upgrading from 0.4.0 or earlier. Change
+  intentional silent sends to `channels: []`; preserve explicit single-channel
+  choices. Generic notify intent can use the default, without inferring scope
+  from page type. If an existing call's intended scope is unclear, resolve that
+  concrete choice before changing its reminder behavior.
+- The expansion is SDK runtime behavior, not a Skill-only instruction or raw
+  backend API default. TypeScript restricts values; the SDK does not perform
+  runtime channel validation. Keep runtime input validation at the app boundary
+  when untyped user input supplies channels.
+- Preview/development sends use `mode: 'test'`; published sends use `'live'`.
+  Do not synthesize or detect a `[Test]` title prefix; use message mode.
+- Preserve recipient selection, business-event idempotency, and runtime App
+  identity. Verify request serialization with a stubbed transport; do not send
+  real notifications solely to validate an upgrade. Delivery requires separate
+  authorized environment verification.
+
+For MQTT, use the SDK's `toWebSocketUrl()` for a platform broker string and
+`parseMqttBroker()` when structured endpoint fields are needed. Preserve existing
+WebSocket URL scheme/port/path/query; never concatenate `wss://` with a TCP URL
+or reuse its TCP port. Non-WebSocket inputs use `wssPort` (default 8084). HTTPS
+browser/Worker contexts infer WSS, whereas server conversion needs explicit
+`secure: true` when WSS is required. Handle undefined results as configuration
+errors and preserve platform-injected settings and server-side lazy loading.
+
 ## Dependency And Lockfile Compatibility
 
 Treat the latest platform template dependency set as the target baseline. Before
@@ -72,6 +109,13 @@ When a legacy package cannot support the current scaffold baseline, document the
 decision and evidence for replacement, isolation, or an explicitly approved
 platform pin. A previously working source lockfile is evidence about the source,
 not proof that its versions satisfy the target scaffold.
+
+Report locked installation, full build, and runtime verification separately.
+If `npm ci` fails on an unmodified upstream lockfile, retain the failing evidence
+and reproduce in isolation. An `npm install` diagnostic may change that temporary
+lockfile; a subsequent build pass does not prove the original package can pass
+`npm ci`. Fix and revalidate the lockfile only within the requested scope; do not
+replace production `npm ci` or add force/legacy-peer flags to conceal the defect.
 
 ## Routing Contract
 
@@ -132,8 +176,8 @@ Authorization rules:
 - An unknown role from a forgeable legacy source fails closed.
 - An explicit deployed empty role set stays empty and never receives admin
   fallback.
-- A preview Gateway identity with no selected role enters with zero roles
-  and zero permissions. Do not create a fallback role or Cookie.
+- A preview Gateway identity without a selected role enters with zero roles
+  and zero permissions. There is no built-in or reserved fallback role.
 - Gateway identity with no applicable role context is denied. No Gateway
   identity is unauthenticated.
 - The client must not select or write roles through localStorage,
@@ -165,20 +209,28 @@ Keep every business role aligned across:
 hyphens, uppercase, leading/trailing underscores, and double underscores are
 invalid and cause platform import registration to fail.
 
-Keep `roles.json` as `{ "roles": [] }` for a roleless App. For role-aware apps,
-mirror every defined business role, including admin if the business needs it.
-Do not invent fallback or demo/test roles. On import, the platform
+Keep `roles.json` as `{ "roles": [] }` for a roleless App. Do not add demo/test roles. A
+business-defined `admin` is an ordinary role
+and must be registered just like every other matrix role. On import, the platform
 uses `roles.json` to create/reuse and bind roles. On export, the platform
 regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
 
-Default the first version to no more than three business roles with materially
-different permission scopes. No role name is reserved. Do not create one role per page, action, or job title. When a source App
+The scaffold starts with empty role definitions and reserves no role name.
+Default the first version to no more than three business roles total, chosen
+for materially different permission scopes. The current locked gate checks
+matrix and metadata counts; a business-defined `admin` counts toward the three. Do not
+create one role per page, action, or job title. When a source App
 has more materially distinct roles, do not silently omit them, merge them into
 broader access, or register them with zero permissions. Stop and obtain an
 explicit user/platform decision for a safe consolidation or phased migration,
 then keep the approved mapping traceable across permissions, metadata,
 navigation, API guards, and `roles.json`.
+
+Registration is distinct from permission. A platform-registered role absent from
+the matrix may legitimately enter with zero permissions and produce an advisory;
+that is not equivalent to delivering a migrated role's expected capabilities.
+Do not delete such a registration or grant broad access just to remove a warning.
 
 ## Authentication Verification Environments
 
@@ -186,7 +238,7 @@ Managed preview injects Gateway identity and may provide one view-as role, so a
 successful preview request does not prove deployed or unauthenticated behavior.
 Separate these surfaces:
 
-- Preview: selected role and no selected role yielding zero roles/permissions.
+- Preview: selected role, and no selected role with zero roles/permissions.
 - Deployed: two known assigned roles with permission union; known plus trusted
   unknown; explicit empty assigned-role set; active-role display ordering.
 - Legacy: recognized single role and unknown untrusted role failing closed.
@@ -205,7 +257,8 @@ button, badge, card, page-header, filter, risk, empty-state, stat, form—includ
 provides them. Do not fork token values or hand-roll equivalent primitives in
 migrated routes.
 
-Complete the applicable business-object lifecycle on management routes. A
+Preserve and complete the in-scope business-object lifecycle on management routes;
+do not add unrelated operations during a partial scaffold update. A
 workspace route is intentionally read-only only when it is a monitor, report,
 audit, or derived result and carries `READ_ONLY_SURFACE: <reason>`. Lifecycle
 actions must connect reachable UI, validation, permission checks, service/API
@@ -227,11 +280,45 @@ Keep App identity centralized in `src/lib/app-chrome.ts`:
 - Set `APP_LOCALE` with the name so document language, native inputs, and shared
   copy stay consistent.
 - Replace placeholder product and shell copy.
-- A generated or rebranded App uses `APP_ICON = "/app-icon.png"` with
-  `public/app-icon.png`: a 512x512 PNG no larger than 2 MB.
-- Synchronize the same image to platform App metadata with `update_app_info` when
-  that tool is available. A local source change alone does not prove platform
-  synchronization; report an unavailable/failed sync as undelivered.
+- Preserve an existing valid brand during alignment; do not rebrand merely
+  because the upstream placeholder changed.
+- On icon generation/rebrand, persist root `icon.png` (512x512 PNG, <=2 MB),
+  copy it byte-for-byte to `public/app-icon.png`, and set
+  `APP_ICON = "/app-icon.png"`. Register the root file with
+  `update_app_info({ icon_path: "icon.png" })` when available and in scope.
+- Persist any designed/changed cover as root `cover.png` (PNG, <=8 MB) before
+  registering `cover_path: "cover.png"`. Do not register temporary/external
+  files as the only copy. If both images change, persist both before syncing.
+- Verify root/public icon bytes and actual metadata sync separately. An
+  unavailable or failed sync remains pending, not inferred from source changes.
+- Use `resolveAppId()` from `@/lib/app-id` at runtime for technical identity
+  such as notification `sender.id`. `APP_ID` is the platform App UUID;
+  `local-app` is a local-only fallback. Never hard-code the current UUID or
+  equate it to the human App name or `DB_SCHEMA`.
+
+### Workspace Spacing And Dialogs
+
+Ordinary `_app` page roots use `<div className="page-shell ...">`; preserve
+page-specific vertical rhythm on that root. The shared class supplies 16px
+horizontal / 20px vertical narrow-screen padding, 24px from 640px, and 32px
+from 1024px, with shrinkable children. `Shell` retains its centered 1440px cap.
+Remove duplicate outer padding rather than nesting another inset. Station,
+review, and monitor layouts own their spacing; do not add `page-shell` there.
+Preserve intentional app customizations when reconciling this upstream default.
+
+Replace product-interaction `alert`, `confirm`, and `prompt`, including calls
+through `window`, `globalThis`, or `self`, with application primitives:
+
+- `toast()` for nonblocking feedback; `Dialog` for acknowledgement.
+- `ConfirmDialog` for risky actions: show affected object/consequence, use a
+  concrete action label, wire `pending`, and leave data unchanged on cancel.
+- `FormDialog` for controlled input with validation and explicit submission.
+
+Native confirmation is synchronous; application dialogs resolve through
+callbacks/state. Move the mutation into the confirmed submit path, not directly
+after opening the dialog. Verify cancellation, one confirmed write, duplicate
+submission prevention, and error feedback. This is generation/migration guidance,
+not a new native-dialog scanner or build gate.
 
 ## Data And Server Boundary
 
@@ -266,6 +353,8 @@ handlers, custom middleware, or Node server files. Reclassify that code:
 - Existing local durable data may enter PostgreSQL only through an explicit,
   validated, idempotent import with defined identity/conflict handling and
   reconciliation evidence.
+- Store application-generated and user-uploaded files through the platform
+  File Storage API, not the sandbox filesystem.
 - Existing database schema/migration behavior and any explicit development/test
   fixture setup should move into the scaffold data layer only when the app owns
   that persistence.
@@ -293,14 +382,23 @@ fall back to `public` only when it is absent, as the current scaffold does. Runt
 queries, `bootstrapModule()`, and any `db:push` verification must resolve to the
 same schema.
 
-The platform provisions the project database and session schema. Never run
-`CREATE SCHEMA` in the app. Use the target scaffold's table/index bootstrap
-inside the provisioned schema. If schema access fails, verify provisioning and
-the injected `DB_SCHEMA`. Do not add a privileged
-admin database connection to the application or invent a second schema-selection
-path.
+The platform provisions the database schema. App runtime must never execute
+`CREATE SCHEMA`, even with `IF NOT EXISTS`: the runtime account need not have
+that database-level privilege. Remove legacy runtime creation when aligning;
+verify the injected schema exists separately. Do not add admin credentials.
 
-Runtime bootstrap is for idempotent table and index DDL within the provisioned schema. For
+Declare all tables/enums with `appSchema.table(...)` / `appSchema.enum(...)` in
+`src/db/schema.ts`, never bare `pgTable`/`pgEnum` or declarations elsewhere.
+Pass declared table objects to `bootstrapModule()` and await each module's
+shared bootstrap promise before queries. Undeclared runtime tables can be
+removed by platform schema sync; runtime-only DDL is not a durable declaration.
+
+Before local sync, use `npm run db:push:check`, then the guarded `npm run db:push`.
+Do not bypass a DROP/TRUNCATE refusal. Use `DB_SYNC_ALLOW_DESTRUCTIVE=1` only for
+an explicitly authorized destructive plan with backup/recovery accounted for.
+Ordinary startup must not depend on having run `db:push` or bulk `db:seed`.
+
+Runtime bootstrap is for idempotent table/index DDL inside the provisioned schema. For
 imported/migrated durable business entities, normal startup and first-request
 paths must not auto-insert demo, sample, or baseline business rows. Retained
 legacy rows enter through an explicit validated import, and development/test
@@ -365,8 +463,10 @@ script names. Before declaring migration complete:
 - Record each accepted remaining failure with evidence, impact, and a concrete
   next action. Do not describe the platform migration as fully complete while a
   blocking class remains.
-- Keep invariant tests and scripts named by `scripts/gate-integrity.json`
-  unchanged. At the verified snapshot, only
+- Preserve invariant tests and scripts named by `scripts/gate-integrity.json`.
+  For an authorized upstream scaffold update, replace changed locked files
+  together with their matching verified upstream manifest; never locally weaken
+  assertions or recompute hashes to conceal failing App code. At this snapshot, only
   `src/lib/template-state.test.mjs` is App-adaptable. If a locked gate reports an
   intentional external caller or read-only surface, use its documented marker
   or restructure the App; editing the gate is not the fix.
@@ -381,6 +481,7 @@ The current upstream template's `artifact.toml` defines the platform service
 shape:
 
 - `deployment.deploymentTarget = "autoscale"`
+- production `serve = "dynamic"` describes deployment serving mode, not a gate
 - production build runs `npm ci && npm run build && npm prune --omit=dev`
 - production run uses `node server.mjs` on `node:22-alpine`
 - service `localPort = 5173`
@@ -423,12 +524,16 @@ silently inventing a second production entry.
 
 Packaging rules depend on the target import environment. The stable baseline is:
 
-- ZIP root should be the app root, with `package.json`, `server.mjs`, and
-  platform config at the top level.
-- Preserve build output required by the runtime, commonly `dist`.
+- Confirm whether the importer accepts an app-root archive or one enclosing
+  directory. Make `package.json`, `server.mjs`, platform config, and root brand
+  assets discoverable at the app root it resolves; do not guess folder depth.
+- For source imports that rebuild, include tracked source and the authoritative
+  lockfile; exclude generated `dist`/`.output` and dependencies. For a runtime
+  artifact, include exactly the output required by the confirmed runtime entry.
+  Do not require built output in every source ZIP.
 - Include `node_modules` only when the target import environment is offline or
   explicitly supports preinstalled dependencies without reinstalling them.
-- Exclude local caches, git metadata, editor metadata, and generated temporary
-  folders.
+- Exclude local caches, git/editor metadata, generated temporary folders, and
+  real local secret/env files; retain tracked `.env.example` when applicable.
 - Do not package platform-managed Skill content in `.agents/skills/`; the
   orchestrator owns Skill selection and injection.

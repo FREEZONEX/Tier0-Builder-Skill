@@ -1,54 +1,81 @@
 # Inspect the Target Scaffold
 
-Use `FREEZONEX/Tier0-App-Scaffold` as the template source. Inspect current main
-unless the user explicitly pins a version. Record the exact SHA in task-local
-evidence; do not copy dependency versions or historical release notes into
-reusable migration instructions.
+## Canonical Repository
 
-Fetch in a clean reference checkout or inspect files at a resolved commit.
-Preserve existing app changes. A remote SHA alone is not a contract review:
-read the affected implementation, instructions, and tests at that SHA.
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
+The upstream `main` baseline verified on 2026-09-09 is
+`8a6ac304a12f74e9079afc0871f942017e4d1904`. The SDK upgrade target is
+`da7ebf85fb9352f6623671c5a214f02317eae0f5` on `codex/sdk-051` in the same repository.
+The target is a PR branch, not yet evidence of a merge to `main` or deployment.
+When aligning to default `main`, inspect its actual dependency version; use the
+upgrade target only when the requested scope selects it or it has merged.
 
-## Files To Compare First
+This Skill reconciles the current contracts:
 
-When aligning an imported app to the latest template, compare these files before
-editing business code:
+- No reserved roles or Preview admin fallback; at most three business roles.
+- Platform-owned schema, `appSchema` declarations, typed bootstrap table objects,
+  and guarded local schema sync.
+- Runtime `resolveAppId()`, root icon/cover persistence, and File Storage.
+- SDK upgrade target `^0.5.1`, locked to `0.5.1`, with server-side lazy loading.
+  The preceding main baseline uses `^0.3.4`, locked to `0.3.4`.
+- SDK default notification channels, explicit silent-send migration, message-mode
+  handling without a title prefix, and MQTT broker/WebSocket normalization.
+- Application-dialog guidance and responsive workspace `page-shell`.
 
-- `AGENTS.md`: task rules, preview workflow, scaffold ownership, hard constraints.
-- `DESIGN.md`: current tokens, primitives, layout, form, table, and visual rules.
-- `README.md`: current stack, environment model, route conventions, build contract.
-- `.gitignore`: generated/runtime state that must stay outside source control.
-- `package.json`: Node engine, scripts, dependency versions, `@tier0/sdk` version.
-- `artifact.toml`: production build/run image, health path, preview command/env.
-- `server.mjs`: production request/response bridge and stream-abort behavior.
-- `.env.example`: App-owned versus platform-injected environment boundary.
-- `vite.config.ts`: base path, preview gateway headers, SSR external policy,
-  optimizeDeps, TanStack Start plugin options.
-- `docs/platform-integration.md`: env injection, auth flow, platform resource
-  model, DB schema/app id/base path behavior.
-- `docs/role-registration.md`, `roles.json`, and
-  `src/lib/{auth,gateway,users,permissions,role-metadata}.ts`: Gateway roles,
-  permission union, role registration, and empty-role behavior.
-- `src/lib/{app-chrome,tier0}.ts`: App identity and SDK lazy-loader contracts.
-- `scripts/{post-build-verify,gate-integrity,runtime-audit,route-smoke,route-nesting,responsive-contract}.mjs`,
-  `scripts/gate-integrity.json`, `src/lib/permissions.test.mjs`, and
-  `src/lib/{navigation,content,route-nesting,responsive}-contracts.test.mjs`:
-  current completion gates, locked files, navigation/lifecycle/role limits,
-  route nesting, and 375px responsiveness.
+The SDK source is `FREEZONEX/Tier0-sdk` at
+`33dfa86f34d3ddad082d64fc0953f7fd6a64691f`; npm `latest` was verified as
+`0.5.1` on 2026-09-09. Its notification Skill is `1.5.5`. These are separate
+source/package facts, not evidence that Builder has loaded a matching Skill or
+that an existing App has upgraded. Recheck them when a task requires freshness.
 
-## Reconcile Differences
+## Verify A Target Commit
 
-- Read dependency versions and commands from package.json and its authoritative
-  lockfile, not from an old skill snapshot.
-- For role/auth changes, inspect implementation and tests as well as AGENTS.md.
-  The 2026-09-09 role/schema review used
-  `8a6ac304a12f74e9079afc0871f942017e4d1904`: no reserved role, no preview
-  fallback, and platform-provisioned schema. This is evidence for those checked
-  surfaces, not a claim that every contract in this skill was refreshed.
-- If instructions and implementation disagree, record the conflict and use
-  the enforced target behavior without silently broadening access.
-- Preserve working business behavior and reconcile the smallest necessary set
-  of files. Keep explicit approval requirements for broad rebases or replacing
-  customized auth/runtime files.
-- After a contract change, search this skill and its references for retired
-  role semantics, environment names, endpoints, versions, and commands.
+Prefer a clean reference checkout and preserve the app's working changes.
+Inspect the remote with `git ls-remote` or fetch into a suitable repository,
+then record the exact `origin/main` SHA. Read files using that commit, not a
+moving branch across multiple requests. If a temporary clone is needed, use a
+unique directory rather than overwriting a fixed `/tmp` checkout.
+
+A pinned user-selected ref takes precedence over latest `main`. If remote access
+is unavailable, identify the cached/package commit and limit freshness claims.
+A version string or previously delivered ZIP filename is not commit evidence.
+
+## Surfaces To Inspect By Change
+
+Read the relevant current files and their changes since the app's known base:
+
+| Area | Source surfaces |
+| --- | --- |
+| Generation/design | `AGENTS.md`, `DESIGN.md`, `src/styles/globals.css`, affected components |
+| Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
+| Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
+| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
+| Persistence | `src/db/{index,schema}.ts`, `src/services/bootstrap.ts`, `src/services/seed-utils.ts`, `scripts/db-sync-guard.mjs`, `drizzle.config.ts` |
+| SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
+
+For a full migration, cover every relevant platform area. For a targeted scaffold
+update, review changed surfaces and transitive dependencies; do not turn this
+inventory into a mandatory whole-app rewrite. Never overwrite app-specific schema,
+permissions, navigation, branding, or routes with the blank template.
+
+## Reconciliation And Refresh
+
+Detailed operational rules live in [platform-contract.md](platform-contract.md).
+Keep this file focused on provenance and discovery rather than a duplicate
+contract checklist.
+
+When updating this Skill against a new commit:
+
+1. Compare the recorded baseline to the target via log and diff.
+2. Inspect changed implementation, guidance, and locked tests. A known-good
+   upstream baseline can contain defects; do not assume every failure is app drift.
+3. Reconcile the entrypoint and all affected references. Search the entire Skill
+   for retired role semantics, env names, SDK versions, bootstrap behavior, asset
+   paths, commands, and packaging assumptions.
+4. Preserve product intent and record conflicts instead of silently increasing
+   permissions or weakening verification.
+5. Update this SHA/date after reconciliation. Validate metadata/references and
+   rebuild the distribution ZIP from the reviewed source; verify its contents.
+
+Check freshness when a task needs it. This guidance does not schedule a recurring
+job or require a network refresh for unrelated product edits.

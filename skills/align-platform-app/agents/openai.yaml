@@ -1,4 +1,4 @@
 interface:
   display_name: "Align Platform App"
-  short_description: "Migrate platform shape and local CRUD to PostgreSQL"
-  default_prompt: "Use $align-platform-app to align an imported or existing Tier0 app with the latest Tier0-App-Scaffold contract, including migrating LocalStorage, sessionStorage, IndexedDB, Zustand persist, mocks, and fixture CRUD to Drizzle/PostgreSQL persistence."
+  short_description: "Migrate apps or update scoped Tier0 scaffold contracts"
+  default_prompt: "Use $align-platform-app to align this app with the requested Tier0 scaffold baseline, preserving business behavior and limiting changes to the migration or update scope."
