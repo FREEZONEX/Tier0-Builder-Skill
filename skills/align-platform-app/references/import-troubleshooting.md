@@ -207,17 +207,29 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 
 ## Database Startup Or Schema Fails
 
-- `permission denied for database ...` during `CREATE SCHEMA` can be caused by
-  legacy App runtime creating a platform-owned schema. Compare with current
-  `bootstrapModule()` and remove that creation; independently verify the
-  provisioned `DB_SCHEMA`. Do not add a privileged connection or increase
-  runtime privileges to mask the obsolete startup behavior.
+- An API 500 with `Failed query: create schema if not exists ...` or
+  `permission denied for database ...` can surface as `Couldn't load data` /
+  `Internal error`. Inspect the failed SQL and server error before assigning a
+  cause; the frontend message alone does not identify a schema-permission issue.
+- When legacy `src/services/bootstrap.ts` or another startup/request path issues
+  `CREATE SCHEMA`, remove that statement, including its `IF NOT EXISTS` form.
+  The platform provisions `DB_SCHEMA`; the App account need not have database-level
+  schema-creation permission. Preserve idempotent table/index bootstrap inside
+  that existing schema. Do not add an admin connection, grant database-level
+  `CREATE`, or remove `DB_SCHEMA` as a workaround.
+- If the injected schema is actually absent, report a platform provisioning or
+  environment mismatch. Do not recreate it in App code or silently switch schemas.
 - Declare tables/enums through `appSchema` in `src/db/schema.ts` and pass table
   objects to `bootstrapModule()`. Use `db:push:check` before guarded sync;
   do not turn on destructive sync merely to get startup working.
 - Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
   the same platform-injected `DB_SCHEMA`, with `public` only as the documented
   fallback when it is absent.
+- Verify with the preview App account: first access initializes business tables
+  and indexes in the existing schema, the previously failing API succeeds, and
+  repeat access (plus a restart when controllable) remains idempotent. Confirm
+  startup/request paths no longer issue `CREATE SCHEMA`; a build alone does not
+  prove the permission failure is fixed.
 
 ## Migrated Business Rows Reappear Automatically
 

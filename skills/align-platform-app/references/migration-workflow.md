@@ -124,8 +124,9 @@ Prefer this sequence:
    -> thin API -> client.
 6. Import legacy data through an explicit validated, idempotent process when
    retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for tables and indexes in the
-   platform-provisioned schema, but
+7. Keep idempotent runtime DDL bootstrap for tables and indexes in the existing
+   platform-injected `DB_SCHEMA`. Remove App-side `CREATE SCHEMA`, including
+   `IF NOT EXISTS`, without expanding database-account privileges. Also
    remove startup- or first-request seed callbacks that auto-insert demo, sample,
    or baseline rows for migrated durable business entities. Retain legacy data
    through the explicit import from step 6; run development/test fixtures only

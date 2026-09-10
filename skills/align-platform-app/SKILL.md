@@ -80,7 +80,8 @@ weaken a gate to reconcile contradictory guidance.
   business-defined, counts as one. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
 - For data changes, declare tables/enums via `appSchema` in `src/db/schema.ts`.
-  The platform provisions the schema: runtime never executes `CREATE SCHEMA`.
+  The platform provisions the schema: remove runtime `CREATE SCHEMA`, including
+  `IF NOT EXISTS`, while preserving idempotent table/index setup in `DB_SCHEMA`.
   Pass declared tables to `bootstrapModule()` and await its module promise
   before querying. Follow the reference's guarded `db:push` workflow.
 - HTTP routes authenticate/validate and call services; services own database

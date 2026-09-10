@@ -385,7 +385,11 @@ same schema.
 The platform provisions the database schema. App runtime must never execute
 `CREATE SCHEMA`, even with `IF NOT EXISTS`: the runtime account need not have
 that database-level privilege. Remove legacy runtime creation when aligning;
-verify the injected schema exists separately. Do not add admin credentials.
+verify the injected schema exists separately. `IF NOT EXISTS` does not remove
+the schema-creation privilege requirement. Do not add admin credentials, grant
+database-level `CREATE`, or unset `DB_SCHEMA` to bypass the failure. If the
+injected schema is missing, report provisioning failure instead of creating it
+in App startup or request code.
 
 Declare all tables/enums with `appSchema.table(...)` / `appSchema.enum(...)` in
 `src/db/schema.ts`, never bare `pgTable`/`pgEnum` or declarations elsewhere.
