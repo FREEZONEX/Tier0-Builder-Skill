@@ -293,15 +293,19 @@ fall back to `public` only when it is absent, as the current scaffold does. Runt
 queries, `bootstrapModule()`, and any `db:push` verification must resolve to the
 same schema.
 
-The platform provisions the project database and session schema. Never run
-`CREATE SCHEMA` in the app. Use the target scaffold's table/index bootstrap
-inside the provisioned schema. If schema access fails, verify provisioning and
-the injected `DB_SCHEMA`. Do not add a privileged
-admin database connection to the application or invent a second schema-selection
-path.
+The platform is responsible for provisioning the project database and session
+schema before App startup. Remove runtime `CREATE SCHEMA`, including
+`CREATE SCHEMA IF NOT EXISTS`, from legacy `src/services/bootstrap.ts` and any
+other startup/request path. `IF NOT EXISTS` does not remove the required
+schema-creation privilege. Use the existing injected schema for idempotent table
+and index initialization; do not grant database-level `CREATE`, add an admin
+connection, or unset `DB_SCHEMA` to bypass the failure. If that schema is actually
+missing, report the provisioning failure instead of creating it in the App.
+Declare business tables/enums through `appSchema` and pass declared table objects
+to `bootstrapModule()` so runtime initialization and schema synchronization agree.
 
-Runtime bootstrap is for idempotent table and index DDL within the provisioned schema. For
-imported/migrated durable business entities, normal startup and first-request
+Runtime bootstrap is for idempotent DDL inside the existing schema, such as tables
+and indexes. For imported/migrated durable business entities, normal startup and first-request
 paths must not auto-insert demo, sample, or baseline business rows. Retained
 legacy rows enter through an explicit validated import, and development/test
 fixtures run only through an explicit development or test action. This migration

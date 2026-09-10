@@ -167,8 +167,11 @@ Before changing migration constraints, fetch or inspect that repository's latest
      silently merge it during ordinary reads.
    - Move database schema and migration behavior into the scaffold data layer
      only when the source app owns the persistence. Preserve the current
-     scaffold's idempotent `bootstrapModule()` schema/table/index setup, but do
-     not let normal startup or a first request auto-insert demo, sample, or
+     scaffold's idempotent `bootstrapModule()` table/index setup inside the
+     platform-provisioned `DB_SCHEMA`. Remove runtime `CREATE SCHEMA`, including
+     `IF NOT EXISTS`, from legacy bootstrap code; the app account must not need
+     database-level schema-creation permission. Do not let normal startup or a
+     first request auto-insert demo, sample, or
      baseline rows for migrated durable business entities. Retained legacy data
      enters through an explicit import; development/test fixtures require an
      explicit development or test action. Where retained runtime baseline data
@@ -321,9 +324,10 @@ A migration is not complete until current evidence proves all of the following:
 - Every app-owned durable entity has PostgreSQL as its single source of truth,
   with schema, current scaffold runtime bootstrap / `db:push`, service, API, and
   client paths connected.
-- Runtime bootstrap creates tables and indexes in the platform-provisioned
-  schema; it never creates the schema. For migrated entities,
-  normal startup and first-request paths do not auto-insert demo, sample, or
+- Runtime bootstrap creates tables and indexes inside the existing platform-injected
+  `DB_SCHEMA`; no App startup or request path executes `CREATE SCHEMA`, including
+  `IF NOT EXISTS`. Preserve idempotent initialization. Normal startup and
+  first-request paths do not auto-insert demo, sample, or
   baseline rows for migrated durable business entities. Retained legacy data and
   development/test fixtures enter only through their explicit flows.
 - No production CRUD path uses browser storage, Zustand persist, IndexedDB,

@@ -202,18 +202,31 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 
 ## Database Startup Or Schema Fails
 
-- The app must not execute `CREATE SCHEMA`. If legacy bootstrap does so,
-  replace it with the target scaffold table/index bootstrap. Verify platform
-  provisioning and injected `DB_SCHEMA` separately; never add a privileged
-  database connection to work around missing schema access.
+- An API 500 with `Failed query: create schema if not exists ...` or
+  `permission denied for database ...` can surface as `Couldn't load data` /
+  `Internal error`. Inspect the failed SQL and server error before assigning a
+  cause; the frontend message alone does not identify a schema-permission issue.
+- When legacy `src/services/bootstrap.ts` or another startup/request path issues
+  `CREATE SCHEMA`, remove that statement, including its `IF NOT EXISTS` form.
+  The platform provisions `DB_SCHEMA`; the App account need not have database-level
+  schema-creation permission. Preserve idempotent table/index bootstrap inside
+  that existing schema. Do not add an admin connection, grant database-level
+  `CREATE`, or remove `DB_SCHEMA` as a workaround.
+- If the injected schema is actually absent, report a platform provisioning or
+  environment mismatch. Do not recreate it in App code or silently switch schemas.
 - Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
   the same platform-injected `DB_SCHEMA`, with `public` only as the documented
   fallback when it is absent.
+- Verify with the preview App account: first access initializes business tables
+  and indexes in the existing schema, the previously failing API succeeds, and
+  repeat access (plus a restart when controllable) remains idempotent. Confirm
+  startup/request paths no longer issue `CREATE SCHEMA`; a build alone does not
+  prove the permission failure is fixed.
 
 ## Migrated Business Rows Reappear Automatically
 
-Keep the current scaffold's idempotent schema/table/index bootstrap, but remove
-seed callbacks that insert demo, sample, or baseline rows for migrated durable
+Keep the current scaffold's idempotent table/index bootstrap in the existing
+schema, but remove seed callbacks that insert demo, sample, or baseline rows for migrated durable
 business entities during normal startup or a first request. Retained legacy rows
 must enter through an explicit validated import; development/test fixtures must
 run only through an explicit development or test action.
