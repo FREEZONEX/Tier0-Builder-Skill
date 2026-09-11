@@ -208,8 +208,8 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 ## Database Startup Or Schema Fails
 
 - An API 500 with `Failed query: create schema if not exists ...` or
-  `permission denied for database ...` can surface as `Couldn't load data` /
-  `Internal error`. Inspect the failed SQL and server error before assigning a
+  `permission denied for database ...` (PostgreSQL `42501`) can surface as
+  `Couldn't load data` / `Internal error`. Inspect the failed SQL and server error before assigning a
   cause; the frontend message alone does not identify a schema-permission issue.
 - When legacy `src/services/bootstrap.ts` or another startup/request path issues
   `CREATE SCHEMA`, remove that statement, including its `IF NOT EXISTS` form.

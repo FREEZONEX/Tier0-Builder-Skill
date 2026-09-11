@@ -53,6 +53,13 @@ Read the relevant current files and their changes since the app's known base:
 | Persistence | `src/db/{index,schema}.ts`, `src/services/bootstrap.ts`, `src/services/seed-utils.ts`, `scripts/db-sync-guard.mjs`, `drizzle.config.ts` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
+Compare and patch `src/services/bootstrap.ts` first when it still runs a
+runtime `create schema if not exists` block: remove the block outright, with no
+try/catch or fallback. The platform pre-creates the schema and the app role has
+no database-level `CREATE`, so PostgreSQL rejects it with `42501`. Repair steps
+are in
+[import-troubleshooting.md](import-troubleshooting.md#database-startup-or-schema-fails).
+
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this
 inventory into a mandatory whole-app rewrite. Never overwrite app-specific schema,
