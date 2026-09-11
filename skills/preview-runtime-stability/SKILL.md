@@ -5,7 +5,9 @@ description: >-
   including install failures, ERESOLVE or lockfile errors, "Failed to load
   preview", preview timeouts, "dev server exited: exit status 1", port 5173
   conflicts, /api/health failures, missing dependencies, stale npm/node
-  processes, broken HMR, or Vite reload issues.
+  processes, broken HMR, Vite reload issues, or a database bootstrap failure
+  where the log shows "VITE ready" then crashes on the first SSR request with
+  DrizzleQueryError, "permission denied for database", or code 42501.
 ---
 
 # Preview Runtime Stability
@@ -26,6 +28,7 @@ Read the first relevant error and identify the failing layer before retrying.
 | --- | --- |
 | Missing dependency, ERESOLVE, unavailable package, install failure | [Error playbooks](references/error-playbooks.md), dependency sections |
 | Dev process exit, SSR/auth error, artifact mismatch, readiness timeout | [Error playbooks](references/error-playbooks.md), matching error section |
+| `VITE ready` then crash on the first SSR request, `DrizzleQueryError`, `42501`, "permission denied for database" | [Error playbooks](references/error-playbooks.md), database bootstrap section |
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |
 | Confirmed stale owned preview process or lifecycle implementation | [Process lifecycle](references/process-lifecycle.md) |
 

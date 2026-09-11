@@ -80,23 +80,36 @@ Treat `exit status 1` as "Vite crashed before readiness", not as a generic previ
 
 Common causes, in order:
 
-1. Stale preview process still owns port `5173`. This is the most common cause when `vite.config.ts` uses `server.strictPort = true`; Vite exits immediately instead of drifting to `5174`.
-2. Route tree or file-route compile error after adding, renaming, or deleting files under `src/routes`.
-3. Missing dependency or stale import after removing component libraries, for
+1. Runtime database bootstrap denied on the first SSR request. The log shows
+   `VITE v... ready` on `5173`, then `DrizzleQueryError: Failed query: create
+   schema if not exists ...` with `permission denied for database` and
+   `code: 42501`, then the exit. Ports, dependencies, and routes are not the
+   problem; rule this out first using
+   [Database bootstrap permission denied (42501)](#database-bootstrap-permission-denied-42501).
+2. Stale preview process still owns port `5173`. This is the most common cause when `vite.config.ts` uses `server.strictPort = true`; Vite exits immediately instead of drifting to `5174`.
+3. Route tree or file-route compile error after adding, renaming, or deleting files under `src/routes`.
+4. Missing dependency or stale import after removing component libraries, for
    example imports from deleted shared or legacy component folders.
-4. CSS/Tailwind startup failure, especially stale `@import` entries for deleted packages.
-5. Server-only imports leaking into client-bundled route/component files, such as using `@tanstack/react-start/server` outside a server handler, middleware, or `createServerFn().handler(...)` body.
+5. CSS/Tailwind startup failure, especially stale `@import` entries for deleted packages.
+6. Server-only imports leaking into client-bundled route/component files, such as using `@tanstack/react-start/server` outside a server handler, middleware, or `createServerFn().handler(...)` body.
 
 Fix sequence:
 
-1. Check preview logs. If the log contains `Port 5173 is already in use`, run the preflight cleanup and restart preview. Do not change application code for a stale-port failure.
-2. If the log shows a route-generation or import error, fix the exact file path in the stack trace, then restart preview.
-3. If the log shows a deleted shared/legacy component import, replace it with
+1. Check preview logs. If the log shows `VITE v... ready` followed by a
+   `42501` / `permission denied for database` crash on the first SSR request,
+   apply the
+   [Database bootstrap permission denied (42501)](#database-bootstrap-permission-denied-42501)
+   playbook: delete the `create schema` block in `src/services/bootstrap.ts`.
+   Do not run port cleanup, reinstall dependencies, or edit routes for this
+   signature; restarting only repeats the crash.
+2. If the log contains `Port 5173 is already in use`, run the preflight cleanup and restart preview. Do not change application code for a stale-port failure.
+3. If the log shows a route-generation or import error, fix the exact file path in the stack trace, then restart preview.
+4. If the log shows a deleted shared/legacy component import, replace it with
    scaffold-native or intentionally retained local components. Do not restore a
    removed component library unless it belongs in the target dependency plan.
-4. If the log shows a CSS import error, remove the stale import from `src/styles/globals.css` or add the missing package only when it is intentionally part of the template.
-5. If the log shows `does not provide an export named` from `@tanstack/react-start/server`, move that call inside a valid server boundary.
-6. When logs are unavailable or ambiguous, first verify port ownership and `/api/health`; then run `npm run build` only if dependencies are installed and the managed install is not running.
+5. If the log shows a CSS import error, remove the stale import from `src/styles/globals.css` or add the missing package only when it is intentionally part of the template.
+6. If the log shows `does not provide an export named` from `@tanstack/react-start/server`, move that call inside a valid server boundary.
+7. When logs are unavailable or ambiguous, first verify port ownership and `/api/health`; then run `npm run build` only if dependencies are installed and the managed install is not running.
 
 Useful checks:
 
@@ -108,6 +121,78 @@ rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
 ```
 
 The second command intentionally over-reports. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
+
+### Database bootstrap permission denied (42501)
+
+Error examples:
+
+```text
+DrizzleQueryError: Failed query: create schema if not exists "app_<id>"
+error: permission denied for database project_<id>
+code: '42501'
+dev server exited: exit status 1
+```
+
+Ready-then-crash signature: `npm install` succeeds, Vite reports `VITE v... ready`
+on `5173`, the first SSR request runs the runtime bootstrap, the `create schema`
+query fails with `42501`, and the dev server exits with status 1. Every restart
+repeats the same cycle, so the preview looks briefly ready and then fails.
+Port cleanup, reinstalling dependencies, and editing routes do not change the
+outcome.
+
+Root cause: older Tier0-App-Scaffold apps run
+`create schema if not exists "${DB_SCHEMA}"` inside the runtime bootstrap
+transaction in `src/services/bootstrap.ts`. The platform pre-creates that schema
+with an admin role and grants the app role only `USAGE` and `CREATE` on the
+schema, not `CREATE` on the database. PostgreSQL checks the database privilege
+before it honors `IF NOT EXISTS`, so the statement fails as soon as `DB_SCHEMA`
+is injected (platform change 2026-09-01). The scaffold deleted the block on
+2026-09-03 (PR #63) because the schema is platform-owned; existing apps must
+apply the same deletion in place.
+
+Fix sequence:
+
+1. Confirm the signature: the failed query is `create schema ...` and the error
+   is `42501` / `permission denied for database`. Do not apply this playbook for
+   `permission denied for schema` or `relation ... does not exist`; those are
+   different provisioning or migration problems.
+2. Open `src/services/bootstrap.ts` and delete the whole
+   `if (schemaName) { ... create schema if not exists ... }` block. Leave the
+   advisory lock, `prepare`, table/index creation, and seeding untouched. Keep
+   the `schemaName` variable if the empty-table check still reads it.
+3. Delete the private `quoteIdentifier` helper only if it has no remaining
+   caller; older scaffolds still use it from `tableReference`.
+4. Verify the edit and the types with the checks below. `create schema` must
+   not match; `quoteIdentifier` may still match only while a caller such as
+   `tableReference` remains.
+5. Restart preview once. Tables and indexes are created through the connection
+   `search_path`, which the platform sets from `DB_SCHEMA`, so no schema
+   statement is needed.
+
+Useful checks:
+
+```bash
+rg -n 'create schema|quoteIdentifier' src/services/bootstrap.ts
+npm run typecheck
+```
+
+Do not:
+
+- Wrap the `create schema` statement in `try/catch` or probe
+  `has_database_privilege(...)` to skip it; the statement must be removed.
+- Add an environment switch that toggles schema creation on or off.
+- Move schema creation into a seed callback, `prepare`, or a migration step;
+  the platform owns the schema.
+- Change `DATABASE_URL` or `DB_SCHEMA`, connect as another role, or ask for
+  database-level `CREATE`.
+- Recreate a missing schema from app code. If the injected schema is absent,
+  the app must fail loudly because the platform did not provision it; report a
+  provisioning mismatch instead of working around it.
+
+For a full scaffold alignment of a legacy app, follow the `align-platform-app`
+skill's "Database Startup Or Schema Fails" guidance in its import
+troubleshooting reference, which covers the legacy `CREATE SCHEMA` repair
+together with the rest of the bootstrap contract.
 
 ### Tier0 SDK SSR external mismatch
 
