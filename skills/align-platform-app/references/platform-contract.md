@@ -49,6 +49,9 @@ Required target invariants:
   SSR/page-startup imports.
 - Keep `.agents/skills/` free of vendored Skill content. Platform Builder
   guidance is selected and injected by the App Builder orchestrator.
+- `package.json` top-level `tier0Scaffold` (`{ "version", "ref" }`) is
+  platform-owned: only this Skill writes it, copied from the inspected scaffold
+  commit as the final step after verification passes.
 
 ## SDK Upgrades
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Align Platform App"
   short_description: "Migrate apps or update scoped Tier0 scaffold contracts"
-  default_prompt: "Use $align-platform-app to align this app with the requested Tier0 scaffold baseline, preserving business behavior and limiting changes to the migration or update scope."
+  default_prompt: "Use $align-platform-app to align this app with the requested Tier0 scaffold baseline, preserving business behavior and limiting changes to the migration or update scope, then update tier0Scaffold in package.json after verification passes."

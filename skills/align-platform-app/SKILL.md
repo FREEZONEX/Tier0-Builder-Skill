@@ -5,7 +5,9 @@ description: >-
   an existing Tier0 app with upstream scaffold changes, or migrate app-owned
   browser/mock business persistence to Drizzle/PostgreSQL. Use for explicit
   platform alignment, migration, and scaffold upgrades; ordinary feature or
-  visual edits alone do not require a full alignment audit.
+  visual edits alone do not require a full alignment audit. Also use when an
+  instruction says "align this app to the latest scaffold" or "追平到最新脚手架",
+  or asks to update tier0Scaffold in package.json after aligning.
 ---
 
 # Align Platform App
@@ -16,7 +18,25 @@ within the user's requested scope. The canonical scaffold is
 user chooses a specific ref. A newer template is not permission to overwrite
 business routes, schema, role mappings, branding, or intentional design choices.
 
+At import, the platform compares the app's `package.json` top-level
+`tier0Scaffold` marker with the current scaffold; when it is missing or
+different, the Builder offers the user one of these instructions:
+
+- `/skill:align-platform-app 将本应用追平到最新脚手架，保留业务代码，完成后更新 package.json 的 tier0Scaffold。`
+- `/skill:align-platform-app Align this app to the latest scaffold, keep business code, then update tier0Scaffold in package.json.`
+
+Treat either as an existing scaffold update against the target above, ending
+with the `tier0Scaffold` write-back described under Completion.
+
 ## Choose The Scope
+
+First confirm the app is a Tier0-App-Scaffold app. If it has neither
+`artifact.toml` nor `src/services/bootstrap.ts`, or is otherwise clearly not
+built from the scaffold (for example a static site from another template),
+report "not a Tier0 scaffold app; alignment not applicable" and stop without
+modifying files or writing `tier0Scaffold`. An explicit request to import or
+migrate such an app into the platform shape is the imported app migration
+scope below and still proceeds.
 
 - **Imported app migration:** inventory the source and choose direct conversion
   or a temporary compatibility boundary. Read
@@ -24,7 +44,8 @@ business routes, schema, role mappings, branding, or intentional design choices.
   fragile source, also read
   [compatibility-boundary.md](references/compatibility-boundary.md).
 - **Existing scaffold update:** compare the app's known base, local changes,
-  and target scaffold commit where possible. Classify drift as required platform
+  and target scaffold commit where possible; an existing `tier0Scaffold.ref`
+  in `package.json` identifies the known base. Classify drift as required platform
   contract, app customization, or unrelated change. Patch the requested surfaces
   and their necessary dependencies; do not start a data migration, rebrand, or
   full UI rewrite solely because upstream changed. With no known base, inspect
@@ -165,3 +186,11 @@ cannot be called complete while its required runtime or persistence checks remai
 blocked. Distinguish local edits/packages from platform registration, deployment,
 and remote publication. Keep retained compatibility boundaries and intentional
 app divergence explicit so the next update does not overwrite them.
+
+After every verification passes, and only then, set the app's `package.json`
+top-level `tier0Scaffold` to the exact object in `package.json` of the inspected
+scaffold commit: copy `version` (integer) and `ref` (commit hex) as-is; never
+invent, bump, or derive them. If that scaffold `package.json` has no
+`tier0Scaffold`, do not write the field and say so in the report. Never write
+it while any verification fails, when alignment stopped early, or for a
+non-scaffold app.
