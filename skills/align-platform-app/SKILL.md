@@ -116,10 +116,12 @@ weaken a gate to reconcile contradictory guidance.
   `resolveAppId()` for platform App identity, not the human name, schema name,
   or a hard-coded UUID. Application files use platform File Storage.
 - When updating SDK dependencies, reconcile the package range and lockfile with
-  the selected target. For SDK 0.5.1, preserve intentional silent notifications
-  with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
+  the selected target. The SDK upgrade target is 0.5.3. Preserve intentional
+  silent notifications with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
   Read [the SDK upgrade contract](references/platform-contract.md#sdk-upgrades)
-  for channel, test-mode and MQTT migration details. Skill replacement alone
+  for channel, test-mode and MQTT migration details. For MQTT authentication
+  failures, check installed SDK/key compatibility before replacing credentials
+  or overriding identity. Skill replacement alone
   does not change the installed SDK.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
