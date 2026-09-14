@@ -122,7 +122,9 @@ weaken a gate to reconcile contradictory guidance.
   for channel, test-mode and MQTT migration details. For MQTT authentication
   failures, check installed SDK/key compatibility before replacing credentials
   or overriding identity. Skill replacement alone
-  does not change the installed SDK.
+  does not change the installed SDK. Before a platform API-key type change,
+  apply the [existing-App compatibility prerequisite](references/platform-contract.md#existing-app-api-key-type-changes);
+  do not automatically switch credentials while upgrade/verification is blocked.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
   duplicate outer insets. Station/review/monitor keep their own spacing.
