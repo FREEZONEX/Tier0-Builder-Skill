@@ -32,25 +32,25 @@ problem.
 - The default product language follows the explicit user request, otherwise
   the current conversation language. Do not ship mixed Chinese/English UI
   unless the user explicitly asks for bilingual output.
-- Match visual tone to the use environment, not to industrial keywords alone.
-  Production execution, station, andon, monitor, equipment terminal, and
-  safety-critical screens may use heavier industrial treatment. EMS, WMS, QMS,
-  CRM, inventory, approval, analytics, R&D, office, and management workspaces
-  default to a modern enterprise software style: lighter surfaces, softer
-  corners, clear hierarchy, and practical operational layouts.
-- Every primary page must have a clear visual center. Do not make all panels,
-  cards, filters, and tables share the same weight. Establish a focal working
-  area through hierarchy, contrast, density, active state, or a dominant queue,
-  table, chart, or decision panel.
-- When the user says the page is too plain, too flat, too white, lacks focus,
-  or has no visual center, treat it as a hierarchy repair task. Keep the
-  existing app structure and business logic, but add clearer active states,
-  layered surfaces, semantic accents, selected/priority rows, stronger section
-  headers, or a dominant work area.
-- Preserve the Tier0 theme tokens. The scaffold's `DESIGN.md` and
-  `src/styles/globals.css` own color, radius, typography, and spacing. Tier0
-  signal green remains the identity accent for active, selected, progress,
-  optimistic, and highlight states; do not replace it with a new brand color.
+- Read the current `DESIGN.md`, `src/styles/globals.css`, and relevant shared
+  primitives before changing UI. Preserve their colors, typography, radii,
+  shadows, and base control appearance. A request for a more modern, polished,
+  or attractive UI stays within that system unless the user explicitly asks
+  to change it.
+- Match layout, density, and interaction size to the work environment using
+  the current design system's supported treatments. Workspace, station,
+  review, and monitor contexts do not by themselves authorize a new theme.
+- Give each primary page a clear main work area through position, size,
+  typography, spacing, and density. Avoid meaningless equal-weight card grids;
+  plain sections and dividers can establish hierarchy without new colors.
+- When the page feels too plain, flat, white, or unfocused, improve grouping,
+  proportions, text hierarchy, and existing active/selected states first.
+  Use semantic accents only for their defined meaning. A visual center does
+  not require a colored panel, softer corners, or decorative effects.
+- Composition freedom does not include restyling shared primitives. Use
+  existing variants for appearance and page-level classes for layout; build
+  missing components from existing semantic tokens. Preserve the current
+  design system's identity accent rather than inventing a brand palette.
 - Visible UI actions must connect to real state, route navigation, API/service
   logic, or mutation feedback.
 - Do not run `npx shadcn`, add `components.json`, or copy a bundled
@@ -79,8 +79,8 @@ Read only the references needed for the current UI task:
 
 1. Identify the exact UI defect from the user report, screenshot, route, or
    visible page state.
-2. Read `DESIGN.md`, the target route/component, and existing helpers before
-   editing UI.
+2. Read the root `DESIGN.md`, `src/styles/globals.css`, the target
+   route/component, and existing helpers before editing UI.
 3. Classify the defect: form alignment, required marker, overflow, accidental
    horizontal scroll, select/dropdown clipping, cramped form rows,
    responsive, flat/all-white hierarchy, weak visual center, route shell,
@@ -93,6 +93,10 @@ Read only the references needed for the current UI task:
 7. Check the affected UI at the relevant viewport widths. Use 375px, 768px, and
    desktop for general app pages; use 360-480px portrait for PDA/scanner flows.
 8. Run available lint/build/preview checks, or state why they could not run.
+
+These design instructions do not add UI acceptance gates. Cosmetic deviations
+alone must not block delivery or trigger whole-page regeneration; preserve
+usable work and keep the requested repair scoped.
 
 ## Practical UI Rules
 
@@ -117,17 +121,11 @@ Read only the references needed for the current UI task:
   brand hex values or fork the palette locally.
 - Prefer compact enterprise controls for workspace pages, larger 44-48px
   controls for station, kiosk, PDA, and scan/tap flows.
-- Do not make dark, high-contrast, machine-terminal UI the default for every
-  industrial-related app. Use it only when the workflow environment justifies
-  it. Management and analysis apps should feel like modern software, not a
-  factory terminal.
-- Modern enterprise style must not become flat or empty. Use layered surfaces,
-  stronger section headers, active navigation, semantic accents, dense but
-  readable tables, and one dominant work area so the page has a readable path.
-- Dark mode or dark panels are acceptable when the user asks for them, when the
-  app is for monitors/stations, or when stronger readability/focus is needed.
-  Keep contrast accessible, preserve Tier0 green as the identity accent, and
-  avoid turning dark styling into the default for all management apps.
+- Establish modern enterprise hierarchy through a dominant work area,
+  readable tables, grouping, and the current system's typography and surface
+  styles. Do not introduce dark mode or dark panels merely to add focus;
+  use them only where the current design specification supports them or the
+  user explicitly requests a design-system change.
 - Page title rows contain title, short description/breadcrumb/status text, and
   compact actions only. Put KPI cards, filters, charts, boards, tables, forms,
   and detail panels in sections below.

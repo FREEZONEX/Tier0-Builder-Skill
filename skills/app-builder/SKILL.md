@@ -40,8 +40,9 @@ work. Expose speculative capabilities only if implemented.
 
 ## Implementation
 
-1. Read the SRS, target scaffold instructions, `DESIGN.md`, and relevant existing
-   routes, services, and primitives.
+1. Read the SRS, target scaffold instructions, root `DESIGN.md`,
+   `src/styles/globals.css`, and relevant existing routes, services, and
+   primitives before implementing UI.
 2. Establish the app shell, navigation, and primary business surface. Connect
    the core workflow through validation, service/API mutations, and feedback;
    supporting commitments can be smaller but must remain operable.
@@ -67,6 +68,24 @@ for Tier0 integration rather than inventing clients or credential screens.
 ## UI and Platform Boundaries
 
 Use `DESIGN.md`, tokens, and shared form, overlay, table, and action primitives.
+Preserve their colors, typography, radii, shadows, and base control appearance.
+A request for a more modern, polished, or attractive UI stays within the current
+system unless the user explicitly requests a design-system change. Layout,
+grouping, proportions, density, and interactions remain workflow-specific;
+composition freedom does not include restyling shared primitives. Use existing
+variants for appearance and page-level classes for layout. Build missing
+components from existing semantic tokens.
+
+Give each primary page a clear main work area through position, size,
+typography, spacing, and density. Avoid meaningless equal-weight card grids;
+plain sections and dividers can establish hierarchy. Use existing selected and
+semantic states where meaningful; a visual center does not require a colored
+panel or decorative effect.
+
+These instructions guide generation, not additional UI acceptance gates.
+Cosmetic deviations alone must not block delivery or trigger whole-page
+regeneration; preserve usable work and keep any correction scoped.
+
 Keep controls legible, field groups stable, and dense content within intentional
 scroll regions. Follow the target scaffold's server/client and persistence
 boundaries; normalize raw SQL results with its current helper where required.
