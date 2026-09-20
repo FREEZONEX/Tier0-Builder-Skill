@@ -3,30 +3,26 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-The upstream `main` baseline verified on 2026-09-09 is
-`8a6ac304a12f74e9079afc0871f942017e4d1904`. The SDK upgrade target is
-`da7ebf85fb9352f6623671c5a214f02317eae0f5` on `codex/sdk-051` in the same repository.
-The target is a PR branch, not yet evidence of a merge to `main` or deployment.
-When aligning to default `main`, inspect its actual dependency version; use the
-upgrade target only when the requested scope selects it or it has merged.
+The upstream `main` baseline verified on 2026-09-20 is
+`b25eb2c9a5857daac7abeeaf214ba7395d28710f`, declaring `^0.5.4` and locking SDK
+0.5.4. Scaffold PR #77 has merged. This source snapshot does not prove deployment
+or that any existing App has upgraded. Recheck the selected commit's manifest
+and authoritative lockfile when aligning an App; do not downgrade a newer SDK
+to the historical 0.5.3 MQTT compatibility baseline below.
 
-This Skill reconciles the current contracts:
+This Skill covers the existing role/schema/runtime/File Storage contracts and
+adds the SDK 0.5.3 MQTT upgrade path. Preserve the SDK 0.5.1 notification rules,
+including explicit silent-send migration and test/live message mode.
 
-- No reserved roles or Preview admin fallback; at most three business roles.
-- Platform-owned schema, `appSchema` declarations, typed bootstrap table objects,
-  and guarded local schema sync.
-- Runtime `resolveAppId()`, root icon/cover persistence, and File Storage.
-- SDK upgrade target `^0.5.1`, locked to `0.5.1`, with server-side lazy loading.
-  The preceding main baseline uses `^0.3.4`, locked to `0.3.4`.
-- SDK default notification channels, explicit silent-send migration, message-mode
-  handling without a title prefix, and MQTT broker/WebSocket normalization.
-- Application-dialog guidance and responsive workspace `page-shell`.
-
-The SDK source is `FREEZONEX/Tier0-sdk` at
-`33dfa86f34d3ddad082d64fc0953f7fd6a64691f`; npm `latest` was verified as
-`0.5.1` on 2026-09-09. Its notification Skill is `1.5.5`. These are separate
-source/package facts, not evidence that Builder has loaded a matching Skill or
-that an existing App has upgraded. Recheck them when a task requires freshness.
+SDK PR #33 merged at `d795a4c263ec1a14c7cbd47f0744a29e6ecdeee0`; npm latest was
+verified as 0.5.3 on 2026-09-14. Its published runtime includes the MQTT fixes,
+but the package lacks `check-api-key-compat.mjs` and carries configuration
+reference version 0.2.1 rather than the PR's final 0.2.2. Check actual Skill
+resources before executing a documented diagnostic. Skill reference versions
+are independent of npm package versions; matching version numbers are not a
+publication or compatibility check. These source/package facts do not prove
+Builder has loaded matching guidance or an existing App has upgraded. Recheck
+when freshness matters.
 
 ## Verify A Target Commit
 

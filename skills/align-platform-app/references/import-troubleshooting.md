@@ -17,6 +17,7 @@ platform-contract drift, production runtime behavior, or import packaging.
 - [Responsive Contract Fails](#responsive-contract-fails)
 - [Assets Missing](#assets-missing)
 - [Tier0 SDK Files Or SSR Import Fails](#tier0-sdk-files-or-ssr-import-fails)
+- [MQTT Authentication Fails](#mqtt-authentication-fails)
 - [Auth Or API Calls Fail](#auth-or-api-calls-fail)
 - [Role Appears Changed But Permissions Did Not](#role-appears-changed-but-permissions-did-not)
 - [Migrated App Still Shows Logout](#migrated-app-still-shows-logout)
@@ -142,13 +143,46 @@ Check:
 ## Tier0 SDK Files Or SSR Import Fails
 
 Confirm the target uses the selected scaffold SDK version and matching lockfile;
-the SDK upgrade target is `^0.5.1`. When migrating older notification calls,
+follow the selected scaffold version and never downgrade a newer SDK merely
+to match the 0.5.3 compatibility baseline described here. When migrating older notification calls,
 follow [SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends. Import
 `loadTier0Files` or other lazy helpers from `@/lib/tier0`, then await the loader
 inside the concrete server action. Do not top-level import
 `@tier0/sdk/openapi`, `@tier0/sdk/files`, or `@tier0/sdk/mq`; do not move the SDK
 into `ssr.noExternal`, and do not replace it with hand-written REST/MQ fallback
 clients.
+
+## MQTT Authentication Fails
+
+For `Not authorized`, CONNACK code 5, repeated reconnects, or OpenAPI succeeding
+while MQTT fails, distinguish SDK compatibility from invalid credentials:
+
+1. Read `npm ls @tier0/sdk` in the app runtime, not only `package.json`. Check
+   injected key presence, non-secret type and workspace-encoded format without
+   printing the key. A workspace-encoded non-service key below SDK 0.5.2 needs
+   an upgrade; use the selected scaffold SDK version (at least 0.5.3) for the complete
+   MQTT fixes described here. An
+   OpenAPI HTTP 401 alone does not prove an old SDK: HTTP sends the key opaquely.
+2. When the SDK compatibility script is available, run it from the application
+   root using its actual path in the package or injected SDK Skill. First check
+   that `skills/tier0-sdk/scripts/check-api-key-compat.mjs` exists: the published
+   0.5.3 package lacks that script and the PR's final diagnostic guidance. A
+   missing script is a packaging limitation, not an authentication failure;
+   continue with the version/key checks here. Do not vendor a platform Skill
+   into the App. A successful diagnostic only checks local compatibility.
+3. Reconcile the dependency range and authoritative lockfile for an authorized
+   upgrade. Let managed preview install/restart, then check the actual installed
+   version again. Do not race managed installation with `npm install`.
+4. If the version already supports this key type, inspect injection into the
+   failing runtime, key revocation/expiry/permissions, broker endpoint and
+   `ws`/`wss`, then backend support for the key type. For 0.5.2, also consider
+   the 0.5.3 connect-time password and embedded-port fixes when those paths
+   are used. Do not repeatedly recommend upgrades after those are covered.
+5. Keep credentials and workspace-derived username/clientId out of logs,
+   business settings and hard-coded workarounds. Preserve intentional custom
+   identity only when the deployment calls for it. Disconnect before changing
+   connection credentials; retry the affected connection/subscription and
+   report separately when runtime verification is unavailable.
 
 ## Auth Or API Calls Fail
 

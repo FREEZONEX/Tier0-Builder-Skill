@@ -55,13 +55,17 @@ Required target invariants:
 
 ## SDK Upgrades
 
-The SDK 0.5.1 target is published on npm. Check the selected scaffold commit's
-`package.json` and lockfile as well as the installed version; an older `^0.3.4`
-range cannot resolve to 0.5.1. Update the range and authoritative lockfile together
-when the requested upgrade includes this target. Preserve an explicitly pinned
-user version and report unsupported behavior instead of silently overriding it.
+Use the SDK version in the selected scaffold commit as the upgrade target.
+SDK 0.5.3 is the baseline for the MQTT fixes described below, not a pin or a
+reason to downgrade a newer version. Check the package range, authoritative lockfile, and actual
+installed version separately. An existing `^0.5.1` range permits 0.5.3 but a
+lockfile pinned to 0.5.1 keeps `npm ci` on 0.5.1. Reconcile both when the requested
+upgrade includes this target. Preserve an explicitly pinned user version and
+report unsupported behavior instead of silently overriding it. Managed preview
+owns dependency installation/restart; use a clean lockfile install only in an
+unmanaged checkout.
 
-For notifications through SDK 0.5.1:
+Notification behavior introduced in SDK 0.5.1 remains applicable:
 
 - Omitted or `undefined` channels expand to `['web', 'mobile']`. `web` covers
   Web & Desktop; there is no `desktop` value. Explicit arrays are deduplicated
@@ -82,13 +86,55 @@ For notifications through SDK 0.5.1:
   real notifications solely to validate an upgrade. Delivery requires separate
   authorized environment verification.
 
-For MQTT, use the SDK's `toWebSocketUrl()` for a platform broker string and
-`parseMqttBroker()` when structured endpoint fields are needed. Preserve existing
-WebSocket URL scheme/port/path/query; never concatenate `wss://` with a TCP URL
-or reuse its TCP port. Non-WebSocket inputs use `wssPort` (default 8084). HTTPS
-browser/Worker contexts infer WSS, whereas server conversion needs explicit
-`secure: true` when WSS is required. Handle undefined results as configuration
-errors and preserve platform-injected settings and server-side lazy loading.
+For MQTT, use `toWebSocketUrl()` for a platform broker string and
+`parseMqttBroker()` when endpoint fields are needed. Explicit WebSocket URLs
+retain scheme/port/path/query. For non-WebSocket inputs, `toWebSocketUrl()` uses
+`wssPort` (default 8084); `Tier0MQClient` instead honors a bare `host:port`
+(e.g. `emqx:8083` uses WS in Node.js). Do not reuse an explicit TCP/MQTT URL's
+port for WebSocket. Port 8084 or an HTTPS browser context selects WSS; other
+ports use WS outside HTTPS browsers. `secure: true/false` overrides inference,
+while explicit `ws://`/`wss://` URLs retain transport. A server cannot infer the
+eventual browser's scheme; pass `secure: true` for browser WSS on other ports.
+Handle undefined URL conversion as a configuration error.
+
+Workspace-encoded non-service keys (`sk-<type>-ws<base36>_<secret>`) require SDK
+0.5.2 or later for MQTT identity derivation. Target 0.5.3 for the additional
+connect-time credential and endpoint fixes. Keep the original key as password
+and let the SDK derive username/clientId; legacy keys retain the Enterprise
+fallback. Preserve deliberate deployment-specific overrides, but do not invent
+hard-coded identity to bypass failed authentication. A changed key passed to
+`connect({ password })` recalculates auto-derived fields and preserves each
+explicit identity field. Disconnect an established connection before changing
+credentials and reconnecting.
+
+After a relevant upgrade, verify the installed version following managed
+restart (or clean unmanaged install), then exercise the affected connection and
+subscription in an authorized environment. A build or local key-format check
+does not prove broker authorization or message delivery. For authentication
+failures, follow [MQTT authentication diagnostics](import-troubleshooting.md#mqtt-authentication-fails)
+before changing credentials. Keep platform injection and server-side lazy loading.
+
+### Existing App API-key type changes
+
+Before the platform changes an existing App to a workspace-encoded non-service
+API key, inspect the SDK version actually running in that App and whether it
+uses MQTT. For MQTT apps below 0.5.2, upgrading the SDK is a prerequisite to the
+key-type change; target 0.5.3 for the complete fixes described above. Updating
+the scaffold or replacing a Skill does not upgrade deployed Apps.
+
+Upgrade and restart the App first, confirm the installed version, and verify
+its MQTT connection/subscription. Validate the target key in an authorized
+staging or controlled cutover before retiring the old credential; a successful
+connection using only the old key does not prove the new key works. If upgrade
+or verification cannot be completed, do not automatically switch credentials;
+report the compatibility blocker. Preserve a rollback path for the controlled
+cutover rather than invalidating the working credential first.
+
+An HTTP-only App must not be marked incompatible solely because its SDK is
+below 0.5.2; check the target key's permissions and endpoint support. Unknown
+runtime versions or unknown MQTT usage are unresolved checks, not evidence that
+a switch is safe. This is a requirement for the platform credential-switch
+workflow; this Skill does not implement platform enforcement.
 
 ## Dependency And Lockfile Compatibility
 
