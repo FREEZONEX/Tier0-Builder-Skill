@@ -143,8 +143,8 @@ Check:
 ## Tier0 SDK Files Or SSR Import Fails
 
 Confirm the target uses the selected scaffold SDK version and matching lockfile;
-the SDK upgrade target is `^0.5.3` when selected or merged into the target
-scaffold. When migrating older notification calls,
+follow the selected scaffold version and never downgrade a newer SDK merely
+to match the 0.5.3 compatibility baseline described here. When migrating older notification calls,
 follow [SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends. Import
 `loadTier0Files` or other lazy helpers from `@/lib/tier0`, then await the loader
 inside the concrete server action. Do not top-level import
@@ -160,7 +160,8 @@ while MQTT fails, distinguish SDK compatibility from invalid credentials:
 1. Read `npm ls @tier0/sdk` in the app runtime, not only `package.json`. Check
    injected key presence, non-secret type and workspace-encoded format without
    printing the key. A workspace-encoded non-service key below SDK 0.5.2 needs
-   an upgrade; use the selected 0.5.3 target for the complete MQTT fixes. An
+   an upgrade; use the selected scaffold SDK version (at least 0.5.3) for the complete
+   MQTT fixes described here. An
    OpenAPI HTTP 401 alone does not prove an old SDK: HTTP sends the key opaquely.
 2. When the SDK compatibility script is available, run it from the application
    root using its actual path in the package or injected SDK Skill. First check

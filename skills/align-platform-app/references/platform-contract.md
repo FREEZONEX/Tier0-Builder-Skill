@@ -55,9 +55,9 @@ Required target invariants:
 
 ## SDK Upgrades
 
-The SDK upgrade target is 0.5.3, published on npm. Inspect the selected scaffold
-commit before applying it; the target is not a claim that default main already
-contains the upgrade. Check the package range, authoritative lockfile, and actual
+Use the SDK version in the selected scaffold commit as the upgrade target.
+SDK 0.5.3 is the baseline for the MQTT fixes described below, not a pin or a
+reason to downgrade a newer version. Check the package range, authoritative lockfile, and actual
 installed version separately. An existing `^0.5.1` range permits 0.5.3 but a
 lockfile pinned to 0.5.1 keeps `npm ci` on 0.5.1. Reconcile both when the requested
 upgrade includes this target. Preserve an explicitly pinned user version and
@@ -134,7 +134,7 @@ An HTTP-only App must not be marked incompatible solely because its SDK is
 below 0.5.2; check the target key's permissions and endpoint support. Unknown
 runtime versions or unknown MQTT usage are unresolved checks, not evidence that
 a switch is safe. This is a requirement for the platform credential-switch
-workflow; this Skill do not implement platform enforcement.
+workflow; this Skill does not implement platform enforcement.
 
 ## Dependency And Lockfile Compatibility
 

@@ -3,13 +3,12 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-The upstream `main` baseline verified on 2026-09-14 is
-`eac3951838d402f46a3439a59711f35df984fb50`, declaring `^0.5.1` and locking SDK
-0.5.1. The SDK 0.5.3 update is
-`f8f36eb4f2a3963cabbf79921c47f5c86a9fd1ff` on `codex/sdk-053-mqtt`
-(scaffold v2, marker ref `fb2802a`). Recheck the branch if selected. A PR branch is not evidence of a merge or deployment.
-For default main, inspect the actual dependency version; use the upgrade target
-only when the requested scope selects it or it has merged.
+The upstream `main` baseline verified on 2026-09-20 is
+`b25eb2c9a5857daac7abeeaf214ba7395d28710f`, declaring `^0.5.4` and locking SDK
+0.5.4. Scaffold PR #77 has merged. This source snapshot does not prove deployment
+or that any existing App has upgraded. Recheck the selected commit's manifest
+and authoritative lockfile when aligning an App; do not downgrade a newer SDK
+to the historical 0.5.3 MQTT compatibility baseline below.
 
 This Skill covers the existing role/schema/runtime/File Storage contracts and
 adds the SDK 0.5.3 MQTT upgrade path. Preserve the SDK 0.5.1 notification rules,

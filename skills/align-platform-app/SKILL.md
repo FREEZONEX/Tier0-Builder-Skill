@@ -116,7 +116,8 @@ weaken a gate to reconcile contradictory guidance.
   `resolveAppId()` for platform App identity, not the human name, schema name,
   or a hard-coded UUID. Application files use platform File Storage.
 - When updating SDK dependencies, reconcile the package range and lockfile with
-  the selected target. The SDK upgrade target is 0.5.3. Preserve intentional
+  the selected scaffold target; do not downgrade a newer SDK to 0.5.3. SDK
+  0.5.3 is the baseline for the MQTT fixes described here. Preserve intentional
   silent notifications with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
   Read [the SDK upgrade contract](references/platform-contract.md#sdk-upgrades)
   for channel, test-mode and MQTT migration details. For MQTT authentication
