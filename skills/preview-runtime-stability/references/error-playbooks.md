@@ -186,8 +186,9 @@ Fix sequence:
    Verify the required session secret and any preview-user fields expected by
    the current gateway-header plugin; do not assume they must all be committed
    in `artifact.toml`.
-5. If an effective preview role is supplied, verify that it exactly matches the
-   migrated permission matrix.
+5. If effective preview roles are supplied, verify that every selected role
+   exactly matches the migrated permission matrix. See
+   [Preview role and permission issues](#preview-role-and-permission-issues).
 6. Verify `vite.config.ts` keeps the current preview gateway header plugin before
    `tanstackStart(...)`, so preview requests receive the scaffold's identity
    headers and signed session cookie.
@@ -200,6 +201,59 @@ rg -n 'requireAuth|HttpError|withErrors' src/routes src/services src/lib
 rg -n 'PREVIEW_USER_ROLE|SESSION_SECRET|PREVIEW_USER_ID' artifact.toml
 rg -n 'PERMISSION_MATRIX|ADMIN_ROLE' src/lib/permissions.ts
 ```
+
+### Preview role and permission issues
+
+Symptoms: after the developer selects roles in the web preview, pages show
+"no permission", return `403`, render empty, or hide menus and actions that the
+selected roles should reach. This is an authorization result, not a process or
+port failure; do not restart the preview to fix it.
+
+How preview roles arrive:
+
+- The web preview lets the developer select one role, several roles, or no
+  role. The Gateway injects `X-Tier0-Runtime: preview` plus
+  `X-Tier0-Preview-Role` carrying the selected set, comma-separated (for
+  example `operator,supervisor`). `X-Tier0-Business-Roles` carries the same set
+  and `X-Tier0-Active-Role` the first role, for older apps.
+- The app must use the whole set with the same permission union as deployed
+  mode. The first role is display metadata only.
+- No selected role means no `X-Tier0-Preview-Role`: the app enters with zero
+  roles and zero permissions. There is no admin fallback, so empty pages or
+  `403` in this state are expected.
+
+Common causes:
+
+1. No role is selected in the preview; select roles instead of changing code.
+2. The app was built on a scaffold that still reads `X-Tier0-Preview-Role` as a
+   single value. With several roles selected it sees one unknown role such as
+   `operator,supervisor` and gets zero permissions, while a single selection
+   still works. Align the app with the latest scaffold using the
+   `align-platform-app` skill instead of patching headers locally.
+3. A selected role is missing from `PERMISSION_MATRIX`, `ROLE_METADATA`, or
+   `roles.json`, or its `role_key` differs; a trusted but unknown role enters
+   with zero permissions.
+4. Code authorizes with `primaryRole` / `X-Tier0-Active-Role` or picks a
+   "highest" role, so the second selected role has no effect.
+
+Do not:
+
+- Hard-code a preview role, add an admin fallback, or grant broad access to
+  make preview pages render.
+- Read or write roles through localStorage, sessionStorage, cookies, query
+  parameters, request bodies, or custom headers; role selection belongs to the
+  platform and takes effect on the next request or refresh.
+
+Useful checks:
+
+```bash
+rg -n 'X-Tier0-Preview-Role|getTrustedGatewayRoles|parsePreviewRoles' src/lib
+rg -n 'primaryRole|X-Tier0-Active-Role' src --glob '!src/lib/gateway.ts'
+rg -n 'PERMISSION_MATRIX|ROLE_METADATA' src/lib && cat roles.json
+```
+
+Verify with one selected role, several selected roles (permission union), and
+no selected role (zero roles and permissions).
 
 ### Artifact preview port mismatch
 

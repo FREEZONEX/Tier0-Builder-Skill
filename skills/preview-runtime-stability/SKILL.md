@@ -5,7 +5,9 @@ description: >-
   including install failures, ERESOLVE or lockfile errors, "Failed to load
   preview", preview timeouts, "dev server exited: exit status 1", port 5173
   conflicts, /api/health failures, missing dependencies, stale npm/node
-  processes, broken HMR, or Vite reload issues.
+  processes, broken HMR, Vite reload issues, or preview pages showing no
+  permission / 403 / missing menus for the selected preview roles (one or
+  several view-as roles).
 ---
 
 # Preview Runtime Stability
@@ -27,6 +29,7 @@ Read the first relevant error and identify the failing layer before retrying.
 | Missing dependency, ERESOLVE, unavailable package, install failure | [Error playbooks](references/error-playbooks.md), dependency sections |
 | Dev process exit, SSR/auth error, artifact mismatch, readiness timeout | [Error playbooks](references/error-playbooks.md), matching error section |
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |
+| No permission, `403`, empty pages or missing menus for the selected preview roles | [Error playbooks](references/error-playbooks.md), preview role section |
 | Confirmed stale owned preview process or lifecycle implementation | [Process lifecycle](references/process-lifecycle.md) |
 
 Do not run a second install while managed dependency restoration is active.
