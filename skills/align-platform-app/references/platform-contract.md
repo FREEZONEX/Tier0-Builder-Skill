@@ -204,8 +204,9 @@ App does not own an authentication session.
 
 Resolve roles by runtime:
 
-1. Preview: use `X-Tier0-Preview-Role` as the single developer-selected view-as
-   role.
+1. Preview: use every comma-separated `X-Tier0-Preview-Role` value as the
+   developer-selected view-as role set (one or several roles, same permission
+   union); the first value is primary display metadata.
 2. Deployed: use every comma-separated `X-Tier0-Business-Roles` value.
    Deduplicate roles and keep `X-Tier0-Active-Role` first only as primary display
    metadata.
@@ -283,11 +284,12 @@ Do not delete such a registration or grant broad access just to remove a warning
 
 ## Authentication Verification Environments
 
-Managed preview injects Gateway identity and may provide one view-as role, so a
+Managed preview injects Gateway identity and may provide a view-as role set, so a
 successful preview request does not prove deployed or unauthenticated behavior.
 Separate these surfaces:
 
-- Preview: selected role, and no selected role with zero roles/permissions.
+- Preview: one selected role; several selected roles with permission union; and
+  no selected role with zero roles/permissions.
 - Deployed: two known assigned roles with permission union; known plus trusted
   unknown; explicit empty assigned-role set; active-role display ordering.
 - Legacy: recognized single role and unknown untrusted role failing closed.

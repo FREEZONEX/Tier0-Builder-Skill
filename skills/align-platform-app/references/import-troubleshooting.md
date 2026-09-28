@@ -207,7 +207,8 @@ authorization rule, and related metadata entry was migrated.
 Issue a new request or refresh after platform assignment or preview view-as
 changes. Then verify:
 
-- Preview uses one `X-Tier0-Preview-Role`.
+- Preview uses the comma-separated `X-Tier0-Preview-Role` role set (one or
+  several roles) with the same permission union as deployed mode.
 - Deployed mode unions permissions across every
   `X-Tier0-Business-Roles` value. `X-Tier0-Active-Role` is primary display
   metadata only.

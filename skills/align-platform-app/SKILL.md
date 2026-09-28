@@ -95,7 +95,9 @@ weaken a gate to reconcile contradictory guidance.
 - Gateway owns login, logout, identity, and role assignment. Remove imported
   App-local sessions, logout and role-picker implementations in a full migration.
   Authorize with `user.roles` permission union, never `primaryRole`. Preview
-  without a selected role has zero roles/permissions; there is no admin fallback.
+  uses the comma-separated `X-Tier0-Preview-Role` view-as set (one or several
+  roles) with the same permission union; preview without a selected role has
+  zero roles/permissions; there is no admin fallback.
   Every defined role must be represented in matrix, metadata, and `roles.json`.
   The current first-version gate allows three business roles total; `admin`, if
   business-defined, counts as one. Preserve roleless sources without inventing
