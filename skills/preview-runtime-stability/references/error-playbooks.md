@@ -209,6 +209,22 @@ Symptoms: after the developer selects roles in the web preview, pages show
 selected roles should reach. This is an authorization result, not a process or
 port failure; do not restart the preview to fix it.
 
+How the report reaches you:
+
+- `kind=authz, source=app-role`: a page failed as a whole because of the
+  preview role. The scaffold's route error boundary reports it when a loader
+  gets a `403` or a `Requires role: ...` failure from `requireAuth`. The
+  message is the app's own error, for example `Requires role: supervisor`.
+- `kind=authz, source=role-registration`: the Gateway rejected the role
+  selection itself, for example `role_codes contain roles not available for
+  this sandbox preview`. The selected role keys are not registered business
+  roles of this app; check `roles.json` and the role registration instead of
+  the page code.
+- A page that renders but shows empty data or hides menus produces no report
+  (`403` from API calls stays inside the page). Apps built on an older scaffold
+  report role failures as `kind=app, source=app-route`; a `Requires role:`
+  message there means the same thing.
+
 How preview roles arrive:
 
 - The web preview lets the developer select one role, several roles, or no

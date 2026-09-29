@@ -29,7 +29,7 @@ Read the first relevant error and identify the failing layer before retrying.
 | Missing dependency, ERESOLVE, unavailable package, install failure | [Error playbooks](references/error-playbooks.md), dependency sections |
 | Dev process exit, SSR/auth error, artifact mismatch, readiness timeout | [Error playbooks](references/error-playbooks.md), matching error section |
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |
-| No permission, `403`, empty pages or missing menus for the selected preview roles | [Error playbooks](references/error-playbooks.md), preview role section |
+| Error report with `kind=authz, source=app-role` or `source=role-registration`; no permission, `403`, empty pages or missing menus for the selected preview roles | [Error playbooks](references/error-playbooks.md), preview role section |
 | Confirmed stale owned preview process or lifecycle implementation | [Process lifecycle](references/process-lifecycle.md) |
 
 Do not run a second install while managed dependency restoration is active.

@@ -223,6 +223,12 @@ Authorization rules:
   grants its actions when another trusted assigned role is unknown.
 - A trusted Tier0 runtime role missing from `PERMISSION_MATRIX` enters with zero
   permissions. It does not fail the request and does not elevate.
+- Keep the scaffold's role failure reporting: `requireAuth` throws
+  `Requires role: ...` using `ROLE_REQUIRED_MESSAGE_PREFIX`, and the route
+  error boundary sends preview-bridge kind `role` when `isPreviewRoleError`
+  matches, `app` otherwise. The Builder then reports a preview role problem
+  instead of broken App code; do not reword the message or collapse both kinds
+  into `app`.
 - An unknown role from a forgeable legacy source fails closed.
 - An explicit deployed empty role set stays empty and never receives admin
   fallback.
