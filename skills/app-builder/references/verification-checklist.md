@@ -37,6 +37,9 @@ Use this before reporting a generated app or substantial change as complete.
   surface is in navigation and each module meets its SRS depth tier
   (core-flow operable end to end; master-data CRUD with seeds; supporting
   minimal but real).
+- List-type pages use the target scaffold's `MetaListPage` by default, or have
+  a concrete workflow/user-request exception. Confirm real metadata/query data,
+  permissions and business actions; never count gallery fixtures as integration.
 - List/ledger pages meet the professional density baseline: search, status
   filter chips with live counts, status badges, remaining-days annotations on
   risk-carrying dates, and a risk banner when the data contains risk states.
