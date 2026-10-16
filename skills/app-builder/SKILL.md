@@ -76,6 +76,21 @@ composition freedom does not include restyling shared primitives. Use existing
 variants for appearance and page-level classes for layout. Build missing
 components from existing semantic tokens.
 
+For list-type pages (master data, ledgers, documents, tasks, or searchable
+record collections), default to the target scaffold's `MetaListPage` from
+`@/components/kit/meta/meta-list-page`. Read `docs/component-kit.md` and the
+component props; configure metadata and extend its business-action hooks instead
+of rebuilding search, views, columns, sorting, and pagination. Wire an
+application-scoped `ComponentKitProvider`, a real data adapter, and permissions;
+logical resource paths and gallery fixtures are not implemented app services.
+Enable only capabilities required by the workflow and backed by real services.
+`DataGrid` / `DataTable` are lower-level display tables; `DetailTable` is for
+editable line items, not the default list-page shell. An explicit user choice
+or a concrete mismatch (chart-first report, Kanban/Gantt, scan-first station,
+or embedded detail table) can justify another composition; record the reason.
+If the target scaffold lacks this component, report the compatibility gap and
+follow the authorized alignment scope rather than inventing the import.
+
 Give each primary page a clear main work area through position, size,
 typography, spacing, and density. Avoid meaningless equal-weight card grids;
 plain sections and dividers can establish hierarchy. Use existing selected and

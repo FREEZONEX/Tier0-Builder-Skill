@@ -3,12 +3,25 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-The upstream `main` baseline verified on 2026-09-20 is
-`b25eb2c9a5857daac7abeeaf214ba7395d28710f`, declaring `^0.5.4` and locking SDK
-0.5.4. Scaffold PR #77 has merged. This source snapshot does not prove deployment
-or that any existing App has upgraded. Recheck the selected commit's manifest
-and authoritative lockfile when aligning an App; do not downgrade a newer SDK
-to the historical 0.5.3 MQTT compatibility baseline below.
+The upstream `main` baseline verified on 2026-10-16 is
+`822dfabf2469bc4d64f6d46f44e79b650fe3ab03` (merged scaffold PR #88).
+Its `package.json.tier0Scaffold` is `{ "version": 7, "ref": "3a96b2b" }`;
+the SDK range remains `^0.5.4`, locked to 0.5.4. The repository commit identifies
+the inspected source; the marker's `ref` identifies the content commit stamped
+by the scaffold maintainer. They need not be equal. After successful app
+alignment, copy the selected scaffold's marker object verbatim, not the merge
+SHA or the Skill package version.
+
+This is a verified source snapshot, not a permanent version pin or deployment
+proof. Recheck the selected commit's manifest and authoritative lockfile for
+each alignment; honor a user-selected ref and do not downgrade a newer SDK.
+Since the prior 2026-09-20 v3 snapshot, the relevant additions are the generic
+component kit/provider and its dependencies, component build checks, right-side
+single required markers, and MetaListPage as the default list-page foundation.
+For in-scope UI work, inspect `docs/component-kit.md`, affected components and
+the current `AGENTS.md`; retain application-specific services and permissions.
+The new list default does not require rewriting untouched pages during an
+unrelated platform upgrade.
 
 This Skill covers the existing role/schema/runtime/File Storage contracts and
 adds the SDK 0.5.3 MQTT upgrade path. Preserve the SDK 0.5.1 notification rules,

@@ -199,3 +199,15 @@ invent, bump, or derive them. If that scaffold `package.json` has no
 `tier0Scaffold`, do not write the field and say so in the report. Never write
 it while any verification fails, when alignment stopped early, or for a
 non-scaffold app.
+
+## List-Page Foundation
+
+When the authorized migration or UI alignment includes creating or rebuilding
+list-type pages, default to the selected scaffold's `MetaListPage` and follow
+its `docs/component-kit.md`. Map existing metadata, real query services,
+permissions and business actions through `ComponentKitProvider` and the page's
+extension props. Preserve saved views and existing workflows where applicable;
+do not replace business data with gallery fixtures. Lower-level tables are not
+the default page shell. A concrete workflow mismatch or explicit user choice
+may justify a different composition; record it. This default does not authorize
+rewriting working list pages during an unrelated runtime, SDK or auth alignment.

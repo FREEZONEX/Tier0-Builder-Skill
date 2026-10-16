@@ -104,6 +104,14 @@ usable work and keep the requested repair scoped.
   form grids, line-item sections, record pickers, impact-preview actions),
   repair the defect by converting the broken markup to those primitives instead
   of patching hand-rolled label spans, ad hoc grids, or opaque action buttons.
+- When repairing or rebuilding a list-type page, use the scaffold's existing
+  `MetaListPage` as the default foundation. Prefer its metadata and action hooks
+  over replacing its query, views, columns, sorting, or pagination shell; read
+  `docs/component-kit.md` and preserve the real provider/data/permission adapter.
+  `DataGrid` is a table primitive and `DetailTable` is an editable line-item
+  component. Explicit user choices or concrete report/board/station/embedded
+  workflows may use another composition. Do not turn a narrow visual repair
+  into a whole-page migration or scaffold upgrade solely to meet this default.
 - Keep components app-specific. Put reusable pieces under
   `src/components/<domain>/`; keep one-off pieces next to the owning route.
 - Use `cn()` from `@/lib/utils` for conditional classes.
