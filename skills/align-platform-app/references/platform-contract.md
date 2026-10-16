@@ -306,6 +306,13 @@ button, badge, card, page-header, filter, risk, empty-state, stat, form—includ
 provides them. Do not fork token values or hand-roll equivalent primitives in
 migrated routes.
 
+When frontend alignment touches forms, required titles use `FieldGroup required`
+or `FieldLabel required` with plain text: one red asterisk on the right. Keep
+control validation and `required` / `aria-required` separate from the marker.
+For list pages created or rebuilt within the requested scope, follow the
+entrypoint's MetaListPage default and the selected scaffold's component-kit
+provider/data/permission contract. Preserve working pages outside that scope.
+
 Preserve and complete the in-scope business-object lifecycle on management routes;
 do not add unrelated operations during a partial scaffold update. A
 workspace route is intentionally read-only only when it is a monitor, report,
