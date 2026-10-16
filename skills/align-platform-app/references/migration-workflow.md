@@ -103,7 +103,9 @@ modeled. Do not report storage cutover as full domain migration.
 
 ## 3. Migration Order
 
-Prefer this sequence:
+Apply this sequence after external-app migration is authorized under
+`SKILL.md`'s scope rules. Before confirmation, keep the inventory and migration
+recommendation read-only.
 
 1. Establish the selected scaffold's platform shell and build/runtime contract
    when the source lacks them, including `artifact.toml`, production and preview

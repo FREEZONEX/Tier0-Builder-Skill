@@ -25,10 +25,11 @@ different, the Builder offers the user one of these instructions:
 - `/skill:align-platform-app 将本应用追平到最新脚手架，保留业务代码，完成后更新 package.json 的 tier0Scaffold。`
 - `/skill:align-platform-app Align this app to the latest scaffold, keep business code, then update tier0Scaffold in package.json.`
 
-Treat either as a request to align against the target above. Choose an existing
-scaffold update or imported app migration from the source structure; the user
-does not need to send a separate migration request for a non-scaffold app.
-Finish with the `tier0Scaffold` write-back described under Completion.
+Treat either as a request to align against the target above. Inspect the source
+structure first: proceed with an existing scaffold update, or ask for migration
+confirmation for a non-scaffold app as described below. These generic alignment
+instructions alone do not authorize external-app migration. After the authorized
+work passes verification, finish with the `tier0Scaffold` write-back under Completion.
 
 ## Choose The Scope
 
@@ -38,13 +39,18 @@ integration to choose the path. Missing `artifact.toml`,
 `src/services/bootstrap.ts`, or `tier0Scaffold` indicates gaps to investigate,
 not grounds to reject alignment. A missing version marker alone does not make
 an existing scaffold app an external app; a marker alone does not prove
-compatibility. Route a clearly non-scaffold app (including a static site from
-another template) into imported app migration and proceed. Explain the required
-conversion without asking the user to authorize the same alignment again.
+compatibility. For a clearly non-scaffold app (including a static site from
+another template), inspect it read-only, recommend alignment, summarize the
+required migration and its effects on runtime, auth, and data, then ask whether
+to proceed. Present alignment as the recommended choice, but wait for the user's
+answer before modifying files or writing `tier0Scaffold`. If the user declines,
+leave the app unchanged and report any observed compatibility limitations.
+If the user has already explicitly authorized migration of this external app
+into the Tier0 scaffold, proceed without asking again.
 Uploading a package alone is not a request to modify it; review-only requests
 remain read-only.
 
-- **Imported app migration:** inventory the source and choose direct conversion
+- **Imported app migration:** after migration is authorized, inventory the source and choose direct conversion
   or a temporary compatibility boundary. Read
   [migration-workflow.md](references/migration-workflow.md); for a large or
   fragile source, also read

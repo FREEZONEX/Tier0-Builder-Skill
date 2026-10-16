@@ -23,8 +23,8 @@
 The target is the Tier0 TanStack Start scaffold, aligned to the latest
 `FREEZONEX/Tier0-App-Scaffold` `main` branch unless the user explicitly asks to pin
 an older template. Keep the scaffold's platform contract intact while importing
-or updating app functionality. For an external source, establish missing target
-entry points and platform files while migrating business behavior; the source
+or updating app functionality. For an external source with migration authorized,
+establish missing target entry points and platform files while migrating business behavior; the source
 does not need to contain scaffold files before alignment can begin.
 
 Required target invariants:
