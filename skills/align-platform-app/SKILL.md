@@ -25,18 +25,24 @@ different, the Builder offers the user one of these instructions:
 - `/skill:align-platform-app 将本应用追平到最新脚手架，保留业务代码，完成后更新 package.json 的 tier0Scaffold。`
 - `/skill:align-platform-app Align this app to the latest scaffold, keep business code, then update tier0Scaffold in package.json.`
 
-Treat either as an existing scaffold update against the target above, ending
-with the `tier0Scaffold` write-back described under Completion.
+Treat either as a request to align against the target above. Choose an existing
+scaffold update or imported app migration from the source structure; the user
+does not need to send a separate migration request for a non-scaffold app.
+Finish with the `tier0Scaffold` write-back described under Completion.
 
 ## Choose The Scope
 
-First confirm the app is a Tier0-App-Scaffold app. If it has neither
-`artifact.toml` nor `src/services/bootstrap.ts`, or is otherwise clearly not
-built from the scaffold (for example a static site from another template),
-report "not a Tier0 scaffold app; alignment not applicable" and stop without
-modifying files or writing `tier0Scaffold`. An explicit request to import or
-migrate such an app into the platform shape is the imported app migration
-scope below and still proceeds.
+Recommend alignment for both scaffold-based and external apps. When alignment
+is requested, inspect the framework, entry points, runtime files, and platform
+integration to choose the path. Missing `artifact.toml`,
+`src/services/bootstrap.ts`, or `tier0Scaffold` indicates gaps to investigate,
+not grounds to reject alignment. A missing version marker alone does not make
+an existing scaffold app an external app; a marker alone does not prove
+compatibility. Route a clearly non-scaffold app (including a static site from
+another template) into imported app migration and proceed. Explain the required
+conversion without asking the user to authorize the same alignment again.
+Uploading a package alone is not a request to modify it; review-only requests
+remain read-only.
 
 - **Imported app migration:** inventory the source and choose direct conversion
   or a temporary compatibility boundary. Read
@@ -84,9 +90,12 @@ weaken a gate to reconcile contradictory guidance.
 
 ## Apply The Relevant Contracts
 
-- Keep the existing TanStack Start project; do not reinitialize it or introduce
-  Next.js patterns. Preserve the scaffold production entry, health/manifest,
-  router/root, Gateway and Vite boundaries; reconcile changes to these files
+- For an existing scaffold app, keep its TanStack Start project without
+  reinitializing it. For an external app, establish the inspected scaffold's
+  target structure and bring over business code through direct conversion or
+  a compatibility boundary; do not overwrite it with a blank template. Do not
+  introduce Next.js patterns into the target. Preserve the scaffold production
+  entry, health/manifest, router/root, Gateway and Vite boundaries; reconcile changes to these files
   deliberately when platform/runtime alignment is the task. Never hand-edit
   generated `src/routeTree.gen.ts`.
 - Preserve route semantics. A nested list/detail resource needs an outlet and
@@ -197,8 +206,9 @@ top-level `tier0Scaffold` to the exact object in `package.json` of the inspected
 scaffold commit: copy `version` (integer) and `ref` (commit hex) as-is; never
 invent, bump, or derive them. If that scaffold `package.json` has no
 `tier0Scaffold`, do not write the field and say so in the report. Never write
-it while any verification fails, when alignment stopped early, or for a
-non-scaffold app.
+it while any verification fails, when alignment stopped early, or while the
+app has not met the target scaffold contracts. An app that started outside the
+scaffold receives the same marker after its migration and verification pass.
 
 ## List-Page Foundation
 

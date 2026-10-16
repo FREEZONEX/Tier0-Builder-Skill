@@ -105,7 +105,10 @@ modeled. Do not report storage cutover as full domain migration.
 
 Prefer this sequence:
 
-1. Stabilize the platform shell and build/runtime contract.
+1. Establish the selected scaffold's platform shell and build/runtime contract
+   when the source lacks them, including `artifact.toml`, production and preview
+   entries. Preserve existing business source while converting or adapting it;
+   missing scaffold files are migration work, not a reason to stop alignment.
 2. Read current `DESIGN.md`; bring in assets, global styles, and source
    providers behind an explicit boundary while composing scaffold primitives.
    Apply workspace `page-shell` and asynchronous dialog migration as described
@@ -289,7 +292,8 @@ For the whole app, verify:
   `tier0Scaffold` equals the object in the inspected scaffold commit's
   `package.json` (`version` integer and `ref` hex copied as-is). If the scaffold
   has no such field, it stays absent here and the report says so. It is never
-  written for a partial, blocked, or non-scaffold alignment.
+  written for a partial or blocked alignment, or before the target scaffold
+  contracts are met. A fully migrated external app receives the same marker.
 
 Run persistence acceptance through real HTTP requests against the running app,
 not direct service calls or an in-memory test substitute:
