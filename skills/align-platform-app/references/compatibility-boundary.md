@@ -28,8 +28,8 @@ new scaffold-native modules.
 ## Rules
 
 - Do not edit generated route tree files by hand.
-- Do not put direct database access, platform credentials, or server-only APIs
-  inside legacy client code.
+- Do not put database access, UNS server calls (`@/lib/uns.server`), platform
+  credentials, or server-only APIs inside legacy client code.
 - Do not let legacy code require Next.js runtime APIs in the target client.
 - For imported/migrated apps, do not preserve legacy custom login/register,
   user-visible logout/sign-out, switch-role, role-picker, or impersonation UI,
@@ -48,15 +48,16 @@ new scaffold-native modules.
 - A single adapter may temporarily expose LocalStorage, sessionStorage,
   IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility and
   explicit legacy-data export/import.
-- Do not add new durable business writes to that adapter. PostgreSQL becomes the
-  only source of truth as each entity is cut over.
-- Do not catch API/database errors and fall back to legacy local data or report a
+- Do not add new durable business writes to that adapter. The entity's
+  app-owned UNS collection becomes the only source of truth as it is cut over.
+- Do not catch API/UNS errors and fall back to legacy local data or report a
   local write as success. Surface the failure and keep retry semantics explicit.
 - Keep legacy import versioned, validated, idempotent, conflict-aware, and
   separate from ordinary application reads.
-- Preserve idempotent runtime DDL bootstrap, but do not let the boundary or its
-  adapters auto-insert demo, sample, or baseline rows for migrated durable
-  business entities during startup or a first request.
+- Collection definitions converge on first use (`defineAppCollection`), but do
+  not let the boundary or its adapters auto-insert demo, sample, or baseline
+  records for migrated durable business entities during startup or a first
+  request.
 - Keep a roleless source roleless. For a role-aware source, preserve every role
   definition, user-role and permission mapping, menu/page/action guard, API
   authorization rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json`
@@ -71,11 +72,11 @@ new scaffold-native modules.
 Start removing the boundary only when:
 
 - Equivalent scaffold-native routes exist.
-- Durable data dependencies use Drizzle schema, the current scaffold runtime
-  bootstrap / `db:push` contract, services, thin APIs, and API-backed clients.
+- Durable data dependencies use app-owned collections declared in services
+  (`defineAppCollection`), thin APIs, and API-backed clients.
 - Required legacy data has been imported and reconciled, or an intentional reset
   decision is recorded.
-- No production durable CRUD or DB-failure fallback depends on browser storage,
+- No production durable CRUD or UNS-failure fallback depends on browser storage,
   persisted Zustand slices, IndexedDB, memory mocks, or fixtures.
 - Layout and navigation are native to the target shell, with no user-visible
   logout/sign-out or app-managed role-switch, role-picker, or impersonation
@@ -90,7 +91,7 @@ Start removing the boundary only when:
   baseline rows for migrated durable business entities.
 - Global CSS side effects are resolved.
 - Primary workflows have current verification evidence, including reload/restart
-  durability and database failure behavior.
+  durability and UNS failure behavior.
 
 ## Common Failure Modes
 
@@ -104,7 +105,7 @@ Start removing the boundary only when:
 - Browser-only code executes during SSR and breaks hydration.
 - A legacy personal menu still writes a role cookie or client role state, causing
   application state to diverge from Gateway-assigned roles.
-- A migrated business table is repopulated with demo or baseline rows because a
+- A migrated business collection is repopulated with demo or baseline rows because a
   legacy runtime seed callback still runs during startup or the first request.
 - A copied `.agents/skills/` tree silently freezes old platform guidance inside
   the App.

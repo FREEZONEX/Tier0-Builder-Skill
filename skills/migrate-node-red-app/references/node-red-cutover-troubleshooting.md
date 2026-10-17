@@ -14,8 +14,9 @@ forward to Node-RED. Browser network silence proves only browser cutover.
 
 Trace adjacent function/change/switch nodes, error branches, context writes,
 multi-step database nodes, derived fields, and audit messages. A replacement
-endpoint that performs one table write may omit the source transaction or state
-machine.
+endpoint that performs one record write may omit the source's multi-step
+atomicity or state machine; model it with `transact([...])` (atomic across
+app collections) or a guarded `findOneAndUpdate` per transition.
 
 ## State Reappears Or Differs After Restart
 
@@ -43,11 +44,11 @@ Check idempotency-key derivation, unique enforcement, claim/lease semantics,
 retry behavior after timeouts, acknowledgement handling, and source/target
 parallel operation. Do not rely on a UI-disabled button as idempotency control.
 
-## JSONB Storage Was Reported As Full Migration
+## Compatibility Document Storage Was Reported As Full Migration
 
 Inspect whether relationships, uniqueness, indexes, concurrency checks, state
-transitions, reporting fields, and transaction boundaries are modeled outside
-the JSON document. If not, keep `persistence_mode=compatibility_jsonb` and record
+transitions, reporting fields, and multi-step write ordering are modeled outside
+the JSON document. If not, keep `persistence_mode=compatibility_document` and record
 the normalization plan.
 
 ## Node-RED Was Reported Retired Without Operations Evidence

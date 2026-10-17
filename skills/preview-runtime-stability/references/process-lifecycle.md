@@ -62,7 +62,7 @@ Run the lifecycle test:
 
 ## Implementation Notes
 
-- Prefer `127.0.0.1` for in-Pod health checks.
+- Prefer `127.0.0.1` for in-sandbox health checks.
 - Record `pid`, `pgid`, `session_id`, `task_id`, `port`, and `health_url` for every preview start.
 - Add logs for `port_occupied`, `health_status`, `reuse_existing_preview`, `cleanup_unhealthy_preview`, `sigterm_sent`, `sigkill_sent`, and `port_free_after_stop`.
 - If `lsof` is unavailable in the image, install it or provide an equivalent port-to-PID resolver. The bundled scripts can also use `fuser` or `ss` when available.

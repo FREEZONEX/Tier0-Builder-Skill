@@ -21,9 +21,9 @@ platform-contract drift, production runtime behavior, or import packaging.
 - [Auth Or API Calls Fail](#auth-or-api-calls-fail)
 - [Role Appears Changed But Permissions Did Not](#role-appears-changed-but-permissions-did-not)
 - [Migrated App Still Shows Logout](#migrated-app-still-shows-logout)
-- [Database Startup Or Schema Fails](#database-startup-or-schema-fails)
-- [Migrated Business Rows Reappear Automatically](#migrated-business-rows-reappear-automatically)
-- [Runtime Seed Dates Fail On First Load](#runtime-seed-dates-fail-on-first-load)
+- [App Data Or Collection Access Fails](#app-data-or-collection-access-fails)
+- [Migrated Business Records Reappear Automatically](#migrated-business-records-reappear-automatically)
+- [Seed Records Duplicate Or Fail On First Load](#seed-records-duplicate-or-fail-on-first-load)
 - [Artifact Args Fail At Deploy](#artifact-args-fail-at-deploy)
 - [Build Passes But A Promise Is Used As A Map](#build-passes-but-a-promise-is-used-as-a-map)
 - [Import Package Fails](#import-package-fails)
@@ -32,8 +32,8 @@ platform-contract drift, production runtime behavior, or import packaging.
 
 A warning such as `Module "fs" has been externalized for browser compatibility`
 means a client or mixed route, router, component, shared wrapper, or transitive
-dependency statically imports Node-only code. Move `fs`/`path`/`url`/`pg` and
-bootstrap/seed work into the scaffold's server-only boundaries or services. Keep
+dependency statically imports Node-only code. Move `fs`/`path`/`url`,
+`@/lib/uns.server` and collection/seed work into the scaffold's server-only boundaries or services. Keep
 `src/start.ts`, API handlers, and `createServerFn` handler bodies server-only; do
 not make the client graph depend on their implementations.
 
@@ -239,48 +239,61 @@ code, and logout/select-role endpoints. Keep `/api/auth/me` and the hidden
 `/login` auth-error bridge when present in the current template. Do not read,
 write, or clear the Gateway login Cookie. Logout is platform-owned for every App.
 
-## Database Startup Or Schema Fails
+## App Data Or Collection Access Fails
 
-- An API 500 with `Failed query: create schema if not exists ...` or
-  `permission denied for database ...` (PostgreSQL `42501`) can surface as
-  `Couldn't load data` / `Internal error`. Inspect the failed SQL and server error before assigning a
-  cause; the frontend message alone does not identify a schema-permission issue.
-- When legacy `src/services/bootstrap.ts` or another startup/request path issues
-  `CREATE SCHEMA`, remove that statement, including its `IF NOT EXISTS` form.
-  The platform provisions `DB_SCHEMA`; the App account need not have database-level
-  schema-creation permission. Preserve idempotent table/index bootstrap inside
-  that existing schema. Do not add an admin connection, grant database-level
-  `CREATE`, or remove `DB_SCHEMA` as a workaround.
-- If the injected schema is actually absent, report a platform provisioning or
-  environment mismatch. Do not recreate it in App code or silently switch schemas.
-- Declare tables/enums through `appSchema` in `src/db/schema.ts` and pass table
-  objects to `bootstrapModule()`. Use `db:push:check` before guarded sync;
-  do not turn on destructive sync merely to get startup working.
-- Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
-  the same platform-injected `DB_SCHEMA`, with `public` only as the documented
-  fallback when it is absent.
-- Verify with the preview App account: first access initializes business tables
-  and indexes in the existing schema, the previously failing API succeeds, and
-  repeat access (plus a restart when controllable) remains idempotent. Confirm
-  startup/request paths no longer issue `CREATE SCHEMA`; a build alone does not
-  prove the permission failure is fixed.
+- **Leftover database layer.** Errors such as `DATABASE_URL is not set`,
+  `ECONNREFUSED ...:5432`, `relation ... does not exist`, a failing
+  `app-data-contracts` test, or an ESLint `no-restricted-imports` error for
+  `pg` / `drizzle-orm` / `@/db` mean the app still uses the database of an older
+  scaffold. The platform no longer injects a database. Move the tables to
+  app-owned collections (`local-state-to-collections.md`) and delete `src/db/`,
+  `drizzle.config.ts`, `db:*` scripts and the dependencies; do not reintroduce a
+  connection string or an embedded database.
+- **503 / `not_configured`.** `TIER0_API_HOST`, `TIER0_API_KEY` or
+  `TIER0_APP_COLLECTION_PREFIX` (fallback: the App UUID in `APP_ID`) are
+  missing. They are injected in Preview and deployed runs; in plain local
+  development show the `isUnsConfigured()` empty state. Never hard-code a key
+  or a prefix.
+- **403 on a write or collection change.** The app key may write, PATCH and
+  purge only its own `app.<appKey>.*` collections. A write to another
+  collection (plant data, another app's collection) is forbidden by design;
+  read it instead, or store the app's own derived data in an app collection.
+  A hard-coded prefix copied from another app also yields 403 — resolve ids
+  with `appCollectionId(name)`.
+- **400 `validation_failed`.** The record does not satisfy the collection's
+  `recordSchema` (after merge for PATCH). Fix the data or relax the schema;
+  adding a `required` field to a collection with existing records makes old
+  records fail on their next merge write — add fields as optional or backfill.
+- **409.** Read `err.code`: `duplicate_key` (the id or a unique index value
+  exists — treat as "already exists" for idempotent seeds / imports, or use an
+  upsert), `conflict` (stale `revision`), `precondition_failed` (a `transact`
+  op with `require: "matched"` matched nothing), `lock_lost` (the lease
+  expired). A state transition that lost a race shows up as
+  `findOneAndUpdate` returning `null`, not as an error. 412
+  `precondition_failed` is a stale `ifMatch` ETag; 423 `locked` means another
+  user / worker holds a lease (`err.lockPrincipal`, `err.lockedUntil`).
+- **400 `upsert_requires_unique_index` / `lookup_requires_index`.** Declare the
+  field as an object-form index (`{ path, unique: true }` / `{ path }`) in the
+  collection definition; the handle waits for it to be built.
+- Verify with the preview App: first access creates the collections, the
+  failing API succeeds, repeat access and a restart stay idempotent (no
+  duplicate records, no repeated PATCH churn).
 
-## Migrated Business Rows Reappear Automatically
+## Migrated Business Records Reappear Automatically
 
-Keep the current scaffold's idempotent table/index bootstrap in the platform-provisioned
-schema, but remove
-seed callbacks that insert demo, sample, or baseline rows for migrated durable
-business entities during normal startup or a first request. Retained legacy rows
-must enter through an explicit validated import; development/test fixtures must
-run only through an explicit development or test action.
+Do not declare `seed` callbacks that insert demo, sample, or baseline records
+for migrated durable business entities. `seed` runs whenever a collection is
+new or empty; retained legacy records must enter through an explicit validated
+import, and development/test fixtures must run only through an explicit
+development or test action.
 
-## Runtime Seed Dates Fail On First Load
+## Seed Records Duplicate Or Fail On First Load
 
-Use `seedDate(offsetDays)` for Drizzle `date()` columns and
-`seedTimestamp(offsetDays, utcHour?)` for `timestamp()` columns. Write runtime
-baseline data through typed transactional `tx.insert()` / `tx.update()` /
-`tx.delete()` builders. Do not use raw SQL for data writes or pass the numeric
-return value of `Date#setDate()`, `setUTCDate()`, or `setTime()`.
+Seed records need fixed ids: a retry or a second process then gets 409 and
+leaves the record alone, while `randomUUID()` / `Date.now()` ids create
+duplicates (the runtime audit rejects them). Build dates with `seedDate()`,
+`seedTimestamp()` (ISO strings) or `seedTimeMs()` (Unix ms); do not pass the
+numeric return value of `Date#setDate()`, `setUTCDate()`, or `setTime()`.
 
 ## Artifact Args Fail At Deploy
 

@@ -11,7 +11,7 @@
 - [App Identity And Design Contract](#app-identity-and-design-contract)
 - [Data And Server Boundary](#data-and-server-boundary)
 - [Server, Client, And Node-Only Module Boundary](#server-client-and-node-only-module-boundary)
-- [Database Schema And Runtime Bootstrap Contract](#database-schema-and-runtime-bootstrap-contract)
+- [App Data Contract (App-Owned Collections)](#app-data-contract-app-owned-collections)
 - [Build And Preview Contract](#build-and-preview-contract)
 - [Migration Quality Gate](#migration-quality-gate)
 - [Artifact Contract](#artifact-contract)
@@ -343,7 +343,7 @@ Keep App identity centralized in `src/lib/app-chrome.ts`:
 - Use `resolveAppId()` from `@/lib/app-id` at runtime for technical identity
   such as notification `sender.id`. `APP_ID` is the platform App UUID;
   `local-app` is a local-only fallback. Never hard-code the current UUID or
-  equate it to the human App name or `DB_SCHEMA`.
+  equate it to the human App name or the collection prefix.
 
 ### Workspace Spacing And Dialogs
 
@@ -380,8 +380,10 @@ handlers, custom middleware, or Node server files. Reclassify that code:
   only when they are not authoritative business records.
 - Shared client requests should use scaffold hooks or explicit abort-safe fetch.
 - HTTP handlers belong in `src/routes/api/**` and stay thin.
-- Business logic, invariants, and transactions belong in `src/services/**`.
-- Database access belongs behind services only.
+- Business logic, invariants, and lifecycle transitions belong in
+  `src/services/**`.
+- UNS access (`@/lib/uns.server`) belongs behind services and server route
+  handlers only. There is no app database.
 - External platform I/O uses the scaffold SDK lazy loaders: at the verified
   snapshot these include `loadTier0OpenApi`, `loadTier0Files`,
   `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi`, and `loadTier0Mq`.
@@ -393,20 +395,20 @@ handlers, custom middleware, or Node server files. Reclassify that code:
   `package.json` name `scaffold`. Resolve the human App name from requirements
   or branding; use `APP_ID` or `/api/manifest` `appId` only as the distinct
   technical identifier.
-- App-owned durable business data uses PostgreSQL as its single source of truth
-  and migrates in this order: Drizzle schema -> current scaffold
-  `bootstrapModule()` / `db:push` contract -> service -> API -> client.
+- App-owned durable business data uses app-owned UNS collections as its single
+  source of truth and migrates in this order: collection definition
+  (`defineAppCollection`) -> service -> API -> client.
 - LocalStorage, sessionStorage, IndexedDB, Zustand persist, in-memory mocks, and
-  fixtures must not back production durable CRUD or serve as database-failure
+  fixtures must not back production durable CRUD or serve as UNS-failure
   fallback.
-- Existing local durable data may enter PostgreSQL only through an explicit,
+- Existing local or database data may enter app collections only through an explicit,
   validated, idempotent import with defined identity/conflict handling and
   reconciliation evidence.
 - Store application-generated and user-uploaded files through the platform
   File Storage API, not the sandbox filesystem.
-- Existing database schema/migration behavior and any explicit development/test
-  fixture setup should move into the scaffold data layer only when the app owns
-  that persistence.
+- An existing database schema (including the Drizzle `src/db/` layer of an older
+  scaffold) maps to app-owned collections when the app owns that persistence;
+  data owned by another system stays there and is read from its UNS collection.
 
 ## Server, Client, And Node-Only Module Boundary
 
@@ -414,56 +416,70 @@ Respect the latest scaffold's explicit boundaries:
 
 - Route components, UI components, `src/router.tsx`, client hooks, and shared
   wrappers are client or mixed modules. Do not statically pull Node-only `fs`,
-  `path`, `url`, `pg`, bootstrap, or seed modules into their browser graph.
+  `path`, `url`, `@/lib/uns.server`, or seed modules into their browser graph.
 - `src/start.ts`, API route handlers, and `createServerFn` handler bodies are
   server-only boundaries. Keep server work there or in services called from those
   boundaries; do not force `src/start.ts` through a browser-safe wrapper.
-- Runtime database bootstrap belongs in `src/services/**` through the current
-  scaffold `bootstrapModule()` contract, not in client or shared modules.
+- App collection declarations (`defineAppCollection`) and their seeds belong in
+  `src/services/**`, not in client or shared modules.
 - Treat `react-router-dom` `BrowserRouter` as browser-only compatibility code.
   Render it inside the scaffold `ClientOnly` boundary so SSR does not evaluate
   `document`-dependent setup.
 
-## Database Schema And Runtime Bootstrap Contract
+## App Data Contract (App-Owned Collections)
 
-Use the platform-injected `DB_SCHEMA` as the application schema source of truth;
-fall back to `public` only when it is absent, as the current scaffold does. Runtime
-queries, `bootstrapModule()`, and any `db:push` verification must resolve to the
-same schema.
+Apps have no database, no `DATABASE_URL` / `DB_SCHEMA`, and no migration step.
+The app's own business data lives in UNS collections whose ids start with the
+platform-injected `TIER0_APP_COLLECTION_PREFIX` (`app.<first 12 hex of the App
+id>.`). Resolve ids at runtime with `appCollectionId(name)` or a
+`defineAppCollection` handle; never hard-code the prefix (an imported app gets
+a new App id). The platform records the owner (`ownerApp`), purges these
+collections when the app is deleted, and purges them on template-library
+preview reset.
 
-The platform provisions the database schema. App runtime must never execute
-`CREATE SCHEMA`, even with `IF NOT EXISTS`: the runtime account need not have
-that database-level privilege. Remove legacy runtime creation when aligning;
-verify the injected schema exists separately. `IF NOT EXISTS` does not remove
-the schema-creation privilege requirement. Do not add admin credentials, grant
-database-level `CREATE`, or unset `DB_SCHEMA` to bypass the failure. If the
-injected schema is missing, report provisioning failure instead of creating it
-in App startup or request code.
+The app key may create, PATCH, purge (`DELETE ?purge=true`) and write only
+its own collections; every other collection is read-only (403 on writes). Do
+not work around a 403 by copying workspace data into app collections; read it
+where it lives.
 
-Declare all tables/enums with `appSchema.table(...)` / `appSchema.enum(...)` in
-`src/db/schema.ts`, never bare `pgTable`/`pgEnum` or declarations elsewhere.
-Pass declared table objects to `bootstrapModule()` and await each module's
-shared bootstrap promise before queries. Undeclared runtime tables can be
-removed by platform schema sync; runtime-only DDL is not a durable declaration.
+Declare each collection once in its owning service:
+`defineAppCollection<T>(name, { name?, description?, recordSchema, sampleSchema?, recordMode?, indexes? }, { seed? })`.
+Every handle method awaits `ready()`: GET; 404 → create; definition differs →
+PATCH; 409 race → re-read; new object-form indexes (`{ path, unique?, kind? }`)
+are awaited until built; once per process, failures not cached. Schema
+changes do not rewrite existing records: add fields as optional or backfill
+them in the service. `resetAppCollection(name)` deletes a collection with all
+records and samples and is only for explicit reset actions.
 
-Before local sync, use `npm run db:push:check`, then the guarded `npm run db:push`.
-Do not bypass a DROP/TRUNCATE refusal. Use `DB_SYNC_ALLOW_DESTRUCTIVE=1` only for
-an explicitly authorized destructive plan with backup/recovery accounted for.
-Ordinary startup must not depend on having run `db:push` or bulk `db:seed`.
+Collections are queried and written like MongoDB (scaffold
+`docs/uns-data.md`): `find` (filters, projection, sort, `nextCursor`,
+`lookup`), `count` / `distinct` / `aggregate`; state transitions with
+`findOneAndUpdate` and the current state in the filter (`null` → 409),
+counters with `$inc`, natural keys with a unique index + upsert, bulk changes
+with `updateManyAll` / `deleteManyAll`, atomic multi-collection writes with
+`transact([...])`, edit locks / work queues with `lock()` leases (423 for
+other writers). Differences: strict types (`5` ≠ `"5"`), no implicit array
+traversal, upsert without `_id` needs a ready unique index, writes only to the
+app's own collections. Do not port read → modify → write-with-`revision`
+retry loops; make retries idempotent with deterministic ids or
+`idempotencyKey`. Live updates: `useUnsChanges` record events are full
+documents (replace, never merge); `applyUnsChange` maintains a list.
 
-Runtime bootstrap is for idempotent table/index DDL inside the provisioned schema. For
-imported/migrated durable business entities, normal startup and first-request
-paths must not auto-insert demo, sample, or baseline business rows. Retained
-legacy rows enter through an explicit validated import, and development/test
-fixtures run only through an explicit development or test action. This migration
-constraint does not define the seed behavior of a separately generated 0-to-1
-app.
+For imported/migrated durable business entities, normal startup and
+first-request paths must not auto-insert demo, sample, or baseline business
+records. Retained legacy rows enter through an explicit validated import, and
+development/test fixtures run only through an explicit development or test
+action. This migration constraint does not define the seed behavior of a
+separately generated 0-to-1 app. When retained baseline data is appropriate,
+use the `seed` option (runs only for a new or empty collection) with fixed
+record ids and `seedDate()` / `seedTimestamp()` / `seedTimeMs()`; never
+generate seed ids with `randomUUID()` / `Date.now()`.
 
-When retained runtime baseline data is appropriate, use `seedDate()` for Drizzle
-`date()` columns and `seedTimestamp()` for `timestamp()` columns. Write seed data
-through typed transactional `tx.insert()` / `tx.update()` / `tx.delete()`
-builders. Do not use raw SQL for data writes or pass the numeric return value of
-mutating `Date` setters.
+An app on an older scaffold that still has `src/db/`, `drizzle.config.ts`,
+`pg` / `drizzle-*` dependencies, `db:*` scripts or `bootstrapModule()` must
+move that data to app-owned collections when aligned: the platform no longer
+injects `DATABASE_URL`, and the locked `app-data-contracts` test fails while
+any of it remains.
 
 ## Build And Preview Contract
 
@@ -497,10 +513,12 @@ Use the scaffold's existing scripts and managed preview behavior:
   readiness timeout, and HMR failures when the orchestrator injected it. Never
   copy that Skill into `.agents/skills/`.
 
-For persistence cutovers, build success is insufficient. Verify clean-schema
-runtime bootstrap / `db:push`, supported API lifecycle operations and constraints,
-reload/restart durability, and visible failure without local fallback when
-PostgreSQL is unavailable.
+For persistence cutovers, build success is insufficient. Verify that
+collections are created on first use in a workspace without them, supported
+API lifecycle operations and schema validation, reload/restart durability,
+concurrent-edit handling (guarded `findOneAndUpdate`, 409 / 423 surfaced to the
+user), and visible failure without local fallback
+when UNS is unavailable.
 
 ## Migration Quality Gate
 

@@ -18,6 +18,7 @@ loop operable:
 | Assignment / dispatch | select target -> preview work -> owner/status change |
 | Resource use / fulfillment | select demand -> choose resource -> confirm use/issue/dispatch -> quantity/status change |
 | Recommendation / automation | basis -> affected records -> adjust/confirm -> execution record |
+| Device control (switch, setpoint) | current reported state -> command with pending state -> device acknowledgement -> reported state updates; failure / timeout shown with the device's error |
 
 Do not expose these words in product UI unless the loop works.
 

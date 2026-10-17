@@ -3,7 +3,7 @@ name: align-platform-app
 description: >-
   Migrate imported applications into the Tier0 TanStack Start scaffold, align
   an existing Tier0 app with upstream scaffold changes, or migrate app-owned
-  browser/mock business persistence to Drizzle/PostgreSQL. Use for explicit
+  browser/mock/database business persistence to app-owned UNS collections. Use for explicit
   platform alignment, migration, and scaffold upgrades; ordinary feature or
   visual edits alone do not require a full alignment audit. Also use when an
   instruction says "align this app to the latest scaffold" or "追平到最新脚手架",
@@ -31,7 +31,7 @@ with the `tier0Scaffold` write-back described under Completion.
 ## Choose The Scope
 
 First confirm the app is a Tier0-App-Scaffold app. If it has neither
-`artifact.toml` nor `src/services/bootstrap.ts`, or is otherwise clearly not
+`artifact.toml` nor `src/routes/__root.tsx` with `src/lib/gateway.ts`, or is otherwise clearly not
 built from the scaffold (for example a static site from another template),
 report "not a Tier0 scaffold app; alignment not applicable" and stop without
 modifying files or writing `tier0Scaffold`. An explicit request to import or
@@ -51,9 +51,12 @@ scope below and still proceeds.
   full UI rewrite solely because upstream changed. With no known base, inspect
   diffs and callers rather than treating every difference as template drift.
 - **Persistence cutover:** read
-  [local-state-to-drizzle.md](references/local-state-to-drizzle.md) only when
+  [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
-  stores, in-memory mocks, or fixtures. UI preferences and caches are not durable
+  stores, in-memory mocks, fixtures, or the Drizzle/PostgreSQL database of an
+  older scaffold (`src/db/`, `DATABASE_URL`, `bootstrapModule`). An app on an
+  older scaffold with a database is always in this scope when aligned to the
+  current scaffold: the platform no longer provides a database. UI preferences and caches are not durable
   business records. Preserve external systems of record unless migration of
   their ownership is explicitly in scope.
 - **Review only:** inspect and report evidence and proposed changes without
@@ -100,21 +103,30 @@ weaken a gate to reconcile contradictory guidance.
   The current first-version gate allows three business roles total; `admin`, if
   business-defined, counts as one. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
-- For data changes, declare tables/enums via `appSchema` in `src/db/schema.ts`.
-  The platform provisions the schema: remove runtime `CREATE SCHEMA`, including
-  `IF NOT EXISTS`, while preserving idempotent table/index setup in `DB_SCHEMA`.
-  Pass declared tables to `bootstrapModule()` and await its module promise
-  before querying. Follow the reference's guarded `db:push` workflow.
-- HTTP routes authenticate/validate and call services; services own database
-  queries, invariants, transactions, and supported lifecycle transitions. Durable
-  writes must survive reloads, and database errors must not fall back to browser
+- Apps have no database. The app's own data lives in app-owned UNS collections
+  declared with `defineAppCollection(name, def, { seed })` from
+  `@/lib/uns.server` (ids `app.<appKey>.<name>`, prefix from the injected
+  `TIER0_APP_COLLECTION_PREFIX`; never hard-code it). The app key can write only
+  those collections; every other collection is read-only. Remove `src/db/`,
+  `drizzle.config.ts`, `db:*` scripts, `pg`/`drizzle-*` dependencies and
+  `bootstrapModule()`; see the reference for mapping tables to collections.
+- HTTP routes authenticate/validate and call services; services own UNS
+  access, invariants, and supported lifecycle transitions. Use the
+  MongoDB-style handle (scaffold `docs/uns-data.md`): `find` + `nextCursor`
+  for lists, `lookup` for related records, `findOneAndUpdate` with the current
+  state in the filter for transitions, `$inc` for counters, unique index +
+  upsert for natural keys, `transact([...])` for atomic multi-record writes,
+  `lock()` leases for edit locks / work queues. Do not port read → modify →
+  write-with-`revision` retry loops; make retries idempotent with
+  deterministic record ids or `idempotencyKey`. Durable
+  writes must survive reloads, and UNS errors must not fall back to browser
   state or fixtures. Migrated business data enters through explicit import;
   ordinary startup must not silently repopulate demo rows. Do not impose blanket
   CRUD on ledgers, audit events, or other domain objects with restricted actions.
 - Keep Node-only modules out of client/mixed import graphs. Load Tier0 SDK
   modules lazily inside server actions through `@/lib/tier0`. Use runtime
-  `resolveAppId()` for platform App identity, not the human name, schema name,
-  or a hard-coded UUID. Application files use platform File Storage.
+  `resolveAppId()` for platform App identity, not the human name, collection
+  prefix, or a hard-coded UUID. Application files use platform File Storage.
 - When updating SDK dependencies, reconcile the package range and lockfile with
   the selected scaffold target; do not downgrade a newer SDK to 0.5.3. SDK
   0.5.3 is the baseline for the MQTT fixes described here. Preserve intentional
@@ -148,9 +160,9 @@ files/hash set together; do not edit their assertions or hash values merely to
 accept failing app code. Only `template-state.test.mjs` is App-adaptable under
 the current baseline. Nonblocking UI advisories are not build failures.
 
-Managed preview owns dependency installation and process startup. Use
-`preview_start` / logs / restart when available; do not race it with manual
-installs or dev servers. In an unmanaged environment use the authoritative
+Managed preview owns dependency installation and process startup. Read its log
+(`/dev/shm/.tier0/preview/preview.log`) and use `preview_restart` when
+available; do not race it with manual installs or dev servers. In an unmanaged environment use the authoritative
 lockfile. Distinguish exact install, full build, and runtime results; an install
 that changes the lockfile does not prove the original lockfile works.
 
@@ -164,9 +176,9 @@ Scale further verification to affected behavior:
   untrusted legacy roles, and unauthenticated cases from the contract reference.
 - **Persistence:** prove supported operations through HTTP, validation and
   authorization failures, reload/restart durability where controllable, and
-  visible database failures without local fallback. Use a disposable or explicitly
-  authorized test environment for writes; do not disrupt a live database to
-  simulate an outage. Verify import reconciliation when data is retained.
+  visible UNS failures without local fallback. Use a disposable or explicitly
+  authorized workspace for writes; do not disrupt live UNS data to simulate an
+  outage. Verify import reconciliation when data is retained.
 - **Runtime/deploy:** when changed or delivering a full migration, verify
   production entry, host/port binding, health, manifest, SSR and client assets
   under the target environment. A static build does not prove deployability.

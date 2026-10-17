@@ -130,34 +130,35 @@ during page initialization.
 Fix sequence:
 
 1. Open `vite.config.ts`.
-2. Keep `pg` external because it is a Node/Postgres runtime dependency.
-3. Ensure SDK packages are externalized for Vite SSR:
+2. Ensure SDK packages are externalized for Vite SSR (apps have no database, so
+   there is no `pg` entry; remove it if an older app still lists it together
+   with the dependency):
 
 ```ts
 ssr: {
-  external: ["pg", "@tier0/sdk", "mqtt"],
+  external: ["@tier0/sdk", "mqtt"],
 }
 ```
 
-4. Do not add `@tier0/sdk` or `mqtt` to `ssr.noExternal`. Let package exports
+3. Do not add `@tier0/sdk` or `mqtt` to `ssr.noExternal`. Let package exports
    choose the correct runtime condition instead of forcing Vite to rebundle
    SDK internals.
-5. Search for top-level SDK imports in app services, route loaders, pages, or
+4. Search for top-level SDK imports in app services, route loaders, pages, or
    generated wrappers:
 
 ```bash
 rg -n '@/lib/tier0|@tier0/sdk/openapi|@tier0/sdk/mq' src/services src/routes src/components src/lib
 ```
 
-6. If an optional operation such as UNS dispatch, Flow publish, or MQTT command
+5. If an optional operation such as UNS dispatch, Flow publish, or MQTT command
    send imports the SDK at module top level, move the SDK call behind
    `@/lib/tier0` lazy loaders and invoke it only inside the action that needs
    platform I/O. Top-level imports of lazy helper functions from `@/lib/tier0`
    are fine; top-level calls to those helpers are not. Do not import SDK values
    while rendering a page or loading preview.
-7. Do not replace the SDK with fallback MQTT clients or hand-written UNS/Flow
+6. Do not replace the SDK with fallback MQTT clients or hand-written UNS/Flow
    fetch wrappers.
-8. Run `npm run build:check` when available.
+7. Run `npm run build:check` when available.
 
 ### TanStack Start HTTPError 500
 

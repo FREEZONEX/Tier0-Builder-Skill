@@ -12,7 +12,7 @@ description: >-
 
 ## Purpose
 
-Use this skill when the user says `Failed to load preview`, `Preview loading timed out`, or when a managed preview is stuck, repeatedly times out, or reports port conflicts such as `Port 5173 is already in use`. The goal is to make preview start/stop idempotent inside one executor Pod.
+Use this skill when the user says `Failed to load preview`, `Preview loading timed out`, or when a managed preview is stuck, repeatedly times out, or reports port conflicts such as `Port 5173 is already in use`. The goal is to make preview start/stop idempotent inside one App Builder sandbox.
 
 This skill also covers dependency-install diagnosis and frequent full page
 reloads during development. Read the install or preview logs before retrying;

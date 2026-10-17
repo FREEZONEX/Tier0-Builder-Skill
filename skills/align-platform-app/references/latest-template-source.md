@@ -46,19 +46,20 @@ Read the relevant current files and their changes since the app's known base:
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
 | Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
 | Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
-| Persistence | `src/db/{index,schema}.ts`, `src/services/bootstrap.ts`, `src/services/seed-utils.ts`, `scripts/db-sync-guard.mjs`, `drizzle.config.ts` |
+| Persistence | `src/lib/uns.server.ts` (app-owned collection helpers and the MongoDB-style document API), `src/lib/uns-types.ts`, `src/lib/uns-live.ts`, `src/lib/uns-documents.test.ts`, `src/services/seed-utils.ts`, `src/lib/app-data-contracts.test.mjs`, `docs/uns-data.md`, `scripts/runtime-audit.mjs` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-Compare and patch `src/services/bootstrap.ts` first when it still runs a
-runtime `create schema if not exists` block: remove the block outright, with no
-try/catch or fallback. The platform pre-creates the schema and the app role has
-no database-level `CREATE`, so PostgreSQL rejects it with `42501`. Repair steps
-are in
-[import-troubleshooting.md](import-troubleshooting.md#database-startup-or-schema-fails).
+When the app still has the Drizzle/PostgreSQL layer of an older scaffold
+(`src/db/`, `drizzle.config.ts`, `src/services/bootstrap.ts`, `pg` /
+`drizzle-*` dependencies, `db:*` scripts), the platform no longer provides a
+database: move its tables to app-owned collections with
+[local-state-to-collections.md](local-state-to-collections.md) and remove the
+database layer. Repair steps for the resulting failures are in
+[import-troubleshooting.md](import-troubleshooting.md#app-data-or-collection-access-fails).
 
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this
-inventory into a mandatory whole-app rewrite. Never overwrite app-specific schema,
+inventory into a mandatory whole-app rewrite. Never overwrite app-specific collections,
 permissions, navigation, branding, or routes with the blank template.
 
 ## Reconciliation And Refresh
@@ -73,7 +74,7 @@ When updating this Skill against a new commit:
 2. Inspect changed implementation, guidance, and locked tests. A known-good
    upstream baseline can contain defects; do not assume every failure is app drift.
 3. Reconcile the entrypoint and all affected references. Search the entire Skill
-   for retired role semantics, env names, SDK versions, bootstrap behavior, asset
+   for retired role semantics, env names, SDK versions, data-layer behavior, asset
    paths, commands, and packaging assumptions.
 4. Preserve product intent and record conflicts instead of silently increasing
    permissions or weakening verification.

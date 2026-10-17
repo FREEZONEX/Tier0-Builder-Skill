@@ -65,7 +65,11 @@ Use this before reporting a generated app or substantial change as complete.
 - Preview or route smoke confirms the entry route loads without "Page failed
   to load" or equivalent route-level runtime errors when a preview URL exists.
 - Visible links/actions resolve to implemented routes or in-page behavior.
-- Raw SQL results are normalized before array operations.
+- No database driver, connection string, or SQL; data access goes only through
+  the scaffold's UNS helpers.
+- Device controls call `sendCommand` from server code, show pending / failed /
+  timeout states, and render the device's reported state from UNS records and
+  change events; nothing writes fake device state.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
 - Polling/timers/subscriptions use shared patterns or clean up correctly.

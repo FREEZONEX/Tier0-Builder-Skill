@@ -39,7 +39,8 @@ Inspect these source areas before editing target code:
 - Server/runtime: API routes, server entry, workers, adapters, cron-like jobs,
   custom middleware, and framework-specific server handlers.
 - Data layer: schema files, migrations, seed data, local JSON stores, browser
-  storage reliance, and backend persistence assumptions.
+  storage reliance, databases (including an older scaffold's Drizzle `src/db/`),
+  and backend persistence assumptions.
 - Assets: public paths, imported images, fonts, CSS resets, CDN references.
 - App identity/design: product name, locale, in-App icon, platform App metadata,
   default scaffold copy, design tokens, shared UI/form/table/data primitives.
@@ -54,8 +55,8 @@ Inspect these source areas before editing target code:
 For every local or mock state source, record its keys/store names, data shape,
 identifier generation, readers, writers, initialization, reset behavior, and
 whether it is durable business data, session/UI preference, cache/derived state,
-or seed/test data. Load `local-state-to-drizzle.md` when any production CRUD is
-local or mocked.
+or seed/test data. Load `local-state-to-collections.md` when any production CRUD
+is local, mocked, or backed by a database.
 
 Write a short migration map when the source is non-trivial:
 
@@ -67,9 +68,9 @@ Write a short migration map when the source is non-trivial:
 - source API/server helper -> target service/API/external dependency
 - compatibility API -> method, request, response, errors, auth, side effects,
   implementation status, external dependencies, and verification evidence
-- source data model -> target schema/runtime-bootstrap-or-`db:push`/service/API/
-  client path or external system
-- source local/mock data -> PostgreSQL cutover, optional legacy import, or an
+- source data model -> app-owned collection (`defineAppCollection`)/service/API/
+  client path, or an existing workspace collection / external system (read-only)
+- source local/mock/database data -> app-owned collection cutover, optional legacy import, or an
   explicitly retained ephemeral state category
 - source asset path -> target asset path
 - source App name/locale/icon -> `app-chrome` identity and platform metadata
@@ -93,13 +94,13 @@ Use a compatibility boundary when:
 - Build/runtime contract work is urgent and native refactoring can follow.
 
 A compatibility boundary may temporarily read legacy durable state for explicit
-import, but it must not legitimize new durable local writes or database-failure
+import, but it must not legitimize new durable local writes or UNS-failure
 fallback.
 
-A JSON or JSONB compatibility container may complete authoritative-storage
-cutover without completing domain normalization. Record which invariants,
-relationships, constraints, indexes, transactions, and query fields remain to be
-modeled. Do not report storage cutover as full domain migration.
+A loosely typed compatibility collection (a permissive `recordSchema` holding
+the legacy JSON) may complete authoritative-storage cutover without completing
+domain normalization. Record which invariants, relationships, required fields,
+indexes, and query fields remain to be modeled. Do not report storage cutover as full domain migration.
 
 ## 3. Migration Order
 
@@ -116,23 +117,22 @@ Prefer this sequence:
    non-nested detail. Define real workspace modules through
    `defineNavigationModules`; every clickable leaf has a unique `href` resolving
    to an existing non-API route.
-4. Classify local/mock state and define PostgreSQL as the source of truth for
-   durable entities.
+4. Classify local/mock/database state and define app-owned UNS collections as
+   the source of truth for durable entities the app owns.
 5. Replace durable local/mock CRUD in vertical slices using
-   `appSchema` declarations in `src/db/schema.ts` -> current scaffold
-   `bootstrapModule()` with declared table objects / guarded `db:push` -> service
-   -> thin API -> client.
+   `defineAppCollection(name, def)` in the owning service -> service methods
+   (revision-guarded transitions) -> thin API -> client.
 6. Import legacy data through an explicit validated, idempotent process when
    retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for tables and indexes in the existing
-   platform-injected `DB_SCHEMA`. Remove App-side `CREATE SCHEMA`, including
-   `IF NOT EXISTS`, without expanding database-account privileges. Also
-   remove startup- or first-request seed callbacks that auto-insert demo, sample,
-   or baseline rows for migrated durable business entities. Retain legacy data
-   through the explicit import from step 6; run development/test fixtures only
-   through an explicit development or test action. For valid retained runtime
-   baseline data, use `seedDate()` / `seedTimestamp()` and typed transactional
-   Drizzle writes, not raw SQL data writes or mutating `Date` setters.
+7. Remove any database layer (`src/db/`, `drizzle.config.ts`, `pg` /
+   `drizzle-*` dependencies, `db:*` scripts, `bootstrapModule()`, transactions).
+   Collections are created and their definitions converged on first use. Do not
+   add `seed` callbacks that auto-insert demo, sample, or baseline records for
+   migrated durable business entities. Retain legacy data through the explicit
+   import from step 6; run development/test fixtures only through an explicit
+   development or test action. For valid retained baseline data, use the
+   `seed` option with fixed record ids and `seedDate()` / `seedTimestamp()` /
+   `seedTimeMs()`, not runtime-generated ids or mutating `Date` setters.
 8. Normalize auth, permissions, and menu visibility. Remove legacy custom login
    and all user-visible logout/sign-out buttons, personal-menu entries, pages,
    routes, and custom logout helpers, together with role-switch, role-picker, and
@@ -200,11 +200,11 @@ For each migrated route, verify:
 - Data reads and writes hit intended APIs, services, or external systems.
 - Local App APIs are called through base-path-aware `apiUrl()`.
 - Durable data survives reload, another client session, and server restart.
-- Database/network failures are visible and never trigger local/mock fallback.
+- UNS/network failures are visible and never trigger local/mock fallback.
 - Empty, loading, error, and success states are real. Scaffold request-hook
   results render through `AsyncView` so a failed first request shows error/retry
   instead of endless loading.
-- When historical data is intentionally not imported, reads from a clean schema
+- When historical data is intentionally not imported, reads from fresh collections
   return a genuine empty state with real creation/onboarding actions; they do not
   fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
@@ -235,18 +235,20 @@ For the whole app, verify:
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
   namespace, not inferred from Vite dev readiness.
-- Current scaffold runtime bootstrap / `db:push` succeeds against a clean schema.
+- App collections are created on first use in a workspace without them, and a
+  changed definition converges without losing records.
 - Normal startup and first-request paths do not auto-insert demo, sample, or
   baseline rows for migrated durable business entities; retained legacy data and
   development/test fixtures use explicit flows.
-- Valid retained runtime baseline dates use current seed helpers and typed
-  transactional Drizzle data writes.
+- Valid retained baseline records use fixed ids and the current seed helpers.
+- No database driver, ORM, `src/db/` or `DATABASE_URL` remains
+  (`app-data-contracts` passes).
 - Repository search shows no production durable CRUD backed by browser storage,
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
 - Required legacy imports are validated, idempotent, and reconciled by result
   counts and conflicts.
 - If historical data is intentionally reset, the reset decision, rollback source
-  or explicit lack of one, clean-schema result, and expected empty-state behavior
+  or explicit lack of one, fresh-collection result, and expected empty-state behavior
   are recorded in project-local migration documentation.
 - Compatibility endpoints have current behavior/status/evidence rows; `partial`
   and `queued-only` behavior is not reported as complete.
@@ -301,7 +303,7 @@ not direct service calls or an in-memory test substitute:
    unauthorized access, duplicate conflict, or missing identifier, and assert its
    status and error contract.
 5. When the environment is controllable, restart the app/server, then read the
-   record again to prove PostgreSQL persistence rather than process memory.
+   record again to prove UNS persistence rather than process memory.
 6. Exercise the entity's supported terminal lifecycle action—delete, archive,
    cancel, or close—and verify the expected final state.
 7. Use `try/finally` or equivalent teardown when the domain contract permits

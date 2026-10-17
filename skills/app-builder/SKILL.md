@@ -88,7 +88,14 @@ regeneration; preserve usable work and keep any correction scoped.
 
 Keep controls legible, field groups stable, and dense content within intentional
 scroll regions. Follow the target scaffold's server/client and persistence
-boundaries; normalize raw SQL results with its current helper where required.
+boundaries: app data lives only in the app's own UNS collections through the
+scaffold's `uns.server.ts` helpers (MongoDB-style `find` / `findOneAndUpdate`
+/ `$inc` / upsert / `transact` / `lock`, see scaffold `docs/uns-data.md`);
+never add a database driver, connection string, or SQL. Device control (lights, valves, setpoints, start/stop) goes
+through `sendCommand` on records of `commandable` UNS collections (scaffold
+`docs/uns-data.md`, "Controlling devices"): the device's reported record is
+the truth, the command never edits it, and the control stays pending until the
+command finishes and the record change arrives.
 
 Derive business roles from the SRS and register each across the target
 scaffold's required surfaces in one pass. Do not assume a reserved admin role

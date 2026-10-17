@@ -42,7 +42,7 @@ External Node-RED runtime: owner, environment, shutdown method, evidence
 External writers/endpoints/schedules: owner, action, evidence
 ```
 
-Do not couple these decisions implicitly. For example, an empty target schema
+Do not couple these decisions implicitly. For example, an empty target collection
 does not automatically authorize deleting flow assets or shutting down an
 external runtime.
 
@@ -114,9 +114,9 @@ Set `node_red_retired` only when:
 ## Acceptance Checklist
 
 - [ ] Browser, CRUD, workflow, and integration cutover states are evidenced.
-- [ ] PostgreSQL or another approved target is the only authoritative store for
-      migrated durable data.
-- [ ] Compatibility JSONB is not reported as normalized-domain completion.
+- [ ] App-owned UNS collections or another approved target are the only
+      authoritative store for migrated durable data.
+- [ ] Compatibility documents are not reported as normalized-domain completion.
 - [ ] Compatibility endpoints have behavior/status/evidence rows in the matrix.
 - [ ] Queued-only integrations are labeled incomplete.
 - [ ] Historical state and rollback decisions are explicit.
