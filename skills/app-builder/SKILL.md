@@ -65,6 +65,11 @@ impact and obtain confirmation before mutation. Use the scaffold's existing
 action primitives. Preserve technology choices and use verified SDK/helpers
 for Tier0 integration rather than inventing clients or credential screens.
 
+For document forms, lifecycle actions, or relation pickers, read
+[document fields and actions](references/document-fields-actions.md) before
+choosing controls and mutation APIs. Keep workflow state server-owned; ordinary
+classifications and list filters remain editable.
+
 ## UI and Platform Boundaries
 
 Use `DESIGN.md`, tokens, and shared form, overlay, table, and action primitives.

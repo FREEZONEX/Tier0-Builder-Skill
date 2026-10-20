@@ -224,3 +224,17 @@ Good:
 ```text
 System must reject any request whose Requested_Amount exceeds Available_Balance unless an authorized approver records an override reason.
 ```
+
+### Document state ownership
+
+For document workflows, distinguish action-owned lifecycle state, progress
+calculated from business records, and ordinary editable classifications.
+Specify initial state and each action's actor, allowed source states,
+prerequisites, effects/result, failure behavior and audit. Saving a draft does
+not submit it. Create/edit forms show lifecycle state read-only; list filters
+remain selectable. Do not introduce approval stages unless the business needs
+them. Receipt/payment/reversal records determine fulfillment/settlement progress;
+“set settled” cannot substitute for actual settlement. Include duplicate/concurrent
+action behavior and cancellation rules without prescribing frameworks or APIs.
+For dialog-based references, describe one clickable field with a right-hand
+search icon, selection/cancel/clear, and dependent-field fill/clear behavior.
