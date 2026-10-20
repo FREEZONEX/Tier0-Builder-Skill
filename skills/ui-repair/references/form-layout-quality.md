@@ -72,3 +72,22 @@ At each width verify:
 - labels and controls remain inside the dialog width
 - long identifiers truncate or wrap intentionally
 - the page or overlay does not acquire accidental horizontal scroll
+
+## Reference and lifecycle fields
+
+For dialog-backed relations, prefer the existing ReferenceInput: one select-like
+box with a right-hand search icon; the whole field opens the picker. Preserve
+clear/cancel, keyboard/disabled behavior and dependent-field fill/clear. Clear
+must not open the picker. Inspect installed props before using code display or
+confirmation overrides; never invent imports or upgrade the entire scaffold for
+a narrow repair. Genuine search dropdowns retain their distinct behavior.
+
+Lifecycle state in a document create/edit form is read-only display, with
+submission/review/void actions using real service operations. Keep state filters
+and ordinary classifications editable. Where supported use stateManagement
+metadata; otherwise preserve the app's existing read-only renderer. Do not fix
+an editable lifecycle dropdown only by disabling it while leaving an unrestricted
+state write in its owning service. Identify the necessary service correction;
+apply it only within the authorized repair scope, otherwise report the concrete
+gap. Do not invent transitions, approval steps or backfill historical state.
+Business-derived receipt/payment progress follows real records, not direct edits.
