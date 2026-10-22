@@ -67,8 +67,11 @@ scope below and still proceeds.
     `src/lib/app-chrome.test.mjs`, `eslint.config.mjs`,
     `scripts/runtime-audit.mjs`, `scripts/data-schema.mjs`,
     `tests/data-layer.test.ts`, `tests/data-schema.test.ts`). v8 still depends on
-    `@tier0/sdk` v1, so the SDK move below applies too. Verify that no
-    `@/lib/data/define` import, `src/lib/data/context.ts` or other removed file
+    `@tier0/sdk` v1, so the SDK move below applies too. Other app imports of a
+    removed `@/lib/data/<module>` (for example `WithMeta` from `collection` or
+    `DataError` from `transport`) move to `@/lib/data`, which re-exports them,
+    or to `@tier0/sdk-v2/data`. Verify that no `@/lib/data/define` or other
+    removed-module import, `src/lib/data/context.ts` or other removed file
     remains, and that `src/start.ts` takes the context only from
     `@tier0/sdk-v2/data`.
   - **v7 and earlier** keep business data in PostgreSQL through Drizzle
