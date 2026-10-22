@@ -102,8 +102,9 @@ Cosmetic deviations alone must not block delivery or trigger whole-page
 regeneration; preserve usable work and keep any correction scoped.
 
 Keep controls legible, field groups stable, and dense content within intentional
-scroll regions. Follow the target scaffold's server/client and persistence
-boundaries; normalize raw SQL results with its current helper where required.
+scroll regions. Follow the target scaffold's server/client and data boundaries:
+declare collections in `src/data/collections.ts` and access records only from
+services through `data` from `@/lib/data`.
 
 Derive business roles from the SRS and register each across the target
 scaffold's required surfaces in one pass. Do not assume a reserved admin role

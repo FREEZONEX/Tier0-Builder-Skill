@@ -2,8 +2,8 @@
 name: align-platform-app
 description: >-
   Migrate imported applications into the Tier0 TanStack Start scaffold, align
-  an existing Tier0 app with upstream scaffold changes, or migrate app-owned
-  browser/mock business persistence to Drizzle/PostgreSQL. Use for explicit
+  an existing Tier0 app with upstream scaffold changes, or move app-owned
+  browser/mock business persistence into Tier0 UNS collections. Use for explicit
   platform alignment, migration, and scaffold upgrades; ordinary feature or
   visual edits alone do not require a full alignment audit. Also use when an
   instruction says "align this app to the latest scaffold" or "追平到最新脚手架",
@@ -14,8 +14,9 @@ description: >-
 
 Preserve the application's business behavior while closing the platform gaps
 within the user's requested scope. The canonical scaffold is
-`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`, unless the
-user chooses a specific ref. A newer template is not permission to overwrite
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
+`feature/cloud-new-architecture-migration` (Tier0 cloud), unless the user
+chooses a specific ref. A newer template is not permission to overwrite
 business routes, schema, role mappings, branding, or intentional design choices.
 
 At import, the platform compares the app's `package.json` top-level
@@ -30,11 +31,11 @@ with the `tier0Scaffold` write-back described under Completion.
 
 ## Choose The Scope
 
-First confirm the app is a Tier0-App-Scaffold app. If it has neither
-`artifact.toml` nor `src/services/bootstrap.ts`, or is otherwise clearly not
-built from the scaffold (for example a static site from another template),
-report "not a Tier0 scaffold app; alignment not applicable" and stop without
-modifying files or writing `tier0Scaffold`. An explicit request to import or
+First confirm the app is a Tier0-App-Scaffold app. If it has no
+`artifact.toml`, or is otherwise clearly not built from the scaffold (for
+example a static site from another template), report "not a Tier0 scaffold
+app; alignment not applicable" and stop without modifying files or writing
+`tier0Scaffold`. An explicit request to import or
 migrate such an app into the platform shape is the imported app migration
 scope below and still proceeds.
 
@@ -50,8 +51,17 @@ scope below and still proceeds.
   and their necessary dependencies; do not start a data migration, rebrand, or
   full UI rewrite solely because upstream changed. With no known base, inspect
   diffs and callers rather than treating every difference as template drift.
+- **Older data layer:** an app built on a scaffold before v9 keeps business data
+  in PostgreSQL through Drizzle (`src/db/**`, `src/services/bootstrap.ts`,
+  `DATABASE_URL` / `DB_SCHEMA`, `db:*` scripts). Aligning it replaces that layer
+  with collections: declare the entities in `src/data/collections.ts` (baseline
+  records as `seed`), rewrite services onto `data` from `@/lib/data`, and remove
+  the Drizzle/`pg` dependencies, scripts and env usage. The existing PostgreSQL
+  records are not migrated — that is a product decision, so do not build an
+  export/import from the old database; state in the report that legacy rows
+  were not carried over.
 - **Persistence cutover:** read
-  [local-state-to-drizzle.md](references/local-state-to-drizzle.md) only when
+  [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
   stores, in-memory mocks, or fixtures. UI preferences and caches are not durable
   business records. Preserve external systems of record unless migration of
@@ -100,32 +110,37 @@ weaken a gate to reconcile contradictory guidance.
   The current first-version gate allows three business roles total; `admin`, if
   business-defined, counts as one. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
-- For data changes, declare tables/enums via `appSchema` in `src/db/schema.ts`.
-  The platform provisions the schema: remove runtime `CREATE SCHEMA`, including
-  `IF NOT EXISTS`, while preserving idempotent table/index setup in `DB_SCHEMA`.
-  Pass declared tables to `bootstrapModule()` and await its module promise
-  before querying. Follow the reference's guarded `db:push` workflow.
-- HTTP routes authenticate/validate and call services; services own database
-  queries, invariants, transactions, and supported lifecycle transitions. Durable
-  writes must survive reloads, and database errors must not fall back to browser
-  state or fixtures. Migrated business data enters through explicit import;
-  ordinary startup must not silently repopulate demo rows. Do not impose blanket
-  CRUD on ledgers, audit events, or other domain objects with restricted actions.
+- For data changes, declare collections with `defineCollection` from
+  `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list them in
+  `collections`; the schema is a storage schema limited to the subset in the
+  scaffold's AGENTS.md → App Data. The App ensures every declared collection on
+  first data access; there is no SQL database, migration or `db:push` step.
+  Preview and the deployed App share the same collections, ensure only widens,
+  and narrowing or description changes go through `schema:replace` via the tier0
+  MCP. Baseline records are the declaration's `seed`, written once when the
+  collection is created.
+- HTTP routes authenticate/validate and call services; services own data access
+  (`data` from `@/lib/data`), invariants, `data.transact` steps, and supported
+  lifecycle transitions. Durable writes must survive reloads, and data-layer
+  errors (`DataError`) must not fall back to browser state or fixtures. Migrated
+  business data enters through explicit import; services never insert baseline
+  rows on startup or when a list is empty. Do not impose blanket CRUD on
+  ledgers, audit events, or other domain objects with restricted actions.
 - Keep Node-only modules out of client/mixed import graphs. Load Tier0 SDK
-  modules lazily inside server actions through `@/lib/tier0`. Use runtime
-  `resolveAppId()` for platform App identity, not the human name, schema name,
-  or a hard-coded UUID. Application files use platform File Storage.
-- When updating SDK dependencies, reconcile the package range and lockfile with
-  the selected scaffold target; do not downgrade a newer SDK to 0.5.3. SDK
-  0.5.3 is the baseline for the MQTT fixes described here. Preserve intentional
-  silent notifications with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
-  Read [the SDK upgrade contract](references/platform-contract.md#sdk-upgrades)
-  for channel, test-mode and MQTT migration details. For MQTT authentication
-  failures, check installed SDK/key compatibility before replacing credentials
-  or overriding identity. Skill replacement alone
-  does not change the installed SDK. Before a platform API-key type change,
-  apply the [existing-App compatibility prerequisite](references/platform-contract.md#existing-app-api-key-type-changes);
-  do not automatically switch credentials while upgrade/verification is blocked.
+  modules lazily inside server actions through `@/lib/tier0`; values from
+  `@tier0/sdk-v2/data` stay in services, `src/lib/data` and `src/start.ts`,
+  while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
+  runtime `resolveAppId()` for platform App identity, not the human name or a
+  hard-coded UUID. Application files use platform File Storage.
+- The platform SDK is `@tier0/sdk-v2`, pinned by the selected scaffold. An app
+  on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
+  the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
+  project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
+  Read [the SDK contract](references/platform-contract.md#sdk-upgrades) and the
+  Skills shipped in `node_modules/@tier0/sdk-v2/skills/` before rewriting SDK
+  calls. Skill replacement alone does not change the installed SDK. For MQTT
+  authentication failures, check the installed SDK and key type before
+  replacing credentials or overriding identity.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
   duplicate outer insets. Station/review/monitor keep their own spacing.
@@ -164,9 +179,11 @@ Scale further verification to affected behavior:
   untrusted legacy roles, and unauthenticated cases from the contract reference.
 - **Persistence:** prove supported operations through HTTP, validation and
   authorization failures, reload/restart durability where controllable, and
-  visible database failures without local fallback. Use a disposable or explicitly
-  authorized test environment for writes; do not disrupt a live database to
-  simulate an outage. Verify import reconciliation when data is retained.
+  visible data-layer failures (`DataError`) without local fallback. Preview
+  writes land in the same collections as the deployed App, so write test
+  records only where authorized and clean them up; never `deleteMany` or
+  recreate a collection to reset it. Verify import reconciliation when data is
+  retained.
 - **Runtime/deploy:** when changed or delivering a full migration, verify
   production entry, host/port binding, health, manifest, SSR and client assets
   under the target environment. A static build does not prove deployability.
@@ -179,8 +196,6 @@ For failures, load only the relevant section of
 [import-troubleshooting.md](references/import-troubleshooting.md).
 Use `preview-runtime-stability` for managed preview failures only when injected;
 otherwise inspect available logs/tools and report unavailable verification.
-Use `migrate-node-red-app` for Node-RED-specific migration only when available;
-absence does not justify inventing its instructions or deleting flows.
 
 ## Completion
 

@@ -2,50 +2,39 @@
 
 ## Canonical Repository
 
-`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-The upstream `main` baseline verified on 2026-10-16 is
-`822dfabf2469bc4d64f6d46f44e79b650fe3ab03` (merged scaffold PR #88).
-Its `package.json.tier0Scaffold` is `{ "version": 7, "ref": "3a96b2b" }`;
-the SDK range remains `^0.5.4`, locked to 0.5.4. The repository commit identifies
-the inspected source; the marker's `ref` identifies the content commit stamped
-by the scaffold maintainer. They need not be equal. After successful app
-alignment, copy the selected scaffold's marker object verbatim, not the merge
-SHA or the Skill package version.
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
+`feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
+on 2026-10-22 is `f8a32025dca37c759ea80ee0b0b0a536538290fd` (merged scaffold
+PR #91). Its `package.json.tier0Scaffold` is `{ "version": 9, "ref": "cdd548b" }`;
+the SDK dependency is `@tier0/sdk-v2` pinned to `0.1.0`. The repository commit
+identifies the inspected source; the marker's `ref` identifies the content
+commit stamped by the scaffold maintainer. They need not be equal. After
+successful app alignment, copy the selected scaffold's marker object verbatim,
+not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment; honor a user-selected ref and do not downgrade a newer SDK.
-Since the prior 2026-09-20 v3 snapshot, the relevant additions are the generic
-component kit/provider and its dependencies, component build checks, right-side
-single required markers, and MetaListPage as the default list-page foundation.
-For in-scope UI work, inspect `docs/component-kit.md`, affected components and
-the current `AGENTS.md`; retain application-specific services and permissions.
-The new list default does not require rewriting untouched pages during an
-unrelated platform upgrade.
-
-This Skill covers the existing role/schema/runtime/File Storage contracts and
-adds the SDK 0.5.3 MQTT upgrade path. Preserve the SDK 0.5.1 notification rules,
-including explicit silent-send migration and test/live message mode.
-
-SDK PR #33 merged at `d795a4c263ec1a14c7cbd47f0744a29e6ecdeee0`; npm latest was
-verified as 0.5.3 on 2026-09-14. Its published runtime includes the MQTT fixes,
-but the package lacks `check-api-key-compat.mjs` and carries configuration
-reference version 0.2.1 rather than the PR's final 0.2.2. Check actual Skill
-resources before executing a documented diagnostic. Skill reference versions
-are independent of npm package versions; matching version numbers are not a
-publication or compatibility check. These source/package facts do not prove
-Builder has loaded matching guidance or an existing App has upgraded. Recheck
-when freshness matters.
+each alignment and honor a user-selected ref. At v9 the App data layer is the
+`@tier0/sdk-v2/data` client: collections are declared in
+`src/data/collections.ts` with `defineCollection` from
+`@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`
+instance, and `src/start.ts` opens the SDK request context. There is no
+Drizzle, `pg`, `DATABASE_URL`, `DB_SCHEMA`, `drizzle.config.ts` or `db:*`
+script. The scaffold's AGENTS.md → App Data and `docs/platform-integration.md`
+are authoritative for the data contract; the SDK's own Skills ship in
+`node_modules/@tier0/sdk-v2/skills/`. For in-scope UI work, inspect
+`docs/component-kit.md`, affected components and the current `AGENTS.md`;
+MetaListPage remains the default list-page foundation.
 
 ## Verify A Target Commit
 
 Prefer a clean reference checkout and preserve the app's working changes.
 Inspect the remote with `git ls-remote` or fetch into a suitable repository,
-then record the exact `origin/main` SHA. Read files using that commit, not a
+then record the exact `origin/feature/cloud-new-architecture-migration` SHA. Read files using that commit, not a
 moving branch across multiple requests. If a temporary clone is needed, use a
 unique directory rather than overwriting a fixed `/tmp` checkout.
 
-A pinned user-selected ref takes precedence over latest `main`. If remote access
+A pinned user-selected ref takes precedence over the latest branch head. If remote access
 is unavailable, identify the cached/package commit and limit freshness claims.
 A version string or previously delivered ZIP filename is not commit evidence.
 
@@ -59,20 +48,17 @@ Read the relevant current files and their changes since the app's known base:
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
 | Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
 | Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
-| Persistence | `src/db/{index,schema}.ts`, `src/services/bootstrap.ts`, `src/services/seed-utils.ts`, `scripts/db-sync-guard.mjs`, `drizzle.config.ts` |
+| Persistence | `src/lib/data/{index,query}.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-Compare and patch `src/services/bootstrap.ts` first when it still runs a
-runtime `create schema if not exists` block: remove the block outright, with no
-try/catch or fallback. The platform pre-creates the schema and the app role has
-no database-level `CREATE`, so PostgreSQL rejects it with `42501`. Repair steps
-are in
-[import-troubleshooting.md](import-troubleshooting.md#database-startup-or-schema-fails).
+An app still on the Drizzle/PostgreSQL layer of an older scaffold replaces it
+with collections as described under "Older data layer" in `SKILL.md`; its
+existing PostgreSQL rows are not migrated.
 
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this
-inventory into a mandatory whole-app rewrite. Never overwrite app-specific schema,
-permissions, navigation, branding, or routes with the blank template.
+inventory into a mandatory whole-app rewrite. Never overwrite app-specific
+collections, permissions, navigation, branding, or routes with the blank template.
 
 ## Reconciliation And Refresh
 
@@ -86,7 +72,7 @@ When updating this Skill against a new commit:
 2. Inspect changed implementation, guidance, and locked tests. A known-good
    upstream baseline can contain defects; do not assume every failure is app drift.
 3. Reconcile the entrypoint and all affected references. Search the entire Skill
-   for retired role semantics, env names, SDK versions, bootstrap behavior, asset
+   for retired role semantics, env names, SDK versions, data-layer behavior, asset
    paths, commands, and packaging assumptions.
 4. Preserve product intent and record conflicts instead of silently increasing
    permissions or weakening verification.

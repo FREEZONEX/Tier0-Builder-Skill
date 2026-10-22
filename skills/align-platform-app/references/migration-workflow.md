@@ -54,8 +54,8 @@ Inspect these source areas before editing target code:
 For every local or mock state source, record its keys/store names, data shape,
 identifier generation, readers, writers, initialization, reset behavior, and
 whether it is durable business data, session/UI preference, cache/derived state,
-or seed/test data. Load `local-state-to-drizzle.md` when any production CRUD is
-local or mocked.
+or seed/test data. Load `local-state-to-collections.md` when any production CRUD
+is local or mocked.
 
 Write a short migration map when the source is non-trivial:
 
@@ -67,9 +67,9 @@ Write a short migration map when the source is non-trivial:
 - source API/server helper -> target service/API/external dependency
 - compatibility API -> method, request, response, errors, auth, side effects,
   implementation status, external dependencies, and verification evidence
-- source data model -> target schema/runtime-bootstrap-or-`db:push`/service/API/
-  client path or external system
-- source local/mock data -> PostgreSQL cutover, optional legacy import, or an
+- source data model -> target collection declaration/service/API/client path or
+  external system
+- source local/mock data -> collection cutover, optional legacy import, or an
   explicitly retained ephemeral state category
 - source asset path -> target asset path
 - source App name/locale/icon -> `app-chrome` identity and platform metadata
@@ -93,13 +93,14 @@ Use a compatibility boundary when:
 - Build/runtime contract work is urgent and native refactoring can follow.
 
 A compatibility boundary may temporarily read legacy durable state for explicit
-import, but it must not legitimize new durable local writes or database-failure
+import, but it must not legitimize new durable local writes or data-failure
 fallback.
 
-A JSON or JSONB compatibility container may complete authoritative-storage
-cutover without completing domain normalization. Record which invariants,
-relationships, constraints, indexes, transactions, and query fields remain to be
-modeled. Do not report storage cutover as full domain migration.
+A coarse document shape (for example one collection holding a source entity's
+payload largely as-is) may complete authoritative-storage cutover without
+completing domain modeling. Record which invariants, relationships, unique
+indexes, transactions, and query fields remain to be modeled. Do not report
+storage cutover as full domain migration.
 
 ## 3. Migration Order
 
@@ -116,23 +117,20 @@ Prefer this sequence:
    non-nested detail. Define real workspace modules through
    `defineNavigationModules`; every clickable leaf has a unique `href` resolving
    to an existing non-API route.
-4. Classify local/mock state and define PostgreSQL as the source of truth for
+4. Classify local/mock state and define collections as the source of truth for
    durable entities.
 5. Replace durable local/mock CRUD in vertical slices using
-   `appSchema` declarations in `src/db/schema.ts` -> current scaffold
-   `bootstrapModule()` with declared table objects / guarded `db:push` -> service
-   -> thin API -> client.
+   `defineCollection` declarations in `src/data/collections.ts` (listed in
+   `collections`) -> service with `data` from `@/lib/data` -> thin API -> client.
 6. Import legacy data through an explicit validated, idempotent process when
    retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for tables and indexes in the existing
-   platform-injected `DB_SCHEMA`. Remove App-side `CREATE SCHEMA`, including
-   `IF NOT EXISTS`, without expanding database-account privileges. Also
-   remove startup- or first-request seed callbacks that auto-insert demo, sample,
-   or baseline rows for migrated durable business entities. Retain legacy data
+7. Put valid baseline records in the declaration's `seed` (fixed `_id`s,
+   `seedDate()` / `seedTimestamp()` / `requireSeedRef()`); they are written once
+   when the collection is created. Remove startup- or first-request code that
+   inserts demo, sample, or baseline rows for migrated durable business
+   entities, and never insert rows because a list is empty. Retain legacy data
    through the explicit import from step 6; run development/test fixtures only
-   through an explicit development or test action. For valid retained runtime
-   baseline data, use `seedDate()` / `seedTimestamp()` and typed transactional
-   Drizzle writes, not raw SQL data writes or mutating `Date` setters.
+   through an explicit development or test action.
 8. Normalize auth, permissions, and menu visibility. Remove legacy custom login
    and all user-visible logout/sign-out buttons, personal-menu entries, pages,
    routes, and custom logout helpers, together with role-switch, role-picker, and
@@ -200,12 +198,13 @@ For each migrated route, verify:
 - Data reads and writes hit intended APIs, services, or external systems.
 - Local App APIs are called through base-path-aware `apiUrl()`.
 - Durable data survives reload, another client session, and server restart.
-- Database/network failures are visible and never trigger local/mock fallback.
+- Data-layer/network failures are visible and never trigger local/mock fallback.
 - Empty, loading, error, and success states are real. Scaffold request-hook
   results render through `AsyncView` so a failed first request shows error/retry
   instead of endless loading.
-- When historical data is intentionally not imported, reads from a clean schema
-  return a genuine empty state with real creation/onboarding actions; they do not
+- When historical data is intentionally not imported, reads from fresh
+  collections return a genuine empty (or seed-only) state with real
+  creation/onboarding actions; they do not
   fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
 - Page content does not repeat the title or explain navigation in an
@@ -235,18 +234,16 @@ For the whole app, verify:
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
   namespace, not inferred from Vite dev readiness.
-- Current scaffold runtime bootstrap / `db:push` succeeds against a clean schema.
-- Normal startup and first-request paths do not auto-insert demo, sample, or
-  baseline rows for migrated durable business entities; retained legacy data and
-  development/test fixtures use explicit flows.
-- Valid retained runtime baseline dates use current seed helpers and typed
-  transactional Drizzle data writes.
+- The build's data contract checks pass for every declaration and seed.
+- Normal startup and first-request paths insert no rows from services; baseline
+  records come only from `seed`, and retained legacy data and development/test
+  fixtures use explicit flows.
 - Repository search shows no production durable CRUD backed by browser storage,
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
 - Required legacy imports are validated, idempotent, and reconciled by result
   counts and conflicts.
 - If historical data is intentionally reset, the reset decision, rollback source
-  or explicit lack of one, clean-schema result, and expected empty-state behavior
+  or explicit lack of one, fresh-collection result, and expected empty-state behavior
   are recorded in project-local migration documentation.
 - Compatibility endpoints have current behavior/status/evidence rows; `partial`
   and `queued-only` behavior is not reported as complete.
@@ -301,7 +298,7 @@ not direct service calls or an in-memory test substitute:
    unauthorized access, duplicate conflict, or missing identifier, and assert its
    status and error contract.
 5. When the environment is controllable, restart the app/server, then read the
-   record again to prove PostgreSQL persistence rather than process memory.
+   record again to prove collection persistence rather than process memory.
 6. Exercise the entity's supported terminal lifecycle action—delete, archive,
    cancel, or close—and verify the expected final state.
 7. Use `try/finally` or equivalent teardown when the domain contract permits

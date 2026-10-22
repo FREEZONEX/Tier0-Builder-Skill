@@ -11,7 +11,7 @@
 - [App Identity And Design Contract](#app-identity-and-design-contract)
 - [Data And Server Boundary](#data-and-server-boundary)
 - [Server, Client, And Node-Only Module Boundary](#server-client-and-node-only-module-boundary)
-- [Database Schema And Runtime Bootstrap Contract](#database-schema-and-runtime-bootstrap-contract)
+- [App Data Contract](#app-data-contract)
 - [Build And Preview Contract](#build-and-preview-contract)
 - [Migration Quality Gate](#migration-quality-gate)
 - [Artifact Contract](#artifact-contract)
@@ -21,8 +21,8 @@
 ## Target Shape
 
 The target is the existing Tier0 TanStack Start scaffold, aligned to the latest
-`FREEZONEX/Tier0-App-Scaffold` `main` branch unless the user explicitly asks to pin
-an older template. Keep the scaffold's platform contract intact while importing
+`FREEZONEX/Tier0-App-Scaffold` `feature/cloud-new-architecture-migration` branch
+unless the user explicitly asks to pin a specific commit. Keep the scaffold's platform contract intact while importing
 or updating app functionality.
 
 Required target invariants:
@@ -44,9 +44,9 @@ Required target invariants:
 - Do not expose platform-provided API keys, hosts, tokens, or MQTT credentials
   through user-editable forms.
 - Keep Node `>=22.12.0` and the latest template script and verification contract.
-- Keep the `@tier0/sdk` version and loading contract from the freshly inspected
-  template, and access it through server-side lazy helpers rather than
-  SSR/page-startup imports.
+- Keep the `@tier0/sdk-v2` version and loading contract from the freshly
+  inspected template, and access it through server-side lazy helpers rather than
+  SSR/page-startup imports. App records go through the scaffold data layer.
 - Keep `.agents/skills/` free of vendored Skill content. Platform Builder
   guidance is selected and injected by the App Builder orchestrator.
 - `package.json` top-level `tier0Scaffold` (`{ "version", "ref" }`) is
@@ -55,36 +55,51 @@ Required target invariants:
 
 ## SDK Upgrades
 
-Use the SDK version in the selected scaffold commit as the upgrade target.
-SDK 0.5.3 is the baseline for the MQTT fixes described below, not a pin or a
-reason to downgrade a newer version. Check the package range, authoritative lockfile, and actual
-installed version separately. An existing `^0.5.1` range permits 0.5.3 but a
-lockfile pinned to 0.5.1 keeps `npm ci` on 0.5.1. Reconcile both when the requested
-upgrade includes this target. Preserve an explicitly pinned user version and
-report unsupported behavior instead of silently overriding it. Managed preview
-owns dependency installation/restart; use a clean lockfile install only in an
-unmanaged checkout.
+The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
+scaffold commit as the target (`0.1.0` at the verified v9 snapshot). Check the
+package range, authoritative lockfile, and actual installed version separately.
+Preserve an explicitly pinned user version and report unsupported behavior
+instead of silently overriding it. Managed preview owns dependency
+installation/restart; use a clean lockfile install only in an unmanaged checkout.
 
-Notification behavior introduced in SDK 0.5.1 remains applicable:
+An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
+
+- Replace the dependency and keep the scaffold's loading contract: SSR external
+  `["@tier0/sdk-v2", "mqtt"]` in `vite.config.ts` and the `@/lib/tier0` lazy
+  loaders `loadTier0Sdk()` (root module, `createClient()`),
+  `loadTier0OpenApi()`, `loadTier0Files()` and `loadTier0Mq()`. The v1 helpers
+  `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi` and
+  `getTier0ClientHelpers` no longer exist.
+- `createClient()` exposes `system`, `members`, `notifications`, `files`,
+  `mqttAuth`, `capabilities`, `controls`, `source`, `stream`, `uns` and `agent`.
+  Reuse one client for work done as the App; create a fresh client per request
+  when passing employee data delegation. The App key never reaches the browser.
+- v2 has no UNS v1, legacy Flow, project member queries or
+  `getCurrentProjectId()`. App records move to the scaffold data layer (see
+  [App Data Contract](#app-data-contract)); there is no Flow replacement, so
+  report a source feature that depended on Flow as a concrete blocker instead
+  of inventing one. Workspace members are not the members who can use this App:
+  App-scoped pickers use `members.listApp({ appId: resolveAppId() })`, which the
+  platform rejects locally (`local-app` placeholder) — that failure is expected.
+- Read the Skills in `node_modules/@tier0/sdk-v2/skills/` for the exact API of
+  the domain being rewritten instead of translating v1 calls by name.
+
+Notification behavior:
 
 - Omitted or `undefined` channels expand to `['web', 'mobile']`. `web` covers
   Web & Desktop; there is no `desktop` value. Explicit arrays are deduplicated
-  without adding channels; `[]` creates only the inbox message.
-- Inspect existing send calls before upgrading from 0.4.0 or earlier. Change
-  intentional silent sends to `channels: []`; preserve explicit single-channel
-  choices. Generic notify intent can use the default, without inferring scope
-  from page type. If an existing call's intended scope is unclear, resolve that
-  concrete choice before changing its reminder behavior.
-- The expansion is SDK runtime behavior, not a Skill-only instruction or raw
-  backend API default. TypeScript restricts values; the SDK does not perform
-  runtime channel validation. Keep runtime input validation at the app boundary
-  when untyped user input supplies channels.
+  without adding channels; `[]` creates only the inbox message. Any other value
+  throws a `TypeError` before the request.
+- Keep intentional silent sends as `channels: []` and explicit single-channel
+  choices as they are. If an existing call's intended scope is unclear, resolve
+  that concrete choice before changing its reminder behavior. The expansion is
+  SDK runtime behavior, not a raw backend API default.
 - Preview/development sends use `mode: 'test'`; published sends use `'live'`.
   Do not synthesize or detect a `[Test]` title prefix; use message mode.
-- Preserve recipient selection, business-event idempotency, and runtime App
-  identity. Verify request serialization with a stubbed transport; do not send
-  real notifications solely to validate an upgrade. Delivery requires separate
-  authorized environment verification.
+- Identify the App with `sender: { type: 'app', id: resolveAppId() }`. Preserve
+  recipient selection and business-event idempotency. Verify request
+  serialization with a stubbed transport; do not send real notifications solely
+  to validate an upgrade. Delivery requires separate authorized verification.
 
 For MQTT, use `toWebSocketUrl()` for a platform broker string and
 `parseMqttBroker()` when endpoint fields are needed. Explicit WebSocket URLs
@@ -97,15 +112,17 @@ while explicit `ws://`/`wss://` URLs retain transport. A server cannot infer the
 eventual browser's scheme; pass `secure: true` for browser WSS on other ports.
 Handle undefined URL conversion as a configuration error.
 
-Workspace-encoded non-service keys (`sk-<type>-ws<base36>_<secret>`) require SDK
-0.5.2 or later for MQTT identity derivation. Target 0.5.3 for the additional
-connect-time credential and endpoint fixes. Keep the original key as password
-and let the SDK derive username/clientId; legacy keys retain the Enterprise
-fallback. Preserve deliberate deployment-specific overrides, but do not invent
-hard-coded identity to bypass failed authentication. A changed key passed to
-`connect({ password })` recalculates auto-derived fields and preserves each
-explicit identity field. Disconnect an established connection before changing
-credentials and reconnecting.
+`Tier0MQClient` reads `TIER0_MQTT_HOST` / `TIER0_MQTT_PORT` and uses
+`TIER0_API_KEY` as the password. A workspace-encoded key
+(`sk-<type>-ws<base36>_<secret>`) supplies the MQTT identity: the client derives
+username and clientId from it. A key it cannot parse is rejected unless
+username, clientId and password are all passed explicitly; there is no
+Enterprise fallback. Dedicated credentials can be created with
+`mqttAuth.create()` (returned only once). Do not invent hard-coded identity to
+bypass failed authentication. A changed key passed to `connect({ password })`
+recalculates auto-derived fields and preserves each explicit identity field.
+Disconnect an established connection before changing credentials and
+reconnecting.
 
 After a relevant upgrade, verify the installed version following managed
 restart (or clean unmanaged install), then exercise the affected connection and
@@ -113,28 +130,6 @@ subscription in an authorized environment. A build or local key-format check
 does not prove broker authorization or message delivery. For authentication
 failures, follow [MQTT authentication diagnostics](import-troubleshooting.md#mqtt-authentication-fails)
 before changing credentials. Keep platform injection and server-side lazy loading.
-
-### Existing App API-key type changes
-
-Before the platform changes an existing App to a workspace-encoded non-service
-API key, inspect the SDK version actually running in that App and whether it
-uses MQTT. For MQTT apps below 0.5.2, upgrading the SDK is a prerequisite to the
-key-type change; target 0.5.3 for the complete fixes described above. Updating
-the scaffold or replacing a Skill does not upgrade deployed Apps.
-
-Upgrade and restart the App first, confirm the installed version, and verify
-its MQTT connection/subscription. Validate the target key in an authorized
-staging or controlled cutover before retiring the old credential; a successful
-connection using only the old key does not prove the new key works. If upgrade
-or verification cannot be completed, do not automatically switch credentials;
-report the compatibility blocker. Preserve a rollback path for the controlled
-cutover rather than invalidating the working credential first.
-
-An HTTP-only App must not be marked incompatible solely because its SDK is
-below 0.5.2; check the target key's permissions and endpoint support. Unknown
-runtime versions or unknown MQTT usage are unresolved checks, not evidence that
-a switch is safe. This is a requirement for the platform credential-switch
-workflow; this Skill does not implement platform enforcement.
 
 ## Dependency And Lockfile Compatibility
 
@@ -350,7 +345,7 @@ Keep App identity centralized in `src/lib/app-chrome.ts`:
 - Use `resolveAppId()` from `@/lib/app-id` at runtime for technical identity
   such as notification `sender.id`. `APP_ID` is the platform App UUID;
   `local-app` is a local-only fallback. Never hard-code the current UUID or
-  equate it to the human App name or `DB_SCHEMA`.
+  equate it to the human App name.
 
 ### Workspace Spacing And Dialogs
 
@@ -388,32 +383,31 @@ handlers, custom middleware, or Node server files. Reclassify that code:
 - Shared client requests should use scaffold hooks or explicit abort-safe fetch.
 - HTTP handlers belong in `src/routes/api/**` and stay thin.
 - Business logic, invariants, and transactions belong in `src/services/**`.
-- Database access belongs behind services only.
+- App data access (`data` from `@/lib/data`) belongs behind services only.
 - External platform I/O uses the scaffold SDK lazy loaders: at the verified
-  snapshot these include `loadTier0OpenApi`, `loadTier0Files`,
-  `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi`, and `loadTier0Mq`.
-  Invoke loaders inside the concrete server action that needs I/O. Do not
-  top-level import `@tier0/sdk/openapi`, `@tier0/sdk/files`, or
-  `@tier0/sdk/mq`, and do not replace the SDK with hand-written REST/MQ
-  fallbacks.
+  snapshot these are `loadTier0Sdk` (root module, `createClient()`),
+  `loadTier0OpenApi`, `loadTier0Files`, and `loadTier0Mq`. Invoke loaders inside
+  the concrete server action that needs I/O. Do not top-level import the SDK
+  root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files`, or `@tier0/sdk-v2/mq`,
+  and do not replace the SDK with hand-written REST/MQ/UNS fallbacks.
 - Do not derive Tier0 resource namespaces from the default
   `package.json` name `scaffold`. Resolve the human App name from requirements
   or branding; use `APP_ID` or `/api/manifest` `appId` only as the distinct
   technical identifier.
-- App-owned durable business data uses PostgreSQL as its single source of truth
-  and migrates in this order: Drizzle schema -> current scaffold
-  `bootstrapModule()` / `db:push` contract -> service -> API -> client.
+- App-owned durable business data lives in Tier0 UNS collections as its single
+  source of truth and migrates in this order: collection declaration (and
+  `seed` for baseline records) -> service -> API -> client.
 - LocalStorage, sessionStorage, IndexedDB, Zustand persist, in-memory mocks, and
-  fixtures must not back production durable CRUD or serve as database-failure
+  fixtures must not back production durable CRUD or serve as data-failure
   fallback.
-- Existing local durable data may enter PostgreSQL only through an explicit,
+- Existing local durable data may enter a collection only through an explicit,
   validated, idempotent import with defined identity/conflict handling and
   reconciliation evidence.
 - Store application-generated and user-uploaded files through the platform
   File Storage API, not the sandbox filesystem.
-- Existing database schema/migration behavior and any explicit development/test
-  fixture setup should move into the scaffold data layer only when the app owns
-  that persistence.
+- Source persistence (an own database, migrations, an ORM) moves into the
+  scaffold data layer only when the app owns that persistence; an external
+  system of record stays external unless its ownership is in scope.
 
 ## Server, Client, And Node-Only Module Boundary
 
@@ -421,56 +415,53 @@ Respect the latest scaffold's explicit boundaries:
 
 - Route components, UI components, `src/router.tsx`, client hooks, and shared
   wrappers are client or mixed modules. Do not statically pull Node-only `fs`,
-  `path`, `url`, `pg`, bootstrap, or seed modules into their browser graph.
+  `path`, `url` modules or values from `@tier0/sdk-v2/data` / `@/lib/data` into
+  their browser graph; declarations from `@tier0/sdk-v2/data/define` and types
+  are browser-safe.
 - `src/start.ts`, API route handlers, and `createServerFn` handler bodies are
   server-only boundaries. Keep server work there or in services called from those
   boundaries; do not force `src/start.ts` through a browser-safe wrapper.
-- Runtime database bootstrap belongs in `src/services/**` through the current
-  scaffold `bootstrapModule()` contract, not in client or shared modules.
+- `src/start.ts` opens the SDK data request context
+  (`runWithRequestContext` from `@tier0/sdk-v2/data`); do not add a second
+  context, or data calls silently lose the employee subject.
 - Treat `react-router-dom` `BrowserRouter` as browser-only compatibility code.
   Render it inside the scaffold `ClientOnly` boundary so SSR does not evaluate
   `document`-dependent setup.
 
-## Database Schema And Runtime Bootstrap Contract
+## App Data Contract
 
-Use the platform-injected `DB_SCHEMA` as the application schema source of truth;
-fall back to `public` only when it is absent, as the current scaffold does. Runtime
-queries, `bootstrapModule()`, and any `db:push` verification must resolve to the
-same schema.
+The scaffold's AGENTS.md → App Data and `docs/platform-integration.md` are
+authoritative; read them before changing data. The essentials for alignment:
 
-The platform provisions the database schema. App runtime must never execute
-`CREATE SCHEMA`, even with `IF NOT EXISTS`: the runtime account need not have
-that database-level privilege. Remove legacy runtime creation when aligning;
-verify the injected schema exists separately. `IF NOT EXISTS` does not remove
-the schema-creation privilege requirement. Do not add admin credentials, grant
-database-level `CREATE`, or unset `DB_SCHEMA` to bypass the failure. If the
-injected schema is missing, report provisioning failure instead of creating it
-in App startup or request code.
-
-Declare all tables/enums with `appSchema.table(...)` / `appSchema.enum(...)` in
-`src/db/schema.ts`, never bare `pgTable`/`pgEnum` or declarations elsewhere.
-Pass declared table objects to `bootstrapModule()` and await each module's
-shared bootstrap promise before queries. Undeclared runtime tables can be
-removed by platform schema sync; runtime-only DDL is not a durable declaration.
-
-Before local sync, use `npm run db:push:check`, then the guarded `npm run db:push`.
-Do not bypass a DROP/TRUNCATE refusal. Use `DB_SYNC_ALLOW_DESTRUCTIVE=1` only for
-an explicitly authorized destructive plan with backup/recovery accounted for.
-Ordinary startup must not depend on having run `db:push` or bulk `db:seed`.
-
-Runtime bootstrap is for idempotent table/index DDL inside the provisioned schema. For
-imported/migrated durable business entities, normal startup and first-request
-paths must not auto-insert demo, sample, or baseline business rows. Retained
-legacy rows enter through an explicit validated import, and development/test
-fixtures run only through an explicit development or test action. This migration
-constraint does not define the seed behavior of a separately generated 0-to-1
-app.
-
-When retained runtime baseline data is appropriate, use `seedDate()` for Drizzle
-`date()` columns and `seedTimestamp()` for `timestamp()` columns. Write seed data
-through typed transactional `tx.insert()` / `tx.update()` / `tx.delete()`
-builders. Do not use raw SQL for data writes or pass the numeric return value of
-mutating `Date` setters.
+- Business data lives in Tier0 UNS collections owned by this App. There is no
+  SQL database, ORM, connection string, migration or `db:push` step, and no
+  `DATABASE_URL` / `DB_SCHEMA`. `TIER0_API_HOST` / `TIER0_API_KEY` are injected
+  by the platform; never add them to `.env.example` or UI.
+- Declare every collection with `defineCollection` from
+  `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list it in
+  `collections`. The schema is a storage schema limited to the documented
+  subset; `npm run build` rejects anything UNS cannot store and validates every
+  seed. Keep input rules (formats, lengths, defaults) in API input schemas.
+- The App ensures every declared collection on first data access; do not
+  ensure manually, touch data at import time, or cache your own "initialized"
+  flags. Preview and the deployed App share the same collections, so ensure
+  only widens. Narrowing a schema, changing descriptions, archive and restore
+  are explicit worker operations through the tier0 MCP (`schema:replace`,
+  `dryRun` first) and must not appear in runtime code.
+- Baseline records are the declaration's `seed` (fixed `_id`s,
+  `seedDate()` / `seedTimestamp()` / `requireSeedRef()` from
+  `src/data/seed-utils.ts`), written once when the collection is created.
+  For imported/migrated durable business entities, services never insert demo,
+  sample or baseline rows on startup, on first request or when a list is empty;
+  retained legacy rows enter through an explicit validated import.
+- Never `deleteMany` or recreate a collection to reset a schema or test data:
+  it deletes the deployed App's records too.
+- Runtime data failures are `DataError`s; let them reach `withErrors`. Retry
+  only retryable errors; `outcomeUnknown: true` means a write may have landed —
+  check before replaying with the same idempotency key.
+- An app on the older Drizzle/PostgreSQL layer replaces it with collections;
+  its PostgreSQL rows are not migrated (product decision). Remove the Drizzle,
+  `pg` and `db:*` dependencies, scripts and env usage together.
 
 ## Build And Preview Contract
 
@@ -482,7 +473,8 @@ Use the scaffold's existing scripts and managed preview behavior:
   or otherwise unmanaged environment, using the authoritative lockfile.
 - Run `npm run build` for normal completion and let its automatic `postbuild`
   verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
-  `auth:union:test`, and `runtime:audit`; the verifier also covers typecheck,
+  `auth:union:test`, `runtime:audit`, `test:components` and `test:data`; the
+  verifier also covers typecheck,
   lint, contract tests, and runtime safety. Locked contract coverage includes
   route nesting, navigation, lifecycle/read-only content, role limits, and 375px
   responsiveness. Do not substitute `vite build` or edit locked gates to make
@@ -504,10 +496,9 @@ Use the scaffold's existing scripts and managed preview behavior:
   readiness timeout, and HMR failures when the orchestrator injected it. Never
   copy that Skill into `.agents/skills/`.
 
-For persistence cutovers, build success is insufficient. Verify clean-schema
-runtime bootstrap / `db:push`, supported API lifecycle operations and constraints,
-reload/restart durability, and visible failure without local fallback when
-PostgreSQL is unavailable.
+For persistence cutovers, build success is insufficient. Verify supported API
+lifecycle operations and constraints, reload/restart durability, and visible
+failure without local fallback when the data layer fails (`DataError`).
 
 ## Migration Quality Gate
 
