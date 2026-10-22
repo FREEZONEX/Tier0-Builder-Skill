@@ -120,44 +120,49 @@ require is not defined in ES module scope
 ReferenceError: exports is not defined in ES module scope
 ```
 
-When the stack points at `@tier0/sdk`, `@tier0/sdk/mq`, or `mqtt` during SSR,
-separate SDK package/export failures from app-code eager loading failures. Read
-the freshly inspected scaffold and installed package metadata instead of
-assuming a historical SDK version. Preserve the current scaffold's SSR external
-and server-side lazy-loading contract so optional platform I/O does not run
-during page initialization.
+When the stack points at `@tier0/sdk-v2` (any subpath, including
+`@tier0/sdk-v2/data`) or `mqtt` during SSR, separate SDK package/export failures
+from app-code eager loading failures. Read the freshly inspected scaffold and
+installed package metadata instead of assuming a historical SDK version.
+Preserve the current scaffold's SSR external and server-side loading contract
+so optional platform I/O does not run during page initialization.
 
 Fix sequence:
 
 1. Open `vite.config.ts`.
-2. Keep `pg` external because it is a Node/Postgres runtime dependency.
-3. Ensure SDK packages are externalized for Vite SSR:
+2. Ensure the SDK and `mqtt` are externalized for Vite SSR; the package name
+   also externalizes its subpaths (`/data`, `/mq`, `/openapi`, ...):
 
 ```ts
 ssr: {
-  external: ["pg", "@tier0/sdk", "mqtt"],
+  external: ["@tier0/sdk-v2", "mqtt"],
 }
 ```
 
-4. Do not add `@tier0/sdk` or `mqtt` to `ssr.noExternal`. Let package exports
+3. Do not add `@tier0/sdk-v2` or `mqtt` to `ssr.noExternal`. Let package exports
    choose the correct runtime condition instead of forcing Vite to rebundle
    SDK internals.
-5. Search for top-level SDK imports in app services, route loaders, pages, or
-   generated wrappers:
+4. Search for SDK imports outside their server-side homes:
 
 ```bash
-rg -n '@/lib/tier0|@tier0/sdk/openapi|@tier0/sdk/mq' src/services src/routes src/components src/lib
+rg -n '@tier0/sdk-v2' src --glob '!routeTree.gen.ts'
 ```
 
-6. If an optional operation such as UNS dispatch, Flow publish, or MQTT command
-   send imports the SDK at module top level, move the SDK call behind
-   `@/lib/tier0` lazy loaders and invoke it only inside the action that needs
-   platform I/O. Top-level imports of lazy helper functions from `@/lib/tier0`
-   are fine; top-level calls to those helpers are not. Do not import SDK values
-   while rendering a page or loading preview.
-7. Do not replace the SDK with fallback MQTT clients or hand-written UNS/Flow
-   fetch wrappers.
-8. Run `npm run build:check` when available.
+   Expected homes: `src/lib/tier0.ts` (lazy loaders), `src/lib/data/**` and
+   `src/services/**` (`@tier0/sdk-v2/data`), `src/start.ts`
+   (`runWithRequestContext`), and declarations in `src/data/**` or anywhere
+   from `@tier0/sdk-v2/data/define` (browser-safe). A value import of
+   `@tier0/sdk-v2/data` from a route component, component or client hook pulls
+   Node-only code into the browser bundle; `npm run build` flags it.
+5. If an optional platform operation (notification, file upload, MQTT command
+   send) imports the SDK root, `/files` or `/mq` at module top level, move the
+   call behind the `@/lib/tier0` lazy loaders and invoke it only inside the
+   action that needs platform I/O. Top-level imports of lazy helper functions
+   from `@/lib/tier0` are fine; top-level calls to those helpers are not. Do not
+   import SDK values while rendering a page or loading preview.
+6. Do not replace the SDK with fallback MQTT clients or hand-written UNS fetch
+   wrappers; App records go through `data` from `@/lib/data` in services.
+7. Run `npm run build:check` when available.
 
 ### TanStack Start HTTPError 500
 

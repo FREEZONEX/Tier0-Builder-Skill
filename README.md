@@ -2,27 +2,28 @@
 
 用于需求整理、工业企业应用构建、平台迁移、界面修复和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
 
+本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v9，App 数据存于 Tier0 UNS collections），平台 SDK 为 `@tier0/sdk-v2`。SDK 的使用技能随 npm 包发布（`node_modules/@tier0/sdk-v2/skills/`），不在本仓库维护。
+
 ## 快速安装到 Codex
 
 在 Codex 对话中复制发送以下内容即可，无需自行寻找安装目录：
 
 ```text
-请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 main 分支安装以下技能到本地用户技能目录：
+请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 feature/cloud-new-architecture-migration 分支安装以下技能到本地用户技能目录：
 skills/app-srs
 skills/app-builder
 skills/align-platform-app
-skills/migrate-node-red-app
 skills/ui-repair
 skills/responsive-craft
 skills/browser-platform-capabilities
 skills/preview-runtime-stability
-请保留每个技能的完整目录及配套文件，跳过没有 SKILL.md 的 tier0-sdk 目录；如果本地存在同名技能，先说明差异，不要直接覆盖。完成后列出安装位置和已安装技能。
+请保留每个技能的完整目录及配套文件；如果本地存在同名技能，先说明差异，不要直接覆盖。完成后列出安装位置和已安装技能。
 ```
 
 只需要一个技能时，也可以发送具体目录链接。例如：
 
 ```text
-请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/main/skills/ui-repair 到本地。
+请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/feature/cloud-new-architecture-migration/skills/ui-repair 到本地。
 ```
 
 安装完成后，在下一轮对话中使用技能；若技能列表未更新，重启 Codex。技能安装只添加本地工作指引，不会自动安装项目依赖、配置平台账号或部署应用。
@@ -34,13 +35,10 @@ skills/preview-runtime-stability
 | [app-srs](skills/app-srs/SKILL.md) | 将需求整理为应用规格说明，或更新已有规格 |
 | [app-builder](skills/app-builder/SKILL.md) | 按需求和规格构建应用或扩展业务模块，建议与 app-srs 一起安装 |
 | [align-platform-app](skills/align-platform-app/SKILL.md) | 将应用迁移或对齐到 Tier0 脚手架 |
-| [migrate-node-red-app](skills/migrate-node-red-app/SKILL.md) | 迁移 Node-RED 后端、流程和数据逻辑，需配合 align-platform-app |
 | [ui-repair](skills/ui-repair/SKILL.md) | 修复表单、弹窗、表格、布局和文案一致性等界面问题 |
 | [responsive-craft](skills/responsive-craft/SKILL.md) | 设计和检查多视口布局、滚动及 sticky 行为 |
 | [browser-platform-capabilities](skills/browser-platform-capabilities/SKILL.md) | 实现扫码、拍照、定位、录音、文件读取和剪贴板能力 |
 | [preview-runtime-stability](skills/preview-runtime-stability/SKILL.md) | 排查依赖安装、预览启动、端口和 HMR 问题 |
-
-`skills/tier0-sdk` 仅保留[迁移说明](skills/tier0-sdk/README.md)，没有 `SKILL.md`，不在本仓库的安装范围内。
 
 ## 手动安装
 
@@ -49,11 +47,11 @@ skills/preview-runtime-stability
 安装了 Git 的用户可以在终端执行：
 
 ```sh
-git clone https://github.com/FREEZONEX/Tier0-Builder-Skill.git
+git clone -b feature/cloud-new-architecture-migration https://github.com/FREEZONEX/Tier0-Builder-Skill.git
 cd Tier0-Builder-Skill
 ```
 
-也可以点击仓库页面的 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
+也可以在仓库页面切换到 `feature/cloud-new-architecture-migration` 分支后点击 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
 
 ### 2. 复制技能到工具识别的目录
 
@@ -62,7 +60,7 @@ Codex 支持以下本地技能目录：
 - 用户级：`~/.agents/skills/`，供当前用户的多个项目使用。
 - 项目级：目标项目根目录中的 `.agents/skills/`，仅供该项目使用。
 
-在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 8 个技能到用户目录。已有同名目录或符号链接会被跳过：
+在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 7 个技能到用户目录。已有同名目录或符号链接会被跳过：
 
 ```sh
 (

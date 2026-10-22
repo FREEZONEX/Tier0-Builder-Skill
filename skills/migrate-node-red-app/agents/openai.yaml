@@ -1,7 +1,0 @@
-interface:
-  display_name: "Migrate Node-RED App"
-  short_description: "Move Node-RED APIs, workflows, and integrations"
-  default_prompt: "Use $align-platform-app together with $migrate-node-red-app to migrate a legacy Node-RED-backed application into the current Tier0 platform shape without overstating cutover or retirement."
-
-policy:
-  allow_implicit_invocation: true

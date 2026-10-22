@@ -9,7 +9,8 @@ Use this before reporting a generated app or substantial change as complete.
 - Identify required data models, state transitions, validation, seed behavior,
   service/API paths, and applicable impact confirmation.
 - Register roles across the target scaffold surfaces together. Use installed
-  SDK/helpers and the current bootstrap contract; do not invent platform clients.
+  SDK/helpers and the scaffold data layer (`src/data/collections.ts`,
+  `@/lib/data` in services); do not invent platform clients.
 
 ## Product
 
@@ -68,7 +69,6 @@ Use this before reporting a generated app or substantial change as complete.
 - Preview or route smoke confirms the entry route loads without "Page failed
   to load" or equivalent route-level runtime errors when a preview URL exists.
 - Visible links/actions resolve to implemented routes or in-page behavior.
-- Raw SQL results are normalized before array operations.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
 - Polling/timers/subscriptions use shared patterns or clean up correctly.
