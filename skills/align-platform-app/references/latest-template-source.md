@@ -51,9 +51,10 @@ Read the relevant current files and their changes since the app's known base:
 | Persistence | `src/lib/data/{index,query}.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-An app still on the Drizzle/PostgreSQL layer of an older scaffold replaces it
-with collections as described under "Older data layer" in `SKILL.md`; its
-existing PostgreSQL rows are not migrated.
+An app on an older data layer follows "Older data layer" in `SKILL.md`: a v8
+app (its own `src/lib/data` on UNS collections) switches to the SDK client and
+keeps its collections and records; a v7-or-earlier app replaces Drizzle and
+PostgreSQL with collections, and its existing PostgreSQL rows are not migrated.
 
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this

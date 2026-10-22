@@ -459,9 +459,16 @@ authoritative; read them before changing data. The essentials for alignment:
 - Runtime data failures are `DataError`s; let them reach `withErrors`. Retry
   only retryable errors; `outcomeUnknown: true` means a write may have landed —
   check before replaying with the same idempotency key.
-- An app on the older Drizzle/PostgreSQL layer replaces it with collections;
-  its PostgreSQL rows are not migrated (product decision). Remove the Drizzle,
-  `pg` and `db:*` dependencies, scripts and env usage together.
+- A v8 app already stores records in the same UNS collections through its own
+  `src/lib/data`: keep the collections and records, keep only
+  `src/lib/data/{index,query}.ts` from the selected scaffold, import declarations
+  from `@tier0/sdk-v2/data/define`, and open the request context only through
+  `runWithRequestContext` from `@tier0/sdk-v2/data` — a leftover second context
+  makes data calls silently run as the App. Take the upstream data gates with
+  their gate-integrity manifest.
+- A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
+  collections; its PostgreSQL rows are not migrated (product decision). Remove
+  the Drizzle, `pg` and `db:*` dependencies, scripts and env usage together.
 
 ## Build And Preview Contract
 

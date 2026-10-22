@@ -51,15 +51,35 @@ scope below and still proceeds.
   and their necessary dependencies; do not start a data migration, rebrand, or
   full UI rewrite solely because upstream changed. With no known base, inspect
   diffs and callers rather than treating every difference as template drift.
-- **Older data layer:** an app built on a scaffold before v9 keeps business data
-  in PostgreSQL through Drizzle (`src/db/**`, `src/services/bootstrap.ts`,
-  `DATABASE_URL` / `DB_SCHEMA`, `db:*` scripts). Aligning it replaces that layer
-  with collections: declare the entities in `src/data/collections.ts` (baseline
-  records as `seed`), rewrite services onto `data` from `@/lib/data`, and remove
-  the Drizzle/`pg` dependencies, scripts and env usage. The existing PostgreSQL
-  records are not migrated — that is a product decision, so do not build an
-  export/import from the old database; state in the report that legacy rows
-  were not carried over.
+- **Older data layer:** identify the base by `tier0Scaffold.version`, else by
+  files.
+  - **v8** keeps its own data layer in `src/lib/data` (`bootstrap`, `client`,
+    `collection`, `context`, `define`, `index`, `query`, `schema`, `transport`)
+    on the same UNS collections v9 uses, so collections and records stay as
+    they are and nothing is migrated. Delete the seven files other than
+    `index.ts` and `query.ts` and take the selected scaffold's
+    `src/lib/data/{index,query}.ts`; change every `@/lib/data/define` import to
+    `@tier0/sdk-v2/data/define`; make `src/start.ts` import
+    `runWithRequestContext` from `@tier0/sdk-v2/data`. Never keep a second
+    request context: with two stores, data calls silently lose the employee
+    subject and run as the App. Take the upstream gate set together
+    (`scripts/gate-integrity.{mjs,json}`, `src/lib/data-contracts.test.mjs`,
+    `src/lib/app-chrome.test.mjs`, `eslint.config.mjs`,
+    `scripts/runtime-audit.mjs`, `scripts/data-schema.mjs`,
+    `tests/data-layer.test.ts`, `tests/data-schema.test.ts`). v8 still depends on
+    `@tier0/sdk` v1, so the SDK move below applies too. Verify that no
+    `@/lib/data/define` import, `src/lib/data/context.ts` or other removed file
+    remains, and that `src/start.ts` takes the context only from
+    `@tier0/sdk-v2/data`.
+  - **v7 and earlier** keep business data in PostgreSQL through Drizzle
+    (`src/db/**`, `src/services/bootstrap.ts`, `DATABASE_URL` / `DB_SCHEMA`,
+    `db:*` scripts). Aligning replaces that layer with collections: declare the
+    entities in `src/data/collections.ts` (baseline records as `seed`), rewrite
+    services onto `data` from `@/lib/data`, and remove the Drizzle/`pg`
+    dependencies, scripts and env usage. The existing PostgreSQL records are not
+    migrated — that is a product decision, so do not build an export/import
+    from the old database; state in the report that legacy rows were not
+    carried over.
 - **Persistence cutover:** read
   [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
