@@ -6,7 +6,7 @@ Audit an existing codebase's responsive behavior, identify problems and design f
 
 Read only the references needed for the affected layout:
 - `references/ai-failure-patterns.md` — pre-flight scan for quick wins
-- `references/responsive-design-forks.md` — loaded when ambiguous patterns are found
+- `references/responsive-design-forks.md` — Fork 2 for any record list/table; other forks when ambiguous patterns are found
 - `references/sticky-scroll-patterns.md` — loaded when sticky/scroll issues are found
 - `references/modern-css-patterns.md` — loaded when implementing fixes
 
@@ -16,7 +16,7 @@ Read only the references needed for the affected layout:
 
 ### Scope the audit
 
-If the user pointed at a specific component, page, or problem ("fix the mobile nav", "the sidebar breaks on tablet"), scope the audit to that area. Don't run a full-codebase audit for a targeted request — read the relevant component, check its responsive behavior, identify the issue, and fix it. Skip to Step 3.
+If the user pointed at a specific component, page, or problem ("fix the mobile nav", "the sidebar breaks on tablet"), scope the audit to that area. Don't run a full-codebase audit for a targeted request — read the relevant component, check its responsive behavior and primary mobile task, then fix it. For record lists/tables, read Fork 2 before Step 3, including when the user says the layout already fits. Apply their chosen presentation without another design-choice gate.
 
 If the user asked for a general responsive review ("make this responsive", "audit the responsive design"), proceed with the full audit below.
 
@@ -55,6 +55,8 @@ Before diving into responsive specifics, understand what you're working with:
 
 8. **Touch targets** — Interactive elements at least 44x44px on mobile?
 
+9. **Task suitability** — Can mobile users identify and process a record comfortably? For every affected list/table, choose cards, a comparison table, or priority columns using Fork 2; passing overflow checks alone is insufficient.
+
 ### Present findings
 
 After auditing, present a structured summary:
@@ -87,7 +89,7 @@ For each ambiguous responsive translation found in the audit, load `references/r
 
 Scan for these patterns in the existing code:
 - Sidebar with mixed content types
-- Data tables with 6+ columns
+- Record lists/tables of any column count, including those that already fit or scroll correctly
 - Multi-panel layouts (dashboard-style)
 - Complex hero sections with video/animation
 - Multiple sticky elements stacking
@@ -95,10 +97,7 @@ Scan for these patterns in the existing code:
 - Multi-column forms
 - Bento/masonry grids
 
-For each fork found:
-1. Describe what exists in the codebase
-2. Present 2-3 mobile approaches with tradeoffs
-3. Ask the user to choose
+For each fork found, apply an explicit user choice first. In Adaptive mode, state and implement a task-supported choice; present 2-3 approaches and ask only if a material tradeoff remains unresolved.
 
 If AskUserQuestion is available, present forks as tappable options. Otherwise, describe the options and ask the user to choose by number.
 
@@ -141,6 +140,7 @@ After implementing fixes:
 3. Check the edge cases most relevant to this specific site
 4. Confirm all design fork decisions were implemented as agreed
 5. Check that no new responsive issues were introduced
+6. For list/table transformations, run the record-list task and state checks in `references/testing-checklist.md`; report static review separately from browser-tested behavior
 
 Present the verification summary:
 
@@ -164,7 +164,7 @@ If they accept, run `node ${CLAUDE_SKILL_DIR}/scripts/preview.js <url>`.
 ## Success Criteria
 
 - [ ] Audit completed and presented
-- [ ] All design forks identified and decided by user
+- [ ] Design choices follow user intent and task context; unresolved tradeoffs confirmed
 - [ ] Fixes implemented in priority order
 - [ ] Pre-flight scan passed
 - [ ] Verification completed at key viewports

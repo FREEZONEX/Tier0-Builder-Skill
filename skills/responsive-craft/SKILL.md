@@ -2,7 +2,8 @@
 name: responsive-craft
 description: >-
   Handle complex responsive layout decisions, coordinated sticky and scroll
-  regions, or dedicated multi-viewport audits and previews. Use for explicit
+  regions, task-driven table-to-card transformations on mobile, or dedicated
+  multi-viewport audits and previews. Use for explicit
   breakpoint strategies and cross-viewport behavior; ordinary form overflow,
   clipped controls, and isolated mobile UI defects belong to ui-repair.
 ---
@@ -33,7 +34,9 @@ Implement responsive design that works across all viewports — compensating for
 
 6. **Sticky/scroll needs explicit patterns** — Sticky coordination, z-index stacking contexts, overflow ancestors, safe areas, virtual keyboards. These break silently. Use the patterns in `references/sticky-scroll-patterns.md`, don't improvise.
 
-7. **Recognize design forks, don't default silently** — When a responsive translation has multiple valid approaches, present 2-3 options with tradeoffs and ask the user to choose. See `references/responsive-design-forks.md`.
+7. **Choose the presentation for the task** — Fitting the viewport is not enough. For mobile operators locating, reading, approving, or editing one record at a time, prefer a card list; retain tables when aligned cross-record comparison is essential. Decide the presentation before selecting CSS tools. Read `references/responsive-design-forks.md` Fork 2 for any record list/table transformation, regardless of column count.
+
+8. **Resolve only open design forks** — Follow an explicit user choice without asking again. When task context clearly supports an approach, state the choice and proceed in Adaptive mode. Ask for a choice with tradeoffs only when the primary task or a material tradeoff remains unclear; keep Guided mode review when requested.
 
 ---
 
@@ -68,7 +71,7 @@ This skill operates in three modes. Detect from `$ARGUMENTS` or ask.
 - `$ARGUMENTS` contains "preview", "show breakpoints", "live preview" → **Preview**
 - `$ARGUMENTS` contains "audit", "transform", "fix", "improve", "retrofit" → **Transform Existing**
 - `$ARGUMENTS` contains "build", "create", "new", "from scratch" → **Build Responsive**
-- User is working in an existing codebase with responsive issues → **Transform Existing**
+- User is working in an existing codebase with responsive issues, or wants a different mobile presentation even though the layout already fits → **Transform Existing**
 - User is starting a new page/component → **Build Responsive**
 - Ambiguous → Ask
 
@@ -109,7 +112,7 @@ After mode and interactivity are selected:
 
 Load other references on demand:
 - `references/sticky-scroll-patterns.md` — when sticky, scroll-snap, or independent scroll regions are involved
-- `references/responsive-design-forks.md` — when an ambiguous responsive translation is detected
+- `references/responsive-design-forks.md` — for record list/table transformations (Fork 2), or when an ambiguous responsive translation is detected
 - `references/testing-checklist.md` — during verification step
 - `references/modern-css-patterns.md` — during Transform mode when implementing fixes
 

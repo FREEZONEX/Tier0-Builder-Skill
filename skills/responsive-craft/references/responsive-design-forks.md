@@ -1,6 +1,6 @@
 # Responsive Design Forks
 
-Patterns where there is no single correct responsive translation. When the skill identifies one of these, it should present the options with tradeoffs and ask the user to choose — not default silently.
+Patterns with multiple responsive presentations. Apply an explicit user choice first. In Adaptive mode, when the task clearly supports an approach, state the decision and proceed. Present options and ask only when a material tradeoff remains unresolved; preserve requested Guided review.
 
 ---
 
@@ -47,81 +47,39 @@ When auditing existing code or planning new responsive layouts, scan for the pat
 
 ---
 
-## Fork 2: Data Table with Many Columns
+## Fork 2: Record Lists and Data Tables
 
-**Desktop pattern:** Table with 6+ columns of data.
+**Desktop pattern:** Records shown in a table, with or without row actions. Inspect the mobile task regardless of column count, even when horizontal scrolling and sticky columns already work correctly.
 
-### Option A: Horizontal Scroll + Sticky First Column
-- All data accessible by scrolling
-- First column stays visible for context
-- Good for data-heavy tables where all columns matter equally
-- **Tradeoff:** Users may not realize they can scroll; discoverability is poor
+### Choose by task
 
-### Option B: Card Stack
-- Each row becomes a card with label:value pairs
-- Good for 4-8 columns where row-level reading matters more than column comparison
-- **Tradeoff:** Cannot compare across rows; loses the tabular advantage
+| Primary mobile task | Preferred presentation | Tradeoff |
+|---------------------|------------------------|----------|
+| Find one record, read its context, approve/edit/process it | Card list | More vertical space; weaker cross-record column comparison |
+| Compare values across records, inspect a matrix, or edit spreadsheet-like data | Table with a contained horizontal scroll region | Requires horizontal navigation; preserve row identity and clear scroll affordance |
+| Scan a few comparable fields, occasionally inspect other fields | Priority columns with explicit details access | Secondary fields take another action to reach |
 
-### Option C: Priority Columns + Expand/Details
-- Show only 2-3 essential columns; rest available via "expand" or details view
-- Good when some columns are clearly more important than others
-- **Tradeoff:** Requires deciding which columns are "essential" — may vary by user
+An operator role or a narrow width alone does not require cards. Use the actual task, existing behavior, and user preference. When the user asks for cards, implement that choice without reopening the fork. When the task is unclear, ask whether users primarily process individual records or compare values across records.
 
-### The Question
-> "This table has [N] columns. Which columns are essential on mobile? That determines whether we (a) scroll horizontally with a sticky first column, (b) stack each row as a card, or (c) show priority columns with an expand option."
+### Design the card, not a vertical dump of every cell
 
-### Signals
-- If users compare across rows → horizontal scroll (A)
-- If users read one row at a time → card stack (B)
-- If there are clearly primary/secondary columns → priority + expand (C)
-- If table has actions (edit/delete) per row → card stack handles this most cleanly
+- Put the record's primary identifier/title first, keeping its detail link. Show relevant status alongside it when the data provides one; do not invent a status from a disabled action.
+- Choose the few labeled fields needed to recognize and act on the record. Preserve full identifiers through wrapping or an accessible detail path. Keep secondary fields reachable in details/expansion rather than silently dropping them.
+- Place the main permitted row action in a clear action area. Keep secondary actions accessible, with the same permission, disabled-state, confirmation, and pending-state rules as the table. Avoid a fixed action column consuming the mobile card width.
+- Preserve selection when supported: a labeled checkbox per record, selected count, select-all scope, and existing bulk actions. Tapping an action or checkbox must not accidentally open the record.
+- Keep existing search, filters, reset, sort, pagination/load-more, refresh, create, and export capabilities reachable. Table-header sorting needs an equivalent control when the header is absent. Adapt crowded toolbars only within the requested scope; show active filter state when filters collapse.
 
-### Implementation: Card Stack on Mobile
+**Example — equipment archive processing:** At phone width, render each archive as a card headed by its document number/link, followed by labeled equipment code and location when available, then approval/edit actions using existing availability rules. Keep selection and bulk controls. At a wider width that supports readable columns and actions, retain the desktop table. Operators should be able to identify and process a record without sideways scrolling. A working horizontal table alone does not satisfy this task.
 
-Mobile-first: the card layout is the base, table layout is added at wider viewports.
+### Implementation contract
 
-```css
-/* Mobile base: card layout */
-table, thead, tbody, tr, th, td { display: block; }
-thead tr { display: none; }
-tr {
-  margin-bottom: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem;
-}
-td {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-}
-td::before {
-  content: attr(data-label);
-  font-weight: 600;
-}
+Use the project's existing card/list or responsive collection component when available. Cards and table are two presentations of the same records, query, selected IDs, and action handlers—not independent workflows or data fetches. Preserve filters, sort, pagination, selection, and action results across resizing or rotation; retain existing rules for selection when the query changes.
 
-/* Desktop: restore table layout */
-@media (min-width: 641px) {
-  table { display: table; }
-  thead { display: table-header-group; }
-  tbody { display: table-row-group; }
-  tr { display: table-row; margin: 0; border: none; padding: 0; }
-  th, td { display: table-cell; }
-  td::before { display: none; }
-}
-```
+Choose the switch from available content width and readable fields/actions, using existing design-system breakpoints where suitable. Do not blindly convert every table below a fixed phone breakpoint. Scope styles to the affected collection, not global `table`, `tr`, or `td` selectors.
 
-Requires `data-label` attributes on each `<td>` in the HTML — Claude must add these when implementing. Note: changing `display` on table elements may break screen reader semantics — test with AT.
+Use semantic list items with real headings and field labels (for example, `dl`/`dt`/`dd`) for cards and retain table/header semantics on desktop. Do not rely solely on CSS-generated `data-label` text for accessible labels. If both presentations exist in the DOM, expose only the active one to focus and assistive technology, avoid duplicate IDs, and do not trigger duplicate requests or actions. Keep keyboard focus usable when switching presentations.
 
-### Implementation: Column Hiding
-
-```css
-@media (min-width: 769px) { .col-secondary { display: table-cell; } }
-```
-
-Only hide genuinely secondary data — hidden columns are invisible to assistive technology.
-
-For sticky table header patterns (dual-axis sticky), see `references/sticky-scroll-patterns.md`.
+For comparison tables that remain scrollable, use the dual-axis sticky patterns in `sticky-scroll-patterns.md`. For both choices, verify task completion and state continuity using the record-list checks in `testing-checklist.md`.
 
 ---
 
