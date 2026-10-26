@@ -48,7 +48,7 @@ Ranked by 2026 device market share and likelihood of catching issues:
 
 ## The 10-Point Check (At Each Viewport)
 
-1. **No horizontal scroll** — any at all is a failure
+1. **No accidental page-level horizontal scroll** — a deliberately retained comparison table may scroll within its labeled region; record cards must not require sideways scrolling
 2. **Text overflow** — long words, URLs, usernames breaking containers
 3. **Images and media** — not overflowing, `max-width: 100%` applied
 4. **Touch targets** — 44px minimum on mobile viewports
@@ -58,6 +58,21 @@ Ranked by 2026 device market share and likelihood of catching issues:
 8. **Positioned elements** — not overlapping or off-screen
 9. **Z-index stacking** — modals, dropdowns, tooltips rendering correctly
 10. **Sticky elements** — sticking as intended, not overlapping each other
+
+---
+
+## Record Lists: Task and State Checks
+
+For table/card transformations, layout checks alone are not acceptance. Test at 360/375px, immediately below and above the chosen switch width, and a desktop width such as 1440px. Check a narrow container too if the switch uses container width.
+
+- **Complete a record task:** Find a record with search/filters, identify it from its title and labeled fields, open details, and invoke an available row action. Verify disabled/forbidden and pending actions retain their rules. Cards should support this without horizontal scrolling.
+- **Keep collection controls:** Exercise reset, sorting, pagination/load-more, refresh, and applicable create/export actions. Confirm hidden table headers have not removed sorting or select-all access.
+- **Keep selection and state:** Select records, verify the selected count and existing select-all/bulk-action scope, then resize/rotate across the switch. Filters, sort, page, and selected IDs remain consistent; an action updates both presentations without duplicate submission or divergent results.
+- **Check representative data/states:** Long document/equipment identifiers, missing optional values, many fields, loading, empty/no-results, and error/retry states. Critical fields stay readable; secondary fields remain accessible.
+- **Check accessibility:** Labels and reading order make sense, controls work by keyboard, focus remains usable across the switch, and inactive views contain no reachable duplicate controls or duplicate IDs. Check that checkbox/action taps do not open the record accidentally.
+- **Retain the table where justified:** For comparison-led tasks, verify column alignment, row identity, scroll affordance, and keyboard access. Do not fail a deliberately chosen contained scroll region merely because it scrolls.
+
+Record what was actually exercised. Static inspection or screenshots alone cannot establish action correctness, state continuity, or assistive-technology behavior; list unavailable runtime checks as unverified.
 
 ---
 

@@ -6,14 +6,14 @@ Build a new responsive site or component with responsive behavior designed in fr
 
 Read only the references needed for the affected layout:
 - `references/modern-css-patterns.md` — CSS patterns for implementation
-- `references/responsive-design-forks.md` — loaded when ambiguous patterns arise
+- `references/responsive-design-forks.md` — Fork 2 for any record list/table; other forks when ambiguous patterns arise
 - `references/ai-failure-patterns.md` — when diagnosing a matching failure pattern
 
 ---
 
 ## Step 1: Understand What's Being Built
 
-Before writing any CSS, understand the layout requirements.
+Before writing any CSS, understand the layout requirements. For record lists/tables, establish whether mobile users process individual records or compare values across records; use available context before asking. Read Fork 2 and choose the presentation before choosing CSS tools.
 
 ### Adaptive mode
 
@@ -52,7 +52,7 @@ For each major component or section, write a brief inline behavior note as a CSS
 /* ProductCard: stack vertical on mobile, horizontal at 640px, fixed 320px grid card at 1024px */
 ```
 
-Surface design forks as you encounter them — don't batch them. When you recognize a pattern from `references/responsive-design-forks.md`, stop, present the fork, get a decision, continue. This is how Adaptive compensates for not writing formal specs.
+Surface design forks as you encounter them — don't batch them. When you recognize a pattern from `references/responsive-design-forks.md`, apply the user's choice or state a task-supported choice. Ask only about unresolved material tradeoffs. This is how Adaptive compensates for not writing formal specs.
 
 ### Guided mode
 
@@ -182,11 +182,9 @@ Before outputting any responsive CSS, scan against `references/ai-failure-patter
 
 As you build, you'll encounter patterns from `references/responsive-design-forks.md`. When you recognize one:
 
-1. Stop implementing
-2. Describe what you're seeing and why there's no single right answer
-3. Present the options with tradeoffs
-4. Ask the user to decide
-5. Continue implementing with their choice
+1. Follow an explicit choice or the agreed behavior spec
+2. In Adaptive mode, state a task-supported choice and continue
+3. If a material tradeoff is unresolved, present options and ask before implementing that decision
 
 ---
 
@@ -205,6 +203,8 @@ Load `references/testing-checklist.md` for the 10-point check and priority viewp
 ### Quick verification (Adaptive mode)
 
 Run the pre-flight scan (ai-failure-patterns.md checklist) against all output. Run through the 10-point check at 375px, 768px, and 1440px mentally — flag any likely issues.
+
+For record list/table transformations, also run the record-list checks in `references/testing-checklist.md`. A mental/static review is not browser verification; report any untested interactions explicitly.
 
 ### Thorough verification (Guided mode)
 
@@ -240,6 +240,6 @@ If they accept, run `node ${CLAUDE_SKILL_DIR}/scripts/preview.js <url>`.
 - [ ] Responsive behavior described before coding (tables or inline notes)
 - [ ] Foundation established (reset, viewport meta, tokens)
 - [ ] Built mobile-first using escalation model
-- [ ] Design forks surfaced and decided by user
+- [ ] Design choices follow user intent and task context; unresolved tradeoffs confirmed
 - [ ] Pre-flight scan passed
 - [ ] Verification completed
