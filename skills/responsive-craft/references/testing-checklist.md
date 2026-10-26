@@ -4,6 +4,29 @@ How to verify responsive design without a visual canvas. Organized from fastest 
 
 ---
 
+## Width-Only Layout Verification
+
+Before device emulation, test with an ordinary desktop browser identity and
+unchanged touch settings. Resize the page or app iframe to 375px and 390px,
+then back to the wide layout. Mobile UA emulation alone cannot validate this
+contract. For each structural breakpoint `b`, inspect `b - 1`, `b`, and `b + 1`
+CSS pixels, including resizing without reloading.
+
+- Narrow navigation, cards, forms, and action mappings activate by width alone.
+- A direct narrow-page load and a wide-to-narrow resize reach the same layout;
+  resizing back restores the wide layout without losing drafts or selection.
+- CSS and JS use the same threshold, with no gap, overlapping variants, or
+  hydration warnings. Check container-driven variants at equal container widths.
+- Where both are available, compare Builder preview and published runtime on the
+  same route, data, role, state, viewport, and container width. Layout selection
+  must agree; font rendering, browser chrome, and safe-area differences are not
+  required to be pixel-identical. Do not publish merely to run this check.
+- Use real-device or mobile-UA checks afterward for platform features and input
+  behavior. Report unavailable browser, preview, published-runtime, or device
+  checks as unverified; source review and screenshots alone do not prove parity.
+
+---
+
 ## The Drag-Resize Habit
 
 The single most valuable responsive testing technique: in Chrome DevTools device mode (`Cmd+Shift+M`), set to Responsive (not a preset device), then slowly drag the right handle from 280px to 2560px.
@@ -48,7 +71,7 @@ Ranked by 2026 device market share and likelihood of catching issues:
 
 ## The 10-Point Check (At Each Viewport)
 
-1. **No horizontal scroll** — any at all is a failure
+1. **No page-level horizontal scroll** — deliberate local scrolling for comparison tables or other documented regions is allowed; keep its controls reachable
 2. **Text overflow** — long words, URLs, usernames breaking containers
 3. **Images and media** — not overflowing, `max-width: 100%` applied
 4. **Touch targets** — 44px minimum on mobile viewports

@@ -44,6 +44,10 @@ Present understanding and wait for confirmation before proceeding.
 
 **This is the key step that compensates for not having a visual canvas.** Before writing CSS, describe what should happen at each viewport.
 
+Apply the Layout Selection Contract in `../SKILL.md`. Read the narrow-layout
+component mappings in `references/responsive-design-forks.md` for the components
+being built; preserve the existing breakpoint system and business workflow.
+
 ### Adaptive mode
 
 For each major component or section, write a brief inline behavior note as a CSS comment:

@@ -37,6 +37,38 @@ Implement responsive design that works across all viewports — compensating for
 
 ---
 
+## Layout Selection Contract
+
+“Mobile” and “desktop” describe layout ranges, not detected devices. Select
+page-level layouts by **viewport width in CSS pixels**. Reuse the application's
+breakpoint tokens; choose new thresholds where content needs to change, not
+from a phone model. Component adaptations may still use container width.
+
+- Prefer CSS media queries for page structure and container queries for reusable
+  components. In an embedded preview, use the app iframe's viewport, not the
+  Builder window, physical screen size, or `screen.width`.
+- Do not select the base layout using User-Agent strings, UA Client Hints
+  (`userAgentData.mobile` / platform), OS, device-detection libraries, touch
+  support, `pointer`, or `hover`. Capability detection may improve an interaction
+  or enable a platform feature; it must not gate access to the narrow layout.
+- When different component trees require JavaScript, reuse the project's
+  responsive hook or `matchMedia` with the same breakpoint as CSS. Subscribe to
+  changes and clean up listeners; a one-time width check becomes stale on resize.
+  Keep SSR and the first client render hydration-safe rather than guessing a
+  device from request headers. Preserve drafts, selection, and active records
+  when switching layouts.
+- Builder Mobile view must work by resizing alone, with the desktop browser
+  identity unchanged. Do not add UA spoofing or a preview-only layout override
+  to make a broken layout pass. The same content, state, viewport and container
+  widths must select the same layout in preview and published runtime.
+
+When translating desktop components, read the mapping rules in
+[responsive-design-forks.md](references/responsive-design-forks.md#narrow-layout-component-mappings).
+Verify this contract with the width-only checks in
+[testing-checklist.md](references/testing-checklist.md#width-only-layout-verification).
+
+---
+
 ## The Three-Layer Responsive System
 
 | Layer | Tool | Handles |
@@ -109,7 +141,7 @@ After mode and interactivity are selected:
 
 Load other references on demand:
 - `references/sticky-scroll-patterns.md` — when sticky, scroll-snap, or independent scroll regions are involved
-- `references/responsive-design-forks.md` — when an ambiguous responsive translation is detected
+- `references/responsive-design-forks.md` — when mapping desktop components to narrow layouts or resolving an ambiguous translation
 - `references/testing-checklist.md` — during verification step
 - `references/modern-css-patterns.md` — during Transform mode when implementing fixes
 

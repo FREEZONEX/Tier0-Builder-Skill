@@ -41,7 +41,7 @@ Before diving into responsive specifics, understand what you're working with:
 
 1. **Viewport meta tag** — Does `<meta name="viewport" ...>` exist? Does it include `viewport-fit=cover` if safe areas are used?
 
-2. **Breakpoint strategy** — How are breakpoints defined? Mobile-first (`min-width`) or desktop-first (`max-width`)? How many breakpoints? Are they consistent or ad-hoc?
+2. **Layout selection and breakpoint strategy** — Trace any `isMobile` or device hook to its implementation. Flag UA, OS, touch, physical-screen, or one-time width checks that select the base layout; follow the Layout Selection Contract in `../SKILL.md`. Read the narrow-layout component mappings in `references/responsive-design-forks.md` for affected components. How are breakpoints defined? Mobile-first (`min-width`) or desktop-first (`max-width`)? How many breakpoints? Are they consistent or ad-hoc?
 
 3. **Layout approach** — CSS Grid, Flexbox, or older techniques (floats, fixed widths)? Intrinsic patterns (`auto-fit`, `flex-wrap`, `clamp()`) or breakpoint-dependent?
 

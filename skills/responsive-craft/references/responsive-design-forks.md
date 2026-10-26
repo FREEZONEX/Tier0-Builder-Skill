@@ -14,6 +14,32 @@ When auditing existing code or planning new responsive layouts, scan for the pat
 
 ---
 
+## Narrow-Layout Component Mappings
+
+Apply these starting points when they fit the workflow and existing components.
+They change presentation, not data, permissions, or business behavior. Reuse
+existing responsive variants before building parallel implementations. Use
+viewport breakpoints for page structure and container queries for local reflow,
+following the Layout Selection Contract in `../SKILL.md`.
+
+| Wide layout | Narrow layout | Conditions and preserved behavior |
+|---|---|---|
+| Record table | Card list with labeled fields, identity, status, and primary action | Use for reading or acting on one record at a time. Keep sort, filters, pagination, selection, permissions, and access to secondary fields. Keep a locally scrollable table for cross-row comparison, dense matrices, or spreadsheet editing; see Fork 2. |
+| Persistent navigation sidebar | Menu trigger and navigation drawer | Keep current-route indication, grouping, and all authorized destinations. Use bottom navigation only when a small stable set of frequent destinations warrants it; do not blindly flatten deep navigation. |
+| Multi-column form | Single-column field groups | Preserve reading order, labels, validation, conditional fields, and unsaved values. Do not turn a form into a wizard solely because it is narrow; steps change the workflow. |
+| Wide filter toolbar | Visible search/key filters plus a filter panel | Keep active-filter count or summary, clear/reset, and the same apply behavior. Keep frequently changed filters inline when space allows. |
+| Row of actions | Visible primary action plus a labeled overflow menu | Keep secondary actions reachable with the same permissions and confirmations. Do not hide the only way to complete the main task or rely on hover. |
+| Side-by-side list and detail | List-to-detail navigation or a full-width detail panel | Preserve selected record, back navigation, list position, and drafts. Keep both panes when the task requires comparison and space permits. |
+| Wide dialog | Viewport-bounded dialog, sheet, or full-screen panel | Choose by content length and task. Keep title, close/cancel, validation, focus handling, and submit accessible with the keyboard open; do not convert every dialog to a sheet. |
+
+Share data and state between variants. Avoid duplicate requests, duplicate form
+IDs, hidden focusable controls, and losing edits when crossing a breakpoint.
+Do not remove essential fields or actions just to make the layout fit. Where
+these conditions do not determine a suitable mapping, use the forks below to
+resolve the product tradeoff.
+
+---
+
 ## Fork 1: Sidebar with Mixed Content
 
 **Desktop pattern:** Sidebar with navigation + filters + summary/stats + secondary actions.
