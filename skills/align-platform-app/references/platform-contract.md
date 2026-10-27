@@ -51,13 +51,17 @@ Required target invariants:
   guidance is selected and injected by the App Builder orchestrator.
 - `package.json` top-level `tier0Scaffold` (`{ "version", "ref" }`) is
   platform-owned: only this Skill writes it, copied from the inspected scaffold
-  commit as the final step after verification passes.
+  commit as the final step after full alignment verification passes. A scoped
+  repair keeps the old marker; a passing partial build cannot certify full alignment.
 
 ## SDK Upgrades
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
 scaffold commit as the target: copy its exact npm version (`0.3.0` at the
-verified v12 snapshot) together with its lockfile. Check the package spec,
+verified v12 snapshot). Reconcile that dependency into the App manifest and
+regenerate its authoritative lockfile while preserving business dependencies;
+copy the template lockfile only for an otherwise matching template dependency
+graph. Check the package spec,
 authoritative lockfile, and actual installed version separately.
 Preserve an explicitly pinned user version and report unsupported behavior
 instead of silently overriding it. Managed preview owns dependency

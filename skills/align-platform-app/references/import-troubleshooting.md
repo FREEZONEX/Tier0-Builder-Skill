@@ -274,7 +274,10 @@ mapping is in the scaffold's `docs/platform-integration.md` → Errors.
   need that permission on the App key; model removal as a status or ask an
   admin. `COLLECTION_NOT_GRANTED` / `COLLECTION_NOT_FOUND` trigger one automatic
   re-ensure; if they persist, the grant or collection was removed by an admin.
-- `BATCH_LIMIT_EXCEEDED` (400): write more than 200 items in chunks.
+- `BATCH_LIMIT_EXCEEDED` (400): independent writes may be split into chunks of
+  at most 200. Chunks are not one transaction: if a business operation requires
+  all-or-nothing across more than 200 steps, redesign the operation or report
+  the limit; never silently weaken atomicity.
 - Leftover Drizzle/`pg` code from an older data layer (`src/db/**`,
   `bootstrapModule()`, `DATABASE_URL` / `DB_SCHEMA`) has no place in the
   current scaffold;

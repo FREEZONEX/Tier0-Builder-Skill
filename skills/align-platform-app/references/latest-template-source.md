@@ -59,12 +59,10 @@ Read the relevant current files and their changes since the app's known base:
 | Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-An app on an older data layer follows "Older data layer" in `SKILL.md`: a v10
-or v11 app moves from SDK 0.2.0 to 0.3.0; a v9 app moves its services from SDK
-0.1.0 to 0.3.0 and keeps its collections and records; a v8 app (its own `src/lib/data` on UNS collections) switches to the
-SDK client and keeps its collections and records; a v7-or-earlier app replaces
-Drizzle and PostgreSQL with collections, and its existing PostgreSQL rows are
-not migrated.
+For the old-main/new-cloud comparison, implementation fingerprints, and
+version-specific upgrade paths, read
+[cloud-architecture-upgrade.md](cloud-architecture-upgrade.md). It distinguishes
+replacing SQL persistence from upgrading a client on existing collections.
 
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this

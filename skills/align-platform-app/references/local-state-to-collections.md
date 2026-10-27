@@ -95,8 +95,10 @@ provide it. Make the import explicit and bounded:
 - Make re-runs idempotent with stable record IDs or unique indexes; do not
   pass idempotency keys (the data layer keys each write call itself). Batch
   writes stay within the 200-item atomic limit.
-- Use `insertMany` / `bulkWrite` or `data.transact` where partial import would
-  violate invariants.
+- Use one `insertMany` / `bulkWrite` or `data.transact` call where partial
+  import would violate invariants (at most 200 items/steps). Several chunks do
+  not provide import-wide atomicity; define resumable reconciliation or resolve
+  the larger atomic unit before importing.
 - Return and record attempted, created, updated, skipped, conflicted, and rejected
   counts without logging sensitive payloads.
 - Mark successful import completion, then remove or archive legacy keys only

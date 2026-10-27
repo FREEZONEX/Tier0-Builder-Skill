@@ -31,13 +31,13 @@ with the `tier0Scaffold` write-back described under Completion.
 
 ## Choose The Scope
 
-First confirm the app is a Tier0-App-Scaffold app. If it has no
-`artifact.toml`, or is otherwise clearly not built from the scaffold (for
-example a static site from another template), report "not a Tier0 scaffold
-app; alignment not applicable" and stop without modifying files or writing
-`tier0Scaffold`. An explicit request to import or
-migrate such an app into the platform shape is the imported app migration
-scope below and still proceeds.
+Identify the source using its marker, Git history, and actual platform files
+(`artifact.toml`, `server.mjs`, Gateway middleware, health/manifest routes).
+A missing marker or one missing file can be the drift to repair; neither an
+`artifact.toml` alone nor its absence proves the app's origin. If the project
+is clearly unrelated to the scaffold and only alignment was requested, report
+"not a Tier0 scaffold app; alignment not applicable" without changing files or
+writing the marker. An explicit import/migration request still proceeds.
 
 - **Imported app migration:** inventory the source and choose direct conversion
   or a temporary compatibility boundary. Read
@@ -48,62 +48,16 @@ scope below and still proceeds.
   and target scaffold commit where possible; an existing `tier0Scaffold.ref`
   in `package.json` identifies the known base. Classify drift as required platform
   contract, app customization, or unrelated change. Patch the requested surfaces
-  and their necessary dependencies; do not start a data migration, rebrand, or
-  full UI rewrite solely because upstream changed. With no known base, inspect
+  and their necessary dependencies. A full v7-to-cloud alignment necessarily
+  replaces the old persistence architecture; a scoped SDK/UI repair does not
+  authorize that cutover or a full UI rewrite. With no known base, inspect
   diffs and callers rather than treating every difference as template drift.
-- **Older data layer:** identify the base by `tier0Scaffold.version`, else by
-  files.
-  - **v9** already uses the `@tier0/sdk-v2/data` client, at SDK `0.1.0`;
-    collections and records stay as they are. Take the selected scaffold's SDK
-    dependency together with its lockfile, and every platform file it changed
-    since v9 (`src/start.ts`, `src/lib/route-handlers.ts`, `src/lib/data/**`,
-    `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, the
-    Gateway/auth/preview-bridge helpers and route error boundary, the kit's
-    `Pagination` and `QueryResult`) with the upstream gate set (`scripts/gate-integrity.{mjs,json}`
-    and the files it lists, `eslint.config.mjs`, `tests/*.test.ts`, the
-    `test:data` script). Then move App code to the SDK API: the data changes
-    in [App Data Contract](references/platform-contract.md#app-data-contract)
-    (capped counts, the `execution` / `retry` error model, no App-side
-    retries or idempotency keys, `useRecordChanges` instead of polling App
-    records) and the platform changes in
-    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
-  - **v10 / v11** already run the current data layer on SDK 0.2.0. Take the
-    selected scaffold's SDK version with its lockfile and the files it changed
-    since that marker's ref, then apply the 0.3.0 changes in
-    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
-  - **v8** keeps its own data layer in `src/lib/data` (`bootstrap`, `client`,
-    `collection`, `context`, `define`, `index`, `query`, `schema`, `transport`)
-    on the same UNS collections the current scaffold uses, so collections and
-    records stay as they are and nothing is migrated. Delete the seven files
-    other than `index.ts` and `query.ts` and take the selected scaffold's
-    `src/lib/data/**`, `src/routes/api/uns/subscribe.ts` and
-    `src/lib/record-changes.ts`; change every `@/lib/data/define` import to
-    `@tier0/sdk-v2/data/define`; make `src/start.ts` import
-    `runWithRequestContext` from `@tier0/sdk-v2/data`. Never keep a second
-    request context: with two stores, data calls silently lose the employee
-    subject and run as the App. Take the upstream gate set together
-    (`scripts/gate-integrity.{mjs,json}`, `src/lib/data-contracts.test.mjs`,
-    `src/lib/app-chrome.test.mjs`, `eslint.config.mjs`,
-    `scripts/runtime-audit.mjs`, `scripts/data-schema.mjs`,
-    `tests/data-layer.test.ts`, `tests/data-schema.test.ts`,
-    `tests/record-changes.test.ts`). Services then follow the same SDK API
-    changes as a v9 app. v8 still depends on
-    `@tier0/sdk` v1, so the SDK move below applies too. Other app imports of a
-    removed `@/lib/data/<module>` (for example `WithMeta` from `collection` or
-    `DataError` from `transport`) move to `@/lib/data`, which re-exports them,
-    or to `@tier0/sdk-v2/data`. Verify that no `@/lib/data/define` or other
-    removed-module import, `src/lib/data/context.ts` or other removed file
-    remains, and that `src/start.ts` takes the context only from
-    `@tier0/sdk-v2/data`.
-  - **v7 and earlier** keep business data in PostgreSQL through Drizzle
-    (`src/db/**`, `src/services/bootstrap.ts`, `DATABASE_URL` / `DB_SCHEMA`,
-    `db:*` scripts). Aligning replaces that layer with collections: declare the
-    entities in `src/data/collections.ts` (baseline records as `seed`), rewrite
-    services onto `data` from `@/lib/data`, and remove the Drizzle/`pg`
-    dependencies, scripts and env usage. The existing PostgreSQL records are not
-    migrated — that is a product decision, so do not build an export/import
-    from the old database; state in the report that legacy rows were not
-    carried over.
+- **Cross-architecture upgrade:** read
+  [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md).
+  Select the path using both provenance and actual code: v7/Drizzle needs a
+  persistence rewrite, v8 keeps records while replacing its local client, and
+  v9–v11 keep records while reconciling SDK/runtime contracts. Mixed or partially
+  upgraded apps need a per-surface inventory, not a version-number shortcut.
 - **Persistence cutover:** read
   [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
@@ -255,7 +209,13 @@ blocked. Distinguish local edits/packages from platform registration, deployment
 and remote publication. Keep retained compatibility boundaries and intentional
 app divergence explicit so the next update does not overwrite them.
 
-After every verification passes, and only then, set the app's `package.json`
+For full alignment, verify every applicable target contract before writing
+its marker. A scoped repair or partial upgrade keeps the previous marker (or
+leaves it absent), even if its own checks pass; otherwise the platform would
+mistake a mixed architecture for a fully aligned app. Required checks that
+could not run are pending, not passes.
+
+After full alignment verification passes, and only then, set the app's `package.json`
 top-level `tier0Scaffold` to the exact object in `package.json` of the inspected
 scaffold commit: copy `version` (integer) and `ref` (commit hex) as-is; never
 invent, bump, or derive them. If that scaffold `package.json` has no
