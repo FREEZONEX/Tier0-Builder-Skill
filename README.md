@@ -2,7 +2,7 @@
 
 用于需求整理、工业企业应用构建、平台迁移、响应式设计和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
 
-本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v12，App 数据存于 Tier0 UNS collections），平台 SDK 为 npm 上的 `@tier0/sdk-v2` 0.3.0。SDK 的使用技能随 SDK 包安装（`node_modules/@tier0/sdk-v2/skills/`），不在本仓库维护。
+本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v13，App 数据存于 Tier0 UNS collections），平台 SDK 为 npm 上的 `@tier0/sdk-v2` 0.3.0。SDK 的使用技能随 SDK 包安装（`node_modules/@tier0/sdk-v2/skills/`），不在本仓库维护。
 
 ## 快速安装到 Codex
 

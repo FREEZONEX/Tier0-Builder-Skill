@@ -13,10 +13,10 @@ Compared on 2026-10-27 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - New `feature/cloud-new-architecture-migration`:
-  `1b11a5cf593297afb3b97772b032a664c8484f56`, marker
-  `{ "version": 12, "ref": "d5b173c" }`.
+  `a9697cc343b63699ffa25db73b6bcda9ebf32952`, marker
+  `{ "version": 13, "ref": "22e39fc" }`.
 
-| Surface | Old main / v7 | Cloud / v12 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v13 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -38,15 +38,22 @@ Compare these at the chosen commits; do not infer a rollout from a merged source
 Record the marker, known source commit, installed/locked SDK, data imports and
 request-context provider. Marker numbers are clues, not proof: a partially
 aligned app may still carry v7 while already using collections. Never migrate
-or recreate existing collections merely because the marker is old.
+or recreate existing collections merely because the marker is old. Likewise,
+check what the target collections hold instead of assuming records exist: an
+App exported from one environment and imported into another gets new collections
+from its first ensure there, and its old records stay behind. At every version,
+such history follows the v7 export and later-import path, and missing old data
+never stops source alignment.
 
 ### Drizzle / v7 and Earlier
 
 Reconstruct from source models and business behavior without connecting to the
 old PostgreSQL database or requesting its configuration. Historical data is not
 copied during alignment: guide the user to export it from the original app and
-import or manually enter it after reconstruction. Continue without waiting for
-exported files, preserve the old app/data, and follow
+import or manually enter it after reconstruction. With full alignment or
+migration authorized, switch every service to collections without waiting for
+exported files or import permissions, keep no SQL path, leave the old
+deployment and database untouched, and follow
 [first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md)
 for initialization, blocked runtime checks, and the later import handoff.
 
@@ -96,11 +103,11 @@ isolation, decimal handling, or foreign-key enforcement.
 
 ### Local Collections Client / v8
 
-Existing UNS collections and records stay in place. The old `src/lib/data`
-contains `bootstrap`, `client`, `collection`, `context`, `define`, `index`,
-`query`, `schema`, and `transport`. Replace platform implementations with the
-selected target's `index.ts`, `query.ts`, and `changes.ts`; remove the seven
-retired modules after remapping callers.
+Existing target collections and their records stay in place. The old
+`src/lib/data` contains `bootstrap`, `client`, `collection`, `context`,
+`define`, `index`, `query`, `schema`, and `transport`. Replace platform
+implementations with the selected target's `index.ts`, `query.ts`, and
+`changes.ts`; remove the seven retired modules after remapping callers.
 
 - `@/lib/data/define` becomes `@tier0/sdk-v2/data/define`.
 - Types such as `WithMeta` and values such as `DataError` from retired modules
@@ -114,9 +121,15 @@ retired modules after remapping callers.
 
 ### SDK Data Client / v9–v11
 
-v9 already uses SDK data at 0.1.0; v10/v11 use 0.2.0. Keep their collections and
-records. Compare against the actual marker ref or known commit rather than
-reinstalling every platform file blindly.
+v9 already uses SDK data at 0.1.0; v10/v11 use 0.2.0. Keep the target's
+existing collections and records. Compare against the actual marker ref or known
+commit rather than reinstalling every platform file blindly.
+
+Before 0.3.0 (v8–v11), seeds and `insertMany` call `records:insertMany`, which
+newer backends no longer serve (404), so a collection can exist without its seed.
+The upgraded SDK never reseeds an existing collection; never recreate one to
+reseed it. Write missing baseline rows once through the tier0 MCP or an explicit
+import, or report them.
 
 Reconcile changed runtime surfaces together: `src/start.ts`,
 `src/lib/route-handlers.ts`, `src/lib/data/**`,
