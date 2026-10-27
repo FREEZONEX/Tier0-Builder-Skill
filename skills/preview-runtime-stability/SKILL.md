@@ -4,8 +4,9 @@ description: >-
   Use when managed preview startup fails for TanStack Start or Vite apps,
   including install failures, ERESOLVE or lockfile errors, "Failed to load
   preview", preview timeouts, "dev server exited: exit status 1", port 5173
-  conflicts, /api/health failures, missing dependencies, stale npm/node
-  processes, broken HMR, or Vite reload issues.
+  conflicts, /api/health failures, preview role errors (kind role,
+  "Requires role:"), missing dependencies, stale npm/node processes, broken
+  HMR, or Vite reload issues.
 ---
 
 # Preview Runtime Stability
@@ -26,6 +27,7 @@ Read the first relevant error and identify the failing layer before retrying.
 | --- | --- |
 | Missing dependency, ERESOLVE, unavailable package, install failure | [Error playbooks](references/error-playbooks.md), dependency sections |
 | Dev process exit, SSR/auth error, artifact mismatch, readiness timeout | [Error playbooks](references/error-playbooks.md), matching error section |
+| Preview error kind `role`, `Requires role:`, or 403 on a page | [Error playbooks](references/error-playbooks.md), preview role section |
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |
 | Confirmed stale owned preview process or lifecycle implementation | [Process lifecycle](references/process-lifecycle.md) |
 

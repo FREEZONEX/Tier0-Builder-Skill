@@ -60,10 +60,9 @@ Fix sequence:
    target scaffold versions. Resolve, replace, or isolate the incompatible
    package; do not hide the conflict with force or legacy-peer flags.
 4. For an unavailable or missing package, verify the intended package name and
-   published version before editing the manifest. Keep `@tier0/sdk-v2` exactly
-   as the scaffold declares it (a GitHub commit until 0.2.0 is on npm); a
-   failure cloning it or downloading from `codeload.github.com` is a network/
-   registry failure, not a reason to change the spec.
+   published version before editing the manifest. Copy the exact npm version
+   of `@tier0/sdk-v2` that the scaffold pins; do not change it to a GitHub
+   reference or another version.
 5. Regenerate the authoritative lockfile only in a controlled, unmanaged install
    step, then verify an exact install from it.
 6. Restart preview once after the dependency graph resolves so Vite can rebuild
@@ -110,7 +109,7 @@ rg -n '@tanstack/react-start/server|from "motion/react"' src --glob '!routeTree.
 rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
 ```
 
-The second command intentionally over-reports. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
+The first two commands intentionally over-report. The scaffold ships its own `src/components/ui`, so only imports of files missing from it are stale. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
 
 ### Tier0 SDK SSR external mismatch
 
@@ -181,8 +180,8 @@ Common causes:
 
 1. An API route calls `requireAuth()` or a service that throws `HttpError`, but the handler is not wrapped in `withErrors(...)`.
 2. A service or loader throws `new HttpError(...)` from a route `beforeLoad`, loader, or `createServerFn` where no route error mapper converts it to a Response.
-3. Preview auth headers/session are missing or invalid, so authenticated routes hit an auth error before the UI can render.
-4. `PREVIEW_USER_ROLE` does not exist in `PERMISSION_MATRIX`, so the middleware redirects to `/login` or auth checks fail unexpectedly.
+3. Gateway identity headers are missing, so `requireAuth()` throws 401 on a public path such as `/_serverFn`; other paths already get a 401 or 403 JSON from `src/start.ts`.
+4. The preview role set lacks a role the page requires; that failure reaches the Builder as kind `role`, see [Preview role error](#preview-role-error-kind-role).
 5. A public endpoint needed by preview, especially `/api/health`, was changed to require auth or throw.
 
 Fix sequence:
@@ -190,23 +189,62 @@ Fix sequence:
 1. Identify the request path that returned the JSON error. Do not assume it is `/api/health`.
 2. For `src/routes/api/**`, wrap every handler in `withErrors(...)` and keep the route body thin: auth, parse, service call, `Response.json`.
 3. Keep `HttpError` throwing in services and route handlers only when a `withErrors` boundary will catch it. In page loaders or `createServerFn` calls, return `null`, throw `redirect(...)`, or map the error locally.
-4. Inspect the effective managed preview environment and the latest scaffold.
-   Verify the required session secret and any preview-user fields expected by
-   the current gateway-header plugin; do not assume they must all be committed
-   in `artifact.toml`.
-5. If an effective preview role is supplied, verify that it exactly matches the
-   migrated permission matrix.
-6. Verify `vite.config.ts` keeps the current preview gateway header plugin before
-   `tanstackStart(...)`, so preview requests receive the scaffold's identity
-   headers and signed session cookie.
-7. Keep `/api/health`, `/api/manifest`, and `/api/auth/**` public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
+4. Identity and roles come only from Gateway headers; the App has no session
+   cookie or session secret. Keep `src/start.ts`, `src/lib/auth.ts`,
+   `src/lib/gateway.ts`, and the `previewGatewayHeaders()` plugin in
+   `vite.config.ts` as the scaffold ships them.
+5. Keep `/login`, `/api/health`, `/api/manifest`, and the TanStack runtime/build paths public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
 
 Useful checks:
 
 ```bash
 rg -n 'requireAuth|HttpError|withErrors' src/routes src/services src/lib
-rg -n 'PREVIEW_USER_ROLE|SESSION_SECRET|PREVIEW_USER_ID' artifact.toml
-rg -n 'PERMISSION_MATRIX|ADMIN_ROLE' src/lib/permissions.ts
+rg -n 'PUBLIC_PATHS' -A 10 src/start.ts
+```
+
+### Preview role error (kind `role`)
+
+Error examples:
+
+```text
+Requires role: <role> or <role>
+HTTP 403 /api/<path>: <detail>
+```
+
+The Builder preview receives `tier0.preview.error` with kind `role` when a
+route `errorComponent` (`RouteErrorBoundary`) catches a 403 from `requestJson`
+or a server-function error whose message contains `Requires role:`
+(`isPreviewRoleError` in `src/lib/preview-bridge.ts`). The App code ran; the
+roles the preview is viewing as do not grant this page. Do not rewrite the
+page or add a fallback role to clear the error.
+
+Preview roles arrive as `X-Tier0-Runtime: preview` plus `X-Tier0-Preview-Role`,
+a comma-separated set chosen in the preview role picker (one or several
+roles, absent when none is selected). Permissions are the union across that
+set: `requireAuth("a", "b")` passes when any selected role matches, and
+`can(user.roles, action)` is true when any selected role grants the action. A
+role missing from `PERMISSION_MATRIX` contributes zero permissions; with no
+role selected, the request enters with zero roles and every role check fails.
+
+Fix sequence:
+
+1. Read the failing page's role requirements: `requireAuth(...)` arguments in
+   its server functions and API routes, and the `can(...)` actions they check.
+2. Compare them with the selected preview roles. If no selected role is listed
+   there, ask the user to select a role that should have access in the preview
+   role picker, then retry.
+3. If a selected role should have access, grant it in `PERMISSION_MATRIX` or
+   add it to the `requireAuth(...)` list, following the business rules.
+4. If a needed role is absent from the picker, it is not registered. Register
+   it in `src/lib/permissions.ts`, `src/lib/role-metadata.ts`, and `roles.json`
+   together (see the scaffold's `docs/role-registration.md`).
+
+Useful checks:
+
+```bash
+rg -n 'requireAuth\(|can\(' src/routes src/services src/lib --glob '!*.test.*'
+rg -n 'PERMISSION_MATRIX' -A 20 src/lib/permissions.ts
+cat roles.json
 ```
 
 ### Artifact preview port mismatch
