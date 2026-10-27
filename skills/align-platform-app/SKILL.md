@@ -140,7 +140,8 @@ alone does not block alignment.
   selected role it has zero roles/permissions; there is no admin fallback.
   Keep the scaffold's legacy single-role parsing (matrix-gated, only for
   requests without Tier0 runtime headers) and its Active-Role display ordering;
-  the locked `gateway.test.ts` covers both. Every defined role must be represented in matrix, metadata, and `roles.json`.
+  the locked `gateway.test.ts` covers both. Every defined role must be
+  represented in matrix, metadata, and `roles.json`.
   The current first-version gate allows three business roles total; `admin`, if
   business-defined, counts as one. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
