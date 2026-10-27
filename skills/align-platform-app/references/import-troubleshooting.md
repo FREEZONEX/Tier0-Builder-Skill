@@ -24,7 +24,7 @@ platform-contract drift, production runtime behavior, or import packaging.
 - [Data Calls Or Collection Ensure Fail](#data-calls-or-collection-ensure-fail)
 - [Migrated Business Rows Reappear Automatically](#migrated-business-rows-reappear-automatically)
 - [Seed Records Missing Or Rejected](#seed-records-missing-or-rejected)
-- [Artifact Args Fail At Deploy](#artifact-args-fail-at-deploy)
+- [Artifact Fails At Deploy](#artifact-fails-at-deploy)
 - [Build Passes But A Promise Is Used As A Map](#build-passes-but-a-promise-is-used-as-a-map)
 - [Import Package Fails](#import-package-fails)
 
@@ -146,7 +146,11 @@ Check:
 ## Tier0 SDK Files Or SSR Import Fails
 
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
-matching lockfile, and that no `@tier0/sdk` (v1) import remains. Import
+matching lockfile, and that no `@tier0/sdk` (v1) import remains. At v11 the
+dependency is a pinned GitHub commit: an `npm ci` that fails cloning it or
+downloading from `codeload.github.com` is a network gap in that runtime;
+report it instead of changing the spec to `0.2.0` (not on npm) or another
+source. Import
 `loadTier0Sdk`, `loadTier0Files` or the other lazy helpers from `@/lib/tier0`,
 then await the loader inside the concrete server action. Do not top-level import
 the SDK root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
@@ -206,7 +210,8 @@ authorization rule, and related metadata entry was migrated.
 Issue a new request or refresh after platform assignment or preview view-as
 changes. Then verify:
 
-- Preview uses one `X-Tier0-Preview-Role`.
+- Preview unions permissions across the comma-separated
+  `X-Tier0-Preview-Role` set the developer selected.
 - Deployed mode unions permissions across every
   `X-Tier0-Business-Roles` value. `X-Tier0-Active-Role` is primary display
   metadata only.
@@ -254,17 +259,26 @@ mapping is in the scaffold's `docs/platform-integration.md` → Errors.
   keeps serving the existing collection): the declaration cannot be joined with
   storage. Follow the per-reason hint — usually a new field name instead of a
   type change — and never `deleteMany` or recreate the collection to clear it.
-- A retryable 503 (`hosted App is not ready` right after an import,
-  `HTTP_502/503/504` during a rollout, `DATA_TIMEOUT`, `DATA_UNREACHABLE`) is a
-  platform state: retry later. A 502 from a UNS 401 is a platform credential
-  problem, not the user's session.
+- A 503 (`APP_NOT_READY` right after an import, `DEPENDENCY_UNAVAILABLE`,
+  `OUTCOME_UNKNOWN`, `HTTP_502/503/504` during a rollout, `DATA_TIMEOUT`,
+  `DATA_UNREACHABLE`) is a platform state the data layer already resent where
+  `retry.safe` allowed: retry later, and do not add an App retry loop. A 502
+  from a UNS 401 is a platform credential problem, not the user's session.
+- `OVERLOADED` (429) that reaches the App means it sends too many data
+  requests: combine a screen's reads into one `data.queryBatch` and drop
+  per-record loops. `QUERY_TIMEOUT` is not resent: narrow the query with an
+  indexed condition.
+- A type error on `findPage(...).total` or a `countDocuments` result comes from
+  a v9 service on SDK 0.2.0: counts are `{ count, capped }`; answer list pages
+  with `toQueryResult`.
 - `APP_PERMISSION_MISSING` with `missingPermission: "uns.delete"` means deletes
   need that permission on the App key; model removal as a status or ask an
   admin. `COLLECTION_NOT_GRANTED` / `COLLECTION_NOT_FOUND` trigger one automatic
   re-ensure; if they persist, the grant or collection was removed by an admin.
 - `BATCH_LIMIT_EXCEEDED` (400): write more than 200 items in chunks.
 - Leftover Drizzle/`pg` code from an older data layer (`src/db/**`,
-  `bootstrapModule()`, `DATABASE_URL` / `DB_SCHEMA`) has no place in v9;
+  `bootstrapModule()`, `DATABASE_URL` / `DB_SCHEMA`) has no place in the
+  current scaffold;
   replace it with collections rather than restoring a database connection.
 
 ## Migrated Business Rows Reappear Automatically
@@ -288,7 +302,7 @@ indexes, so a rejected seed is fixed in `src/data/collections.ts`. To add rows
 to an existing collection, write them once through the tier0 MCP or an explicit
 action, not by editing `seed`.
 
-## Artifact Args Fail At Deploy
+## Artifact Fails At Deploy
 
 Treat every `artifact.toml` `args` array as literal argv:
 
@@ -298,6 +312,11 @@ Treat every `artifact.toml` `args` array as literal argv:
 - Do not cram a command into one element or place `&&` in plain argv. The
   platform may normalize legacy join-era forms with a warning, but aligned files
   use canonical forms.
+
+A production pod stuck in `ImagePullBackOff` on `node:22-alpine` (or another
+docker.io image) means `artifact.toml` still pins
+`[services.production.run].image`. Delete that line; the platform supplies the
+environment's default runtime image.
 
 ## Build Passes But A Promise Is Used As A Map
 

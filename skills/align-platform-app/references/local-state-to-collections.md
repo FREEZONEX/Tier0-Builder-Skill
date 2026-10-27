@@ -92,8 +92,9 @@ provide it. Make the import explicit and bounded:
 - Version and validate the legacy payload before sending it to a dedicated API.
 - Define identity mapping, ownership, deduplication, conflict precedence, invalid
   row handling, and maximum payload size.
-- Make retries idempotent with stable record IDs, unique indexes or an
-  idempotency key; batch writes stay within the 200-item atomic limit.
+- Make re-runs idempotent with stable record IDs or unique indexes; do not
+  pass idempotency keys (the data layer keys each write call itself). Batch
+  writes stay within the 200-item atomic limit.
 - Use `insertMany` / `bulkWrite` or `data.transact` where partial import would
   violate invariants.
 - Return and record attempted, created, updated, skipped, conflicted, and rejected
@@ -111,10 +112,10 @@ A data-layer failure (`DataError`, including timeouts and an unavailable
 gateway) must produce an observable failure. Never fall back to LocalStorage,
 sessionStorage, IndexedDB, Zustand persist, in-memory repositories, mock
 handlers, or fixtures for production business reads or writes. Such fallback
-creates split-brain data and false success. Retry only retryable errors and
-idempotent operations; `outcomeUnknown: true` means a write may have landed, so
-check before replaying with the same idempotency key. Let the UI show a
-recoverable error.
+creates split-brain data and false success. The data layer already resends
+calls that are safe to repeat, so add no retry loop of your own;
+`outcomeUnknown: true` (`execution: "unknown"`) means a write may have landed,
+so read back before writing again. Let the UI show a recoverable error.
 
 ## 6. Acceptance Evidence
 

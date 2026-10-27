@@ -56,8 +56,12 @@ Required target invariants:
 ## SDK Upgrades
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target (`0.1.0` at the verified v9 snapshot). Check the
-package range, authoritative lockfile, and actual installed version separately.
+scaffold commit as the target. At the verified v11 snapshot that is 0.2.0,
+declared as `github:FREEZONEX/Tier0-sdk-v2#<40-character sha>` until 0.2.0 is
+published to npm: copy the spec as-is and never swap it for a version number
+or another source. `npm ci` then also needs `github.com` or
+`codeload.github.com`, and the package's `prepare` script builds `dist`. Check
+the package spec, authoritative lockfile, and actual installed version separately.
 Preserve an explicitly pinned user version and report unsupported behavior
 instead of silently overriding it. Managed preview owns dependency
 installation/restart; use a clean lockfile install only in an unmanaged checkout.
@@ -199,8 +203,9 @@ App does not own an authentication session.
 
 Resolve roles by runtime:
 
-1. Preview: use `X-Tier0-Preview-Role` as the single developer-selected view-as
-   role.
+1. Preview: use every comma-separated `X-Tier0-Preview-Role` value as the
+   developer-selected view-as role set (one or several roles, permission
+   union); the first value is the primary display role.
 2. Deployed: use every comma-separated `X-Tier0-Business-Roles` value.
    Deduplicate roles and keep `X-Tier0-Active-Role` first only as primary display
    metadata.
@@ -278,11 +283,12 @@ Do not delete such a registration or grant broad access just to remove a warning
 
 ## Authentication Verification Environments
 
-Managed preview injects Gateway identity and may provide one view-as role, so a
+Managed preview injects Gateway identity and may provide a view-as role set, so a
 successful preview request does not prove deployed or unauthenticated behavior.
 Separate these surfaces:
 
-- Preview: selected role, and no selected role with zero roles/permissions.
+- Preview: one and several selected roles (permission union), and no selected
+  role with zero roles/permissions.
 - Deployed: two known assigned roles with permission union; known plus trusted
   unknown; explicit empty assigned-role set; active-role display ordering.
 - Legacy: recognized single role and unknown untrusted role failing closed.
@@ -422,8 +428,11 @@ Respect the latest scaffold's explicit boundaries:
   server-only boundaries. Keep server work there or in services called from those
   boundaries; do not force `src/start.ts` through a browser-safe wrapper.
 - `src/start.ts` opens the SDK data request context
-  (`runWithRequestContext` from `@tier0/sdk-v2/data`); do not add a second
-  context, or data calls silently lose the employee subject.
+  (`runWithRequestContext(request, ...)` from `@tier0/sdk-v2/data`, which also
+  cancels data calls when the caller goes away); do not add a second context,
+  or data calls silently lose the employee subject.
+- `src/routes/api/uns/subscribe.ts` is the one route that imports a data-layer
+  module (`@/lib/data/changes`); keep it and its `requireAuth()` as upstream.
 - Treat `react-router-dom` `BrowserRouter` as browser-only compatibility code.
   Render it inside the scaffold `ClientOnly` boundary so SSR does not evaluate
   `document`-dependent setup.
@@ -456,16 +465,41 @@ authoritative; read them before changing data. The essentials for alignment:
   retained legacy rows enter through an explicit validated import.
 - Never `deleteMany` or recreate a collection to reset a schema or test data:
   it deletes the deployed App's records too.
-- Runtime data failures are `DataError`s; let them reach `withErrors`. Retry
-  only retryable errors; `outcomeUnknown: true` means a write may have landed —
-  check before replaying with the same idempotency key.
+- Runtime data failures are `DataError`s (`execution`, `retry`,
+  `outcomeUnknown`); let them reach `withErrors`, which adds `Retry-After` only
+  for a 429 / 503 that is safe to repeat. The data layer already resent every
+  call `retry.safe` allowed and keys each write itself, so the App adds no
+  retry loops and passes no idempotency keys. `outcomeUnknown: true`
+  (`execution: "unknown"`) means a write may have landed — read back before
+  writing again. Branch on `code` / `reason`, never on message text.
+- App records shown live refresh through `useRecordChanges(aliases, ...)` from
+  `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass collection
+  aliases, never declarations, from pages.
+- A v9 app (`@tier0/sdk-v2` 0.1.0) keeps its collections and records. SDK
+  0.2.0 (UNS v2 contract 5.0.0) changes App code in these places:
+  - `findPage` returns `total: { count, capped }` and `countDocuments` returns
+    `{ count, capped }` instead of a number. List services answer
+    `toQueryResult(page, { map, groups })` from `@/lib/data`, so a capped
+    total renders as "N+"; never page through records to count them.
+  - `DataError.retryable` and `retryAdvice` are gone (see `execution` /
+    `retry` above). Remove App-side retry loops and explicitly passed
+    `idempotencyKey`s, including stable keys per import chunk; fixed `_id`s
+    and conditional updates keep re-run work from duplicating.
+  - A failed `updateMany` / `deleteMany` with `execution: "committed"` has
+    committed part of its matches: continue with
+    `{ resumeAfter: error.details.resumeAfter }`, never rerun the whole call.
+  - The data-access lint rule also flags `countBy`, `distinct`, `queryBatch`
+    and `get([...])` per loop iteration: read by ID with one `get(ids)` and
+    combine a screen's reads into one `data.queryBatch`.
+  - Replace polling of App records with `useRecordChanges`, as above.
 - A v8 app already stores records in the same UNS collections through its own
-  `src/lib/data`: keep the collections and records, keep only
-  `src/lib/data/{index,query}.ts` from the selected scaffold, import declarations
+  `src/lib/data`: keep the collections and records, keep only the selected
+  scaffold's `src/lib/data/**` (`index`, `query`, `changes`), import declarations
   from `@tier0/sdk-v2/data/define`, and open the request context only through
   `runWithRequestContext` from `@tier0/sdk-v2/data` — a leftover second context
   makes data calls silently run as the App. Take the upstream data gates with
-  their gate-integrity manifest.
+  their gate-integrity manifest; services then follow the SDK 0.2.0 points
+  above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
   collections; its PostgreSQL rows are not migrated (product decision). Remove
   the Drizzle, `pg` and `db:*` dependencies, scripts and env usage together.
@@ -541,7 +575,11 @@ shape:
 - `deployment.deploymentTarget = "autoscale"`
 - production `serve = "dynamic"` describes deployment serving mode, not a gate
 - production build runs `npm ci && npm run build && npm prune --omit=dev`
-- production run uses `node server.mjs` on `node:22-alpine`
+- production run is `["node", "server.mjs"]` with no `image`: the platform
+  supplies each environment's default runtime image. When aligning an older
+  App, delete a hardcoded `[services.production.run].image`; `node:22-alpine`
+  from docker.io cannot be pulled in environments without docker.io access
+  (Aliyun), so the deployment fails with `ImagePullBackOff`
 - service `localPort = 5173`
 - startup health path is `/api/health`
 - preview runs `npm run dev -- --host 0.0.0.0 --port 5173`

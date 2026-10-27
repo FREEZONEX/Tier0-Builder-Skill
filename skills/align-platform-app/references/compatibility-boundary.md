@@ -80,7 +80,7 @@ Start removing the boundary only when:
 - Layout and navigation are native to the target shell, with no user-visible
   logout/sign-out or app-managed role-switch, role-picker, or impersonation
   entry and no App-local session/logout/select-role implementation.
-- Role-aware Apps verify preview single-role view-as, deployed assigned-role
+- Role-aware Apps verify preview view-as role sets, deployed assigned-role
   union, known plus trusted unknown roles, explicit deployed empty roles, preview
   without a selected role (zero roles and permissions), and legacy untrusted
   unknown-role rejection. Authorization
