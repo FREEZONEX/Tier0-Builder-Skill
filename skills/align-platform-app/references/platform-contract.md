@@ -58,7 +58,7 @@ Required target invariants:
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
 scaffold commit as the target: copy its exact npm version (`0.3.0` at the
-verified v12 snapshot). Reconcile that dependency into the App manifest and
+verified v13 snapshot). Reconcile that dependency into the App manifest and
 regenerate its authoritative lockfile while preserving business dependencies;
 copy the template lockfile only for an otherwise matching template dependency
 graph. Check the package spec,

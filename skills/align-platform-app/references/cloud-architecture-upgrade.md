@@ -13,10 +13,10 @@ Compared on 2026-10-27 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - New `feature/cloud-new-architecture-migration`:
-  `1b11a5cf593297afb3b97772b032a664c8484f56`, marker
-  `{ "version": 12, "ref": "d5b173c" }`.
+  `a9697cc343b63699ffa25db73b6bcda9ebf32952`, marker
+  `{ "version": 13, "ref": "22e39fc" }`.
 
-| Surface | Old main / v7 | Cloud / v12 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v13 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |

@@ -4,15 +4,18 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `1b11a5cf593297afb3b97772b032a664c8484f56` (merged scaffold
-PR #96, v12). Its `package.json.tier0Scaffold` is
-`{ "version": 12, "ref": "d5b173c" }`; the SDK dependency is `@tier0/sdk-v2`
+on 2026-10-27 is `a9697cc343b63699ffa25db73b6bcda9ebf32952` (merged scaffold
+PR #97, v13). Its `package.json.tier0Scaffold` is
+`{ "version": 13, "ref": "22e39fc" }`; the SDK dependency is `@tier0/sdk-v2`
 pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
 `f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
 to SDK 0.2.0 and added live record changes, the merged preview multi-role
 change (`4dbe4ce`) made Preview a view-as role set, v11 (`dbe3547`) dropped the
-production run image from `artifact.toml`, and v12 (`d5b173c`) moved to SDK
-0.3.0, whose platform calls all use `/openapi/v2`. The repository commit
+production run image from `artifact.toml`, v12 (`d5b173c`) moved to SDK
+0.3.0, whose platform calls all use `/openapi/v2`, and v13 (`22e39fc`) checks
+subscribe requests against passed-in declarations, so the change-stream test no
+longer depends on the App's collections, and grants a deployed Active-Role
+nothing unless it is a business role. The repository commit
 identifies the inspected source; the marker's `ref` identifies the content
 commit stamped by the scaffold maintainer. They need not be equal. After
 successful app alignment, copy the selected scaffold's marker object verbatim,
@@ -20,7 +23,7 @@ not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v12 the App data layer is the
+each alignment and honor a user-selected ref. At v13 the App data layer is the
 `@tier0/sdk-v2/data` client: collections are declared in
 `src/data/collections.ts` with `defineCollection` from
 `@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`

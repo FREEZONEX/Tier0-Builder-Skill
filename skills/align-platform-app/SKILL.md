@@ -109,7 +109,7 @@ migration plan, keep the old data source to protect historical records or
 because the target API is blocked, or write a completion marker without required
 runtime evidence.
 
-For every pre-v12 source, historical records are whatever the target
+For every pre-v13 source, historical records are whatever the target
 collections actually hold; an App moved to another environment gets new
 collections from its first ensure there, without the old records. Do not connect
 to the original database or environment or request connection configuration.
@@ -168,7 +168,7 @@ alone does not block alignment.
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
 - The platform SDK is `@tier0/sdk-v2`; copy the exact npm version the selected
-  scaffold pins (`0.3.0` at v12). An app
+  scaffold pins (`0.3.0` at v13). An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
