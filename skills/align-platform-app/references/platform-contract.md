@@ -235,7 +235,7 @@ Resolve roles by runtime:
    union); the first value is the primary display role.
 2. Deployed: use every comma-separated `X-Tier0-Business-Roles` value.
    Deduplicate roles and keep `X-Tier0-Active-Role` first only as primary display
-   metadata.
+   metadata, and only when it is one of them; otherwise it grants nothing.
 3. Legacy fallback: `X-Tier0-Active-Role`, `X-Tier0-Preview-Role`,
    `X-App-User-Role`, then JSON `user.role`. These legacy sources remain
    single-role and matrix-gated.
