@@ -55,9 +55,10 @@ writing the marker. An explicit import/migration request still proceeds.
 - **Cross-architecture upgrade:** read
   [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md).
   Select the path using both provenance and actual code: v7/Drizzle needs a
-  persistence rewrite, v8 keeps records while replacing its local client, and
-  v9–v11 keep records while reconciling SDK/runtime contracts. Mixed or partially
-  upgraded apps need a per-surface inventory, not a version-number shortcut.
+  persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
+  SDK/runtime contracts. Whether records exist depends on the target
+  collections, not the version. Mixed or partially upgraded apps need a
+  per-surface inventory, not a version-number shortcut.
 - **Persistence cutover:** read
   [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
@@ -68,10 +69,12 @@ writing the marker. An explicit import/migration request still proceeds.
   modifying the app or registering platform metadata.
 
 Honor already-authorized updates without repeatedly asking for permission.
-If a needed choice changes business behavior, loses data, broadens access, or
-expands the requested scope, identify the concrete decision and continue
-independent work while awaiting it. Never silently consolidate source roles or
-reset legacy data to make a gate pass.
+If a needed choice changes business behavior, loses existing data, broadens
+access, or expands the requested scope, identify the concrete decision and
+continue independent work while awaiting it. Records left untouched in the
+original app or environment for a later user import are not lost and need no
+decision. Never silently consolidate source roles, or delete or reset existing
+records, to make a gate pass.
 
 ## Establish The Baseline
 
@@ -100,16 +103,23 @@ assigning a cause. Context success is not a prerequisite for first ensure.
 Never override an explicit revoked grant or disabled policy.
 
 Continue independent source reconstruction and available checks while runtime
-verification is blocked. Do not stop at a migration plan, preserve the old SQL
-path solely because the target API is blocked, or write a completion marker
-without required runtime evidence.
+verification is blocked. A context 403 or unconfirmed collection or import
+permissions block only runtime acceptance and the later import. Do not stop at a
+migration plan, keep the old data source to protect historical records or
+because the target API is blocked, or write a completion marker without required
+runtime evidence.
 
-Do not connect to the original database or request connection configuration.
+For every pre-v12 source, historical records are whatever the target
+collections actually hold; an App moved to another environment gets new
+collections from its first ensure there, without the old records. Do not connect
+to the original database or environment or request connection configuration.
 If historical data is needed, guide the user to export it from the original
 application, continue reconstruction without waiting for the export, and import
-or manually enter the data only after reconstruction is ready. Keep the original
-app/data untouched. Report code alignment, runtime acceptance and historical
-import separately; pending historical entry alone does not block alignment.
+or manually enter the data only after reconstruction is ready. The original
+deployment and its data stay untouched; rewriting this App's source is the
+alignment itself. Report "source rewritten", "runtime acceptance pending/passed"
+and "historical data not imported/imported" separately; pending historical entry
+alone does not block alignment.
 
 ## Apply The Relevant Contracts
 
@@ -205,8 +215,8 @@ Scale further verification to affected behavior:
   visible data-layer failures (`DataError`) without local fallback. Preview
   writes land in the same collections as the deployed App, so write test
   records only where authorized and clean them up; never `deleteMany` or
-  recreate a collection to reset it. Verify import reconciliation when data is
-  retained.
+  recreate a collection to reset it. Verify import reconciliation when an import
+  runs.
 - **Runtime/deploy:** when changed or delivering a full migration, verify
   production entry, host/port binding, health, manifest, SSR and client assets
   under the target environment. A static build does not prove deployability.

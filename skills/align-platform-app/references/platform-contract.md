@@ -505,8 +505,9 @@ authoritative; read them before changing data. The essentials for alignment:
 - App records shown live refresh through `useRecordChanges(aliases, ...)` from
   `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass collection
   aliases, never declarations, from pages.
-- A v9 app (`@tier0/sdk-v2` 0.1.0) keeps its collections and records. SDK
-  0.2.0 and later (UNS v2 contract 5.0.0) change App data code in these places:
+- A v9 app (`@tier0/sdk-v2` 0.1.0) keeps the target's existing collections and
+  records. SDK 0.2.0 and later (UNS v2 contract 5.0.0) change App data code in
+  these places:
   - `findPage` returns `total: { count, capped }` and `countDocuments` returns
     `{ count, capped }` instead of a number. List services answer
     `toQueryResult(page, { map, groups })` from `@/lib/data`, so a capped
@@ -522,18 +523,20 @@ authoritative; read them before changing data. The essentials for alignment:
     and `get([...])` per loop iteration: read by ID with one `get(ids)` and
     combine a screen's reads into one `data.queryBatch`.
   - Replace polling of App records with `useRecordChanges`, as above.
-- A v8 app already stores records in the same UNS collections through its own
-  `src/lib/data`: keep the collections and records, keep only the selected
-  scaffold's `src/lib/data/**` (`index`, `query`, `changes`), import declarations
-  from `@tier0/sdk-v2/data/define`, and open the request context only through
-  `runWithRequestContext` from `@tier0/sdk-v2/data` — a leftover second context
-  makes data calls silently run as the App. Take the upstream data gates with
-  their gate-integrity manifest; services then follow the v9 points above.
+- A v8 app already stores records in UNS collections through its own
+  `src/lib/data`: keep the target's existing collections and records, keep only
+  the selected scaffold's `src/lib/data/**` (`index`, `query`, `changes`),
+  import declarations from `@tier0/sdk-v2/data/define`, and open the request
+  context only through `runWithRequestContext` from `@tier0/sdk-v2/data` — a
+  leftover second context makes data calls silently run as the App. Take the
+  upstream data gates with their gate-integrity manifest; services then follow
+  the v9 points above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
   collections without connecting to the old database or requesting credentials.
   Guide historical-data retention through original-app export and later import/
   manual entry after reconstruction. Remove the Drizzle, `pg` and `db:*`
-  dependencies, scripts and env usage together; retain the original app/data.
+  dependencies, scripts and env usage together; leave the original deployment
+  and database untouched.
 
 ## Build And Preview Contract
 
