@@ -4,8 +4,8 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `1ae4baccae97ff515440274afc30cbf565ec8322` (scaffold v12,
-`chore/sdk-v2-npm-0.3.0`). Its `package.json.tier0Scaffold` is
+on 2026-10-27 is `1b11a5cf593297afb3b97772b032a664c8484f56` (merged scaffold
+PR #96, v12). Its `package.json.tier0Scaffold` is
 `{ "version": 12, "ref": "d5b173c" }`; the SDK dependency is `@tier0/sdk-v2`
 pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
 `f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
