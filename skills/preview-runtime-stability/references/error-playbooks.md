@@ -15,7 +15,7 @@ sh: vite: command not found
 Failed to resolve import "..." — the package is not installed
 ```
 
-This happens when an uploaded or imported project ships **without** `node_modules` (common when a user uploads a zip that excludes dependencies). The Core Diagnosis assumes dependency restore already succeeded; if it did not, no port/health work will help — install first. `node_modules` can also be *partial* after an interrupted install, so treat a missing `node_modules/.bin/vite` or any startup `Cannot find module` as "restore dependencies".
+This happens when an uploaded or imported project ships **without** `node_modules` (common when a user uploads a zip that excludes dependencies). The port and health checks in [Process lifecycle](process-lifecycle.md) assume dependency restore already succeeded; if it did not, no port/health work will help — install first. `node_modules` can also be *partial* after an interrupted install, so treat a missing `node_modules/.bin/vite` or any startup `Cannot find module` as "restore dependencies".
 
 Detect:
 
