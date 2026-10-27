@@ -61,10 +61,16 @@ scope below and still proceeds.
     Gateway/auth/preview-bridge helpers and route error boundary, the kit's
     `Pagination` and `QueryResult`) with the upstream gate set (`scripts/gate-integrity.{mjs,json}`
     and the files it lists, `eslint.config.mjs`, `tests/*.test.ts`, the
-    `test:data` script). Then move App code to the SDK 0.2.0 API as listed in
-    [App Data Contract](references/platform-contract.md#app-data-contract):
-    capped counts, the `execution` / `retry` error model, no App-side retries
-    or idempotency keys, and `useRecordChanges` instead of polling App records.
+    `test:data` script). Then move App code to the SDK API: the data changes
+    in [App Data Contract](references/platform-contract.md#app-data-contract)
+    (capped counts, the `execution` / `retry` error model, no App-side
+    retries or idempotency keys, `useRecordChanges` instead of polling App
+    records) and the platform changes in
+    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
+  - **v10 / v11** already run the current data layer on SDK 0.2.0. Take the
+    selected scaffold's SDK version with its lockfile and the files it changed
+    since that marker's ref, then apply the 0.3.0 changes in
+    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
   - **v8** keeps its own data layer in `src/lib/data` (`bootstrap`, `client`,
     `collection`, `context`, `define`, `index`, `query`, `schema`, `transport`)
     on the same UNS collections the current scaffold uses, so collections and
@@ -80,8 +86,8 @@ scope below and still proceeds.
     `src/lib/app-chrome.test.mjs`, `eslint.config.mjs`,
     `scripts/runtime-audit.mjs`, `scripts/data-schema.mjs`,
     `tests/data-layer.test.ts`, `tests/data-schema.test.ts`,
-    `tests/record-changes.test.ts`). Services then follow the same SDK 0.2.0
-    API as a v9 app. v8 still depends on
+    `tests/record-changes.test.ts`). Services then follow the same SDK API
+    changes as a v9 app. v8 still depends on
     `@tier0/sdk` v1, so the SDK move below applies too. Other app imports of a
     removed `@/lib/data/<module>` (for example `WithMeta` from `collection` or
     `DataError` from `transport`) move to `@/lib/data`, which re-exports them,
@@ -173,9 +179,8 @@ weaken a gate to reconcile contradictory guidance.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`, pinned by the selected scaffold; copy
-  that dependency spec as-is (at v11 a GitHub commit, since 0.2.0 is not on
-  npm yet). An app
+- The platform SDK is `@tier0/sdk-v2`; copy the exact npm version the selected
+  scaffold pins (`0.3.0` at v12). An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).

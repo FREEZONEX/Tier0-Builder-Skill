@@ -56,12 +56,9 @@ Required target invariants:
 ## SDK Upgrades
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target. At the verified v11 snapshot that is 0.2.0,
-declared as `github:FREEZONEX/Tier0-sdk-v2#<40-character sha>` until 0.2.0 is
-published to npm: copy the spec as-is and never swap it for a version number
-or another source. `npm ci` then also needs `github.com` or
-`codeload.github.com`, and the package's `prepare` script builds `dist`. Check
-the package spec, authoritative lockfile, and actual installed version separately.
+scaffold commit as the target: copy its exact npm version (`0.3.0` at the
+verified v12 snapshot) together with its lockfile. Check the package spec,
+authoritative lockfile, and actual installed version separately.
 Preserve an explicitly pinned user version and report unsupported behavior
 instead of silently overriding it. Managed preview owns dependency
 installation/restart; use a clean lockfile install only in an unmanaged checkout.
@@ -87,6 +84,32 @@ An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
   platform rejects locally (`local-app` placeholder) — that failure is expected.
 - Read the Skills in `node_modules/@tier0/sdk-v2/skills/` for the exact API of
   the domain being rewritten instead of translating v1 calls by name.
+
+An app on `@tier0/sdk-v2` 0.1.x / 0.2.x moves to 0.3.0, which calls only
+`/openapi/v2` and removes retired methods without a fallback route:
+
+- Platform calls (`system`, `members`, `notifications`, `files`, `mqttAuth`,
+  `capabilities`, `agent`) go to `/openapi/v2/*` and Controls to
+  `/openapi/v2/uns/controls/*`; the SDK does this, so delete any hand-written
+  call to `/openapi/v1`. `tier0.api` / `loadTier0OpenApi()` expose the 44
+  platform v2 operations only.
+- Source: `source.list` / `get` / `create` / `update` and
+  `source.connection.update` are gone; use `source.documents.*`.
+- Stream: `stream.programs.get` / `create` / `update` / `validate` / `disable`
+  are gone; drafts use `stream.documents.*` (disable passes both
+  `expectedRevision` and `expectedActiveRelease`), publish and rollback stay on
+  `stream.programs.deploy` / `rollback`.
+- Agent: `agent.nodes.*` and `agent.relations.*` are gone with no v2
+  replacement; report a source feature that needs them as a blocker.
+- Low-level UNS calls (`tier0.uns`, `createUnsV2Client()`): `recordInsertMany`,
+  `recordFindOneAnd*` and `recordDistinct` are gone; use `recordBulkWrite` with
+  `insertOne` items, `recordUpdateOne` / `recordReplaceOne` / `recordDeleteOne`
+  with `returnDocument`, and an aggregate `$group`. App records still go through
+  `@/lib/data`, whose `insertMany`, `findOneAnd*` and `distinct` stay.
+- `ControlError.errorCode` is the UNS `error.code`, with `requestId`,
+  `execution` and `retry` alongside; branch on those codes.
+- A write whose outcome was unknown before the upgrade is reconciled by
+  reading back, never by resending it to the new route with its old key.
 
 Notification behavior:
 
@@ -476,7 +499,7 @@ authoritative; read them before changing data. The essentials for alignment:
   `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass collection
   aliases, never declarations, from pages.
 - A v9 app (`@tier0/sdk-v2` 0.1.0) keeps its collections and records. SDK
-  0.2.0 (UNS v2 contract 5.0.0) changes App code in these places:
+  0.2.0 and later (UNS v2 contract 5.0.0) change App data code in these places:
   - `findPage` returns `total: { count, capped }` and `countDocuments` returns
     `{ count, capped }` instead of a number. List services answer
     `toQueryResult(page, { map, groups })` from `@/lib/data`, so a capped
@@ -498,8 +521,7 @@ authoritative; read them before changing data. The essentials for alignment:
   from `@tier0/sdk-v2/data/define`, and open the request context only through
   `runWithRequestContext` from `@tier0/sdk-v2/data` — a leftover second context
   makes data calls silently run as the App. Take the upstream data gates with
-  their gate-integrity manifest; services then follow the SDK 0.2.0 points
-  above.
+  their gate-integrity manifest; services then follow the v9 points above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
   collections; its PostgreSQL rows are not migrated (product decision). Remove
   the Drizzle, `pg` and `db:*` dependencies, scripts and env usage together.

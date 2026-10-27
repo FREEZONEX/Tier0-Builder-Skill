@@ -146,11 +146,10 @@ Check:
 ## Tier0 SDK Files Or SSR Import Fails
 
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
-matching lockfile, and that no `@tier0/sdk` (v1) import remains. At v11 the
-dependency is a pinned GitHub commit: an `npm ci` that fails cloning it or
-downloading from `codeload.github.com` is a network gap in that runtime;
-report it instead of changing the spec to `0.2.0` (not on npm) or another
-source. Import
+matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error
+or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
+`recordInsertMany` or similar after the move to 0.3.0 is a retired method;
+follow [SDK Upgrades](platform-contract.md#sdk-upgrades). Import
 `loadTier0Sdk`, `loadTier0Files` or the other lazy helpers from `@/lib/tier0`,
 then await the loader inside the concrete server action. Do not top-level import
 the SDK root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
@@ -269,7 +268,7 @@ mapping is in the scaffold's `docs/platform-integration.md` → Errors.
   per-record loops. `QUERY_TIMEOUT` is not resent: narrow the query with an
   indexed condition.
 - A type error on `findPage(...).total` or a `countDocuments` result comes from
-  a v9 service on SDK 0.2.0: counts are `{ count, capped }`; answer list pages
+  a v9 service on SDK 0.2.0 or later: counts are `{ count, capped }`; answer list pages
   with `toQueryResult`.
 - `APP_PERMISSION_MISSING` with `missingPermission: "uns.delete"` means deletes
   need that permission on the App key; model removal as a status or ask an

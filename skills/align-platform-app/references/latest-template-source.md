@@ -4,15 +4,15 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `feecb7c33b2ef2c68650b3a0bd4b98e79f0d86ed` (merged scaffold
-PR #95). Its `package.json.tier0Scaffold` is `{ "version": 11, "ref": "dbe3547" }`;
-the SDK dependency is `@tier0/sdk-v2` 0.2.0, declared as
-`github:FREEZONEX/Tier0-sdk-v2#b9aa196e6b81a8f1c9947dc4141ea4b3a3835401`
-until 0.2.0 is published to npm. Since the previous baseline (v9, `f8a3202`),
-v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer to SDK
-0.2.0 and added live record changes, the merged preview multi-role change
-(`4dbe4ce`) made Preview a view-as role set, and v11 (`dbe3547`) dropped the
-production run image from `artifact.toml`. The repository commit
+on 2026-10-27 is `1ae4baccae97ff515440274afc30cbf565ec8322` (scaffold v12,
+`chore/sdk-v2-npm-0.3.0`). Its `package.json.tier0Scaffold` is
+`{ "version": 12, "ref": "d5b173c" }`; the SDK dependency is `@tier0/sdk-v2`
+pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
+`f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
+to SDK 0.2.0 and added live record changes, the merged preview multi-role
+change (`4dbe4ce`) made Preview a view-as role set, v11 (`dbe3547`) dropped the
+production run image from `artifact.toml`, and v12 (`d5b173c`) moved to SDK
+0.3.0, whose platform calls all use `/openapi/v2`. The repository commit
 identifies the inspected source; the marker's `ref` identifies the content
 commit stamped by the scaffold maintainer. They need not be equal. After
 successful app alignment, copy the selected scaffold's marker object verbatim,
@@ -20,7 +20,7 @@ not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v11 the App data layer is the
+each alignment and honor a user-selected ref. At v12 the App data layer is the
 `@tier0/sdk-v2/data` client: collections are declared in
 `src/data/collections.ts` with `defineCollection` from
 `@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`
@@ -59,9 +59,9 @@ Read the relevant current files and their changes since the app's known base:
 | Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-An app on an older data layer follows "Older data layer" in `SKILL.md`: a v9
-app moves its services from SDK 0.1.0 to 0.2.0 and keeps its collections and
-records; a v8 app (its own `src/lib/data` on UNS collections) switches to the
+An app on an older data layer follows "Older data layer" in `SKILL.md`: a v10
+or v11 app moves from SDK 0.2.0 to 0.3.0; a v9 app moves its services from SDK
+0.1.0 to 0.3.0 and keeps its collections and records; a v8 app (its own `src/lib/data` on UNS collections) switches to the
 SDK client and keeps its collections and records; a v7-or-earlier app replaces
 Drizzle and PostgreSQL with collections, and its existing PostgreSQL rows are
 not migrated.
