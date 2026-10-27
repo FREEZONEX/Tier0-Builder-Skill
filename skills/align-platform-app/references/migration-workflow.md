@@ -261,7 +261,8 @@ For the whole app, verify:
   `admin`, appears in `roles.json`. The result fits at most three business roles, or
   has a traceable user/platform-approved consolidation or phased migration with
   no silently lost, broadened, collapsed, or zero-permission source role.
-- Role tests cover preview single-role view-as; deployed permission union across
+- Role tests cover preview view-as with one and several selected roles
+  (permission union); deployed permission union across
   all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
   unknown roles; explicit deployed empty roles; preview without a selected role (zero
   roles and permissions); legacy

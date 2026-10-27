@@ -53,12 +53,31 @@ scope below and still proceeds.
   diffs and callers rather than treating every difference as template drift.
 - **Older data layer:** identify the base by `tier0Scaffold.version`, else by
   files.
+  - **v9** already uses the `@tier0/sdk-v2/data` client, at SDK `0.1.0`;
+    collections and records stay as they are. Take the selected scaffold's SDK
+    dependency together with its lockfile, and every platform file it changed
+    since v9 (`src/start.ts`, `src/lib/route-handlers.ts`, `src/lib/data/**`,
+    `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, the
+    Gateway/auth/preview-bridge helpers and route error boundary, the kit's
+    `Pagination` and `QueryResult`) with the upstream gate set (`scripts/gate-integrity.{mjs,json}`
+    and the files it lists, `eslint.config.mjs`, `tests/*.test.ts`, the
+    `test:data` script). Then move App code to the SDK API: the data changes
+    in [App Data Contract](references/platform-contract.md#app-data-contract)
+    (capped counts, the `execution` / `retry` error model, no App-side
+    retries or idempotency keys, `useRecordChanges` instead of polling App
+    records) and the platform changes in
+    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
+  - **v10 / v11** already run the current data layer on SDK 0.2.0. Take the
+    selected scaffold's SDK version with its lockfile and the files it changed
+    since that marker's ref, then apply the 0.3.0 changes in
+    [SDK Upgrades](references/platform-contract.md#sdk-upgrades).
   - **v8** keeps its own data layer in `src/lib/data` (`bootstrap`, `client`,
     `collection`, `context`, `define`, `index`, `query`, `schema`, `transport`)
-    on the same UNS collections v9 uses, so collections and records stay as
-    they are and nothing is migrated. Delete the seven files other than
-    `index.ts` and `query.ts` and take the selected scaffold's
-    `src/lib/data/{index,query}.ts`; change every `@/lib/data/define` import to
+    on the same UNS collections the current scaffold uses, so collections and
+    records stay as they are and nothing is migrated. Delete the seven files
+    other than `index.ts` and `query.ts` and take the selected scaffold's
+    `src/lib/data/**`, `src/routes/api/uns/subscribe.ts` and
+    `src/lib/record-changes.ts`; change every `@/lib/data/define` import to
     `@tier0/sdk-v2/data/define`; make `src/start.ts` import
     `runWithRequestContext` from `@tier0/sdk-v2/data`. Never keep a second
     request context: with two stores, data calls silently lose the employee
@@ -66,7 +85,9 @@ scope below and still proceeds.
     (`scripts/gate-integrity.{mjs,json}`, `src/lib/data-contracts.test.mjs`,
     `src/lib/app-chrome.test.mjs`, `eslint.config.mjs`,
     `scripts/runtime-audit.mjs`, `scripts/data-schema.mjs`,
-    `tests/data-layer.test.ts`, `tests/data-schema.test.ts`). v8 still depends on
+    `tests/data-layer.test.ts`, `tests/data-schema.test.ts`,
+    `tests/record-changes.test.ts`). Services then follow the same SDK API
+    changes as a v9 app. v8 still depends on
     `@tier0/sdk` v1, so the SDK move below applies too. Other app imports of a
     removed `@/lib/data/<module>` (for example `WithMeta` from `collection` or
     `DataError` from `transport`) move to `@/lib/data`, which re-exports them,
@@ -121,14 +142,17 @@ weaken a gate to reconcile contradictory guidance.
   Next.js patterns. Preserve the scaffold production entry, health/manifest,
   router/root, Gateway and Vite boundaries; reconcile changes to these files
   deliberately when platform/runtime alignment is the task. Never hand-edit
-  generated `src/routeTree.gen.ts`.
+  generated `src/routeTree.gen.ts`. `artifact.toml` sets no production run
+  `image`: the platform supplies each environment's runtime image, so delete a
+  hardcoded `[services.production.run].image` such as `node:22-alpine`.
 - Preserve route semantics. A nested list/detail resource needs an outlet and
   index/detail routes; a standalone detail uses trailing-`_` opt-out. Navigation
   leaves must resolve to unique real routes. Use `apiUrl()` for local APIs.
 - Gateway owns login, logout, identity, and role assignment. Remove imported
   App-local sessions, logout and role-picker implementations in a full migration.
   Authorize with `user.roles` permission union, never `primaryRole`. Preview
-  without a selected role has zero roles/permissions; there is no admin fallback.
+  carries the developer's view-as role set with the same union; without a
+  selected role it has zero roles/permissions; there is no admin fallback.
   Every defined role must be represented in matrix, metadata, and `roles.json`.
   The current first-version gate allows three business roles total; `admin`, if
   business-defined, counts as one. Preserve roleless sources without inventing
@@ -155,7 +179,8 @@ weaken a gate to reconcile contradictory guidance.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`, pinned by the selected scaffold. An app
+- The platform SDK is `@tier0/sdk-v2`; copy the exact npm version the selected
+  scaffold pins (`0.3.0` at v12). An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
