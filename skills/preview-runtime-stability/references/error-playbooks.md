@@ -109,7 +109,7 @@ rg -n '@tanstack/react-start/server|from "motion/react"' src --glob '!routeTree.
 rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
 ```
 
-The first two commands intentionally over-report. The scaffold ships its own `src/components/ui`, so only imports of files missing from it are stale. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
+The `@/components` and `@tanstack/react-start/server` searches intentionally over-report. The scaffold ships its own `src/components/ui`, so only imports of files missing from it are stale. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
 
 ### Tier0 SDK SSR external mismatch
 
