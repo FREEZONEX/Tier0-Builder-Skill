@@ -478,9 +478,12 @@ authoritative; read them before changing data. The essentials for alignment:
   `collections`. The schema is a storage schema limited to the documented
   subset; `npm run build` rejects anything UNS cannot store and validates every
   seed. Keep input rules (formats, lengths, defaults) in API input schemas.
-- The App ensures every declared collection on first data access; do not
-  ensure manually, touch data at import time, or cache your own "initialized"
-  flags. Preview and the deployed App share the same collections, so ensure
+- The App ensures every declared collection on first data access; do not add
+  manual ensure calls, import-time data access, or initialization flags to App
+  code. Worker-side ensure diagnostics follow
+  [first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md):
+  context can return 403 before first ensure creates the policy, and dry-run
+  checks do not create it. Preview and the deployed App share the same collections, so ensure
   only widens. Narrowing a schema, changing descriptions, archive and restore
   are explicit worker operations through the tier0 MCP (`schema:replace`,
   `dryRun` first) and must not appear in runtime code.
@@ -527,8 +530,10 @@ authoritative; read them before changing data. The essentials for alignment:
   makes data calls silently run as the App. Take the upstream data gates with
   their gate-integrity manifest; services then follow the v9 points above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
-  collections; its PostgreSQL rows are not migrated (product decision). Remove
-  the Drizzle, `pg` and `db:*` dependencies, scripts and env usage together.
+  collections without connecting to the old database or requesting credentials.
+  Guide historical-data retention through original-app export and later import/
+  manual entry after reconstruction. Remove the Drizzle, `pg` and `db:*`
+  dependencies, scripts and env usage together; retain the original app/data.
 
 ## Build And Preview Contract
 

@@ -244,6 +244,14 @@ write, or clear the Gateway login Cookie. Logout is platform-owned for every App
 
 ## Data Calls Or Collection Ensure Fail
 
+For `403 active hosted App data policy required`, follow
+[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md).
+Context cannot distinguish an absent policy from a disabled one. Check App
+binding and ensure dry-run with the real declarations; never treat this context
+error alone as proof that an administrator must initialize the App. Explicit
+`APP_GRANT_REVOKED` must not be bypassed. Runtime failures leave dependent
+acceptance checks pending, not all source reconstruction.
+
 Read the `DataError` (`status`, `code`, `reason`, `details`) in the server log
 before assigning a cause; the frontend message alone does not identify it. The
 mapping is in the scaffold's `docs/platform-integration.md` → Errors.

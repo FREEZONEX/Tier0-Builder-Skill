@@ -47,7 +47,9 @@ new scaffold-native modules.
 - Guard browser-only libraries during SSR.
 - A single adapter may temporarily expose LocalStorage, sessionStorage,
   IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility and
-  explicit legacy-data export/import.
+  an explicit user export from the original application. Historical import
+  happens only after reconstruction, using exported files or manual entry;
+  never connect to the original database or request connection settings.
 - Do not add new durable business writes to that adapter. Its collection becomes
   the only source of truth as each entity is cut over.
 - Do not catch API/data-layer errors and fall back to legacy local data or report a
@@ -73,8 +75,9 @@ Start removing the boundary only when:
 - Equivalent scaffold-native routes exist.
 - Durable data dependencies use declared collections, services with `data` from
   `@/lib/data`, thin APIs, and API-backed clients.
-- Required legacy data has been imported and reconciled, or an intentional reset
-  decision is recorded.
+- The user has been guided to preserve original-app exports for later import
+  or manual entry after reconstruction. Pending historical data does not keep
+  the old runtime adapter alive; retain the original app/data independently.
 - No production durable CRUD or data-failure fallback depends on browser storage,
   persisted Zustand slices, IndexedDB, memory mocks, or fixtures.
 - Layout and navigation are native to the target shell, with no user-visible

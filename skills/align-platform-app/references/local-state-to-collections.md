@@ -86,8 +86,13 @@ declaration and seed against what UNS can store.
 
 ## 4. Import Legacy Browser Data
 
-Import old local data only when retention is required and the browser can still
-provide it. Make the import explicit and bounded:
+When retention is needed, guide the user to export data from the original
+application and keep the files. Do not connect to its database or request
+connection configuration. Reconstruct without waiting for the export; only after
+reconstruction and required runtime checks should the user import or manually
+enter the data. See
+[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md).
+Make any in-scope import explicit and bounded:
 
 - Version and validate the legacy payload before sending it to a dedicated API.
 - Define identity mapping, ownership, deduplication, conflict precedence, invalid
@@ -101,8 +106,8 @@ provide it. Make the import explicit and bounded:
   the larger atomic unit before importing.
 - Return and record attempted, created, updated, skipped, conflicted, and rejected
   counts without logging sensitive payloads.
-- Mark successful import completion, then remove or archive legacy keys only
-  after server confirmation. Never import silently on every normal application
+- Mark successful import completion. Keep original data and exports intact
+  unless the user separately authorizes cleanup. Never import silently on every normal application
   read.
 
 If no retention requirement exists, document the reset/cutover decision and
@@ -139,8 +144,10 @@ Collect current evidence for every migrated durable entity:
   indefinite loading shell.
 - Repository search finds no production durable CRUD writes to browser storage,
   persisted Zustand slices, IndexedDB, memory repositories, or fixtures.
-- Legacy import, when required, has idempotency and reconciliation evidence with
-  attempted/created/updated/skipped/conflicted/rejected counts.
+- Historical import, when performed after reconstruction, has idempotency and
+  reconciliation evidence with attempted/created/updated/skipped/conflicted/
+  rejected counts. Pending historical entry is reported separately and is not
+  a prerequisite for otherwise verified scaffold alignment.
 - Preview writes land in the same collections as the deployed App: write test
   records only where authorized and remove them afterwards; never `deleteMany` or
   recreate a collection to reset it.

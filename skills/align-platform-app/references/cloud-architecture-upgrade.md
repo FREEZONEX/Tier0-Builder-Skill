@@ -42,11 +42,13 @@ or recreate existing collections merely because the marker is old.
 
 ### Drizzle / v7 and Earlier
 
-This branch's migration baseline does not carry over old PostgreSQL rows.
-Preserve that distinction in the delivery report: replacing the storage code
-is not historical-data migration. Do not build an unsolicited database export/
-import or delete the old database. If the current user explicitly requires
-retention, resolve the import scope before switching authoritative reads.
+Reconstruct from source models and business behavior without connecting to the
+old PostgreSQL database or requesting its configuration. Historical data is not
+copied during alignment: guide the user to export it from the original app and
+import or manually enter it after reconstruction. Continue without waiting for
+exported files, preserve the old app/data, and follow
+[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md)
+for initialization, blocked runtime checks, and the later import handoff.
 
 1. Map each service's tables, SQL queries, constraints, triggers/defaults,
    transactions, scheduled writes and API response types to its business

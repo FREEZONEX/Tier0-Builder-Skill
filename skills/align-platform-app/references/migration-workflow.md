@@ -92,8 +92,9 @@ Use a compatibility boundary when:
 - The user requires preserving full business behavior first.
 - Build/runtime contract work is urgent and native refactoring can follow.
 
-A compatibility boundary may temporarily read legacy durable state for explicit
-import, but it must not legitimize new durable local writes or data-failure
+A compatibility boundary must not create a live dependency on the original
+storage for historical import. Guide the user to original-app export and later
+entry after reconstruction; allow no new durable local writes or data-failure
 fallback.
 
 A coarse document shape (for example one collection holding a source entity's
@@ -122,8 +123,11 @@ Prefer this sequence:
 5. Replace durable local/mock CRUD in vertical slices using
    `defineCollection` declarations in `src/data/collections.ts` (listed in
    `collections`) -> service with `data` from `@/lib/data` -> thin API -> client.
-6. Import legacy data through an explicit validated, idempotent process when
-   retention is required; otherwise document reset/cutover.
+6. If historical data is needed, guide the user to export it from the original
+   application and retain the files. Do not connect to its database or request
+   connection configuration. Continue reconstruction without waiting for exports;
+   import or manual entry happens only after reconstruction is ready. Follow
+   `first-ensure-and-runtime-blockers.md` for the handoff and pending statuses.
 7. Put valid baseline records in the declaration's `seed` (fixed `_id`s,
    `seedDate()` / `seedTimestamp()` / `requireSeedRef()`); they are written once
    when the collection is created. Remove startup- or first-request code that
@@ -240,8 +244,10 @@ For the whole app, verify:
   fixtures use explicit flows.
 - Repository search shows no production durable CRUD backed by browser storage,
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
-- Required legacy imports are validated, idempotent, and reconciled by result
-  counts and conflicts.
+- Historical import is separate from reconstruction. When performed after the
+  rebuilt app is ready, it is validated, idempotent, and reconciled by result
+  counts and conflicts. Pending user exports do not block source reconstruction
+  or otherwise verified scaffold alignment.
 - If historical data is intentionally reset, the reset decision, rollback source
   or explicit lack of one, fresh-collection result, and expected empty-state behavior
   are recorded in project-local migration documentation.

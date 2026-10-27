@@ -90,6 +90,27 @@ When implementation, docs, and locked tests disagree, trace actual behavior and
 record the conflict. Do not grant extra access, delete business behavior, or
 weaken a gate to reconcile contradictory guidance.
 
+## Initialization, Blockers, and Historical Data
+
+Read [first-ensure-and-runtime-blockers.md](references/first-ensure-and-runtime-blockers.md)
+for first initialization or a platform/API blocker. A context 403 saying
+`active hosted App data policy required` can mean no policy yet or a disabled
+policy; verify identity and the real declarations with ensure dry-run before
+assigning a cause. Context success is not a prerequisite for first ensure.
+Never override an explicit revoked grant or disabled policy.
+
+Continue independent source reconstruction and available checks while runtime
+verification is blocked. Do not stop at a migration plan, preserve the old SQL
+path solely because the target API is blocked, or write a completion marker
+without required runtime evidence.
+
+Do not connect to the original database or request connection configuration.
+If historical data is needed, guide the user to export it from the original
+application, continue reconstruction without waiting for the export, and import
+or manually enter the data only after reconstruction is ready. Keep the original
+app/data untouched. Report code alignment, runtime acceptance and historical
+import separately; pending historical entry alone does not block alignment.
+
 ## Apply The Relevant Contracts
 
 - Keep the existing TanStack Start project; do not reinitialize it or introduce
