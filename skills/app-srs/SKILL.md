@@ -164,6 +164,10 @@ never a keyword match on how the user happened to phrase it.
 - Keep all content business-logic focused: input, processing, output, roles,
   validations, status changes, exceptions, records, and operational workflow.
 - Avoid platform-level, architecture, scalability, future extensibility, and technology-stack claims unless the user explicitly requests them.
+- Derive roles from business actions, not development or platform access.
+  Do not inject `root`, Full Access, or an administrator by default. Preserve
+  roleless requests; apply the template's current Tier0 role limit without
+  silently removing or combining user-required permission scopes.
 - Never use generic roles such as "User", "Viewer", "Read-only", or "Business User".
 
 ## Clarification Decision

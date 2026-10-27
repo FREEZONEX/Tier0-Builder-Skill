@@ -1,6 +1,6 @@
 # Tier0 Builder Skills
 
-用于需求整理、工业企业应用构建、平台迁移、界面修复和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
+用于需求整理、工业企业应用构建、平台迁移、响应式设计和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
 
 本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v12，App 数据存于 Tier0 UNS collections），平台 SDK 为 npm 上的 `@tier0/sdk-v2` 0.3.0。SDK 的使用技能随 SDK 包安装（`node_modules/@tier0/sdk-v2/skills/`），不在本仓库维护。
 
@@ -13,7 +13,6 @@
 skills/app-srs
 skills/app-builder
 skills/align-platform-app
-skills/ui-repair
 skills/responsive-craft
 skills/browser-platform-capabilities
 skills/preview-runtime-stability
@@ -23,7 +22,7 @@ skills/preview-runtime-stability
 只需要一个技能时，也可以发送具体目录链接。例如：
 
 ```text
-请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/feature/cloud-new-architecture-migration/skills/ui-repair 到本地。
+请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/feature/cloud-new-architecture-migration/skills/responsive-craft 到本地。
 ```
 
 安装完成后，在下一轮对话中使用技能；若技能列表未更新，重启 Codex。技能安装只添加本地工作指引，不会自动安装项目依赖、配置平台账号或部署应用。
@@ -35,7 +34,6 @@ skills/preview-runtime-stability
 | [app-srs](skills/app-srs/SKILL.md) | 将需求整理为应用规格说明，或更新已有规格 |
 | [app-builder](skills/app-builder/SKILL.md) | 按需求和规格构建应用或扩展业务模块，建议与 app-srs 一起安装 |
 | [align-platform-app](skills/align-platform-app/SKILL.md) | 将应用迁移或对齐到 Tier0 脚手架 |
-| [ui-repair](skills/ui-repair/SKILL.md) | 修复表单、弹窗、表格、布局和文案一致性等界面问题 |
 | [responsive-craft](skills/responsive-craft/SKILL.md) | 设计和检查多视口布局、滚动及 sticky 行为 |
 | [browser-platform-capabilities](skills/browser-platform-capabilities/SKILL.md) | 实现扫码、拍照、定位、录音、文件读取和剪贴板能力 |
 | [preview-runtime-stability](skills/preview-runtime-stability/SKILL.md) | 排查依赖安装、预览启动、端口和 HMR 问题 |
@@ -60,7 +58,7 @@ Codex 支持以下本地技能目录：
 - 用户级：`~/.agents/skills/`，供当前用户的多个项目使用。
 - 项目级：目标项目根目录中的 `.agents/skills/`，仅供该项目使用。
 
-在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 7 个技能到用户目录。已有同名目录或符号链接会被跳过：
+在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 6 个技能到用户目录。已有同名目录或符号链接会被跳过：
 
 ```sh
 (
@@ -84,7 +82,7 @@ Codex 支持以下本地技能目录：
 
 ```text
 .agents/skills/
-└── ui-repair/
+└── responsive-craft/
     ├── SKILL.md
     ├── agents/
     └── references/
@@ -103,10 +101,10 @@ Codex 支持以下本地技能目录：
 ```
 
 ```text
-请使用 ui-repair，检查并修复当前页面在手机宽度下的表单和弹窗溢出问题。
+请使用 responsive-craft，检查当前应用在手机、平板和桌面下的布局与滚动行为。
 ```
 
-Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，例如 `$ui-repair`。
+Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，例如 `$responsive-craft`。
 
 部分技能需要目标项目源码、Tier0 脚手架、SDK、浏览器工具或平台运行环境。安装技能不会授予这些资源的访问权限；缺少依赖时，按技能给出的检查结果补齐。预览排障脚本应只用于有权操作的目标应用环境。
 

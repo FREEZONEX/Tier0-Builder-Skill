@@ -81,14 +81,22 @@ Structural constraints:
 
 ### 2.1 Roles and Permission
 
-- Always include `root | Root | Full Access`.
-- Use `root` only for application development; never use it in user stories.
-- Derive every non-root role from concrete actions in section 2.2.
+- Derive business roles from concrete actions in section 2.2. Do not add a
+  development-only `root`, reserved administrator, or implicit Full Access role.
+- A role named `root` or `admin` is allowed only when the user's business
+  requirements actually define it; it has explicit capabilities like any role.
+- Preserve roleless scope: state that no differentiated business roles are
+  required, leave the role table empty, and name the domain actor in stories
+  without inventing an authorization role.
 - Include only direct in-module operators.
 - Exclude stakeholders who only consume, approve, reference, or reuse data outside the module.
-- Map each non-root role to at least one user story.
+- Map each defined business role to at least one user story.
 - Remove any role that has no direct in-module action.
-- Prefer 2 to 4 non-root roles unless the requested scope clearly needs more.
+- For Tier0's current first-release scaffold, default to at most three business
+  roles total, only where workflows need distinct permissions; there is no
+  minimum role count. If supplied requirements need more distinct roles, preserve
+  their meaning and resolve a consolidation or phased-delivery decision before
+  implementation. Never silently merge scopes, drop roles, or broaden access.
 - Describe permissions as operational capabilities, not CRUD labels.
 - Use wording like "Can record exception" or "Can approve request" instead of technical CRUD levels.
 - Prefer domain-specific role names from the user's context, such as requester,
@@ -101,8 +109,9 @@ Structural constraints:
 - Break scenarios into concise operational user stories.
 - Keep each story to a maximum of 3 lines.
 - Avoid fluff and generic value statements.
-- Do not create user stories for `root`.
-- Ensure every user story uses a role that appears in section 2.1.
+- Do not create user stories for development-only or platform administration roles.
+- For role-aware apps, every user story uses a business role in section 2.1;
+  for roleless apps, use the domain actor without adding role-gated behavior.
 
 ### 2.3 First-Version Commitments
 

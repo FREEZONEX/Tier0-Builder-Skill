@@ -71,16 +71,48 @@ Use this before reporting a generated app or substantial change as complete.
 - Visible links/actions resolve to implemented routes or in-page behavior.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
-- Polling/timers/subscriptions use shared patterns or clean up correctly.
+- App record views use `useRecordChanges` with aliases, not declarations or
+  polling. Changes, `batch.reset`, and employee-filtered `batch.collections`
+  invalidate the affected reads through authorized APIs; events are not record
+  payloads. Poll only data subscriptions cannot cover, with cleanup.
+
+## App Data
+
+Apply these checks to the affected data paths using the selected scaffold's
+current App Data contract:
+
+- Collections are declared and listed in `src/data/collections.ts`; services
+  use `@/lib/data`. Baseline seeds run only on collection creation, never because
+  a list is empty. Existing collections are not reseeded by changing `seed`.
+- Business requests retain the SDK employee context; verify data-scope behavior
+  separately from role/action checks. Do not bypass restrictions with `runAsApp`.
+- Supported writes survive reload and, where controllable, server restart.
+  Data failures are visible with no browser/mock persistence fallback.
+- List adapters preserve capped-count semantics with `toQueryResult` where
+  applicable; a capped total is not presented as an exact count.
+- State transitions check expected state and edits use `expectedRevision`.
+  Exercise a conflict path. Cross-record invariants use one supported atomic
+  operation; independent chunks and `updateMany` are not a global transaction.
+- Unknown write outcomes are reconciled by reading back, not blind resubmission.
+  Keep the SDK's retry/error handling instead of adding App retry loops.
+- Preview writes affect deployed collections too. Use authorized test records,
+  clean up only those records where permitted, and never reset/recreate a
+  collection to make verification pass. Report unavailable runtime checks as
+  pending rather than treating a static build as persistence proof.
 
 ## Roles
 
 - Real business roles from the SRS are registered across every role surface
   the scaffold contract lists (permission matrix, role metadata, platform
   role mirror) in one pass.
-- Template/demo/test roles are replaced, not shipped.
+- No development-only `root` / Full Access or invented role is shipped.
+  Roleless scope remains roleless. The current first release has at most three
+  business roles total; any conflicting SRS role model is resolved explicitly,
+  without silently dropping roles or broadening permissions.
 - No reserved admin role or preview fallback is assumed. Verify current
-  empty-role behavior and each defined role's intended access.
+  empty-role behavior and each defined role's intended access. Cover Preview
+  and deployed multi-role permission union, and verify a missing/unknown role
+  never creates an implicit privilege.
 - Walk the Delivery Map once per defined role: each business role reaches the
   workflows the SRS assigns to it; no role lands on an empty workspace unless
   the SRS says so.

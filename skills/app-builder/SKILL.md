@@ -104,12 +104,28 @@ regeneration; preserve usable work and keep any correction scoped.
 Keep controls legible, field groups stable, and dense content within intentional
 scroll regions. Follow the target scaffold's server/client and data boundaries:
 declare collections in `src/data/collections.ts` and access records only from
-services through `data` from `@/lib/data`.
+services through `data` from `@/lib/data`. Read the target scaffold's App Data
+contract before implementing persistence. Keep its SDK request context so
+employee data rules apply; do not add a second context or use App-level calls
+to bypass a request's restrictions. Baseline records belong in declaration
+`seed`, written on collection creation, never service startup or empty reads.
+
+For App record views, use `useRecordChanges` with collection aliases and reload
+through authorized App APIs on changes, resets, and collection invalidations.
+Do not poll App records with `refetchInterval` or `usePolling`; those are only
+for data subscriptions cannot cover. Preserve capped counts, revision conflicts,
+atomic business operations and unknown-write-outcome handling from the current
+data contract. Preview shares deployed collections: validation does not
+implicitly authorize resetting data or recreating collections.
 
 Derive business roles from the SRS and register each across the target
 scaffold's required surfaces in one pass. Do not assume a reserved admin role
 or preview fallback. Verify each defined role's intended permissions and the
-current empty-role behavior; preserve roleless scope when appropriate.
+current empty-role behavior; preserve roleless scope when appropriate. No
+`root` or Full Access role is generated for development. The current first
+release allows at most three business roles total. If an inherited SRS exceeds
+that limit or contains a development-only role, reconcile the concrete conflict
+before implementation; never silently discard business roles or widen access.
 
 ## Specialist Routing
 
@@ -117,9 +133,9 @@ current empty-role behavior; preserve roleless scope when appropriate.
   reading, or clipboard access, read
   [browser-platform-capabilities](../browser-platform-capabilities/SKILL.md)
   before choosing the browser API.
-- For an existing UI defect, use `$ui-repair` when available. Use
-  `$responsive-craft` only for complex breakpoint, sticky/scroll, or dedicated
-  multi-viewport work.
+- Fix ordinary UI defects directly using the target scaffold's `DESIGN.md`
+  and existing primitives, keeping the repair scoped. Use `$responsive-craft`
+  only for complex breakpoint, sticky/scroll, or dedicated multi-viewport work.
 - For preview install, process, readiness, or HMR failures, use
   `$preview-runtime-stability` when available.
 
