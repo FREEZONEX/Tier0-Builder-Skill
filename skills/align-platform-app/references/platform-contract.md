@@ -293,15 +293,10 @@ regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
 
 The scaffold starts with empty role definitions and reserves no role name.
-Default the first version to no more than three business roles total, chosen
-for materially different permission scopes. The current locked gate checks
-matrix and metadata counts; a business-defined `admin` counts toward the three. Do not
-create one role per page, action, or job title. When a source App
-has more materially distinct roles, do not silently omit them, merge them into
-broader access, or register them with zero permissions. Stop and obtain an
-explicit user/platform decision for a safe consolidation or phased migration,
-then keep the approved mapping traceable across permissions, metadata,
-navigation, API guards, and `roles.json`.
+Prefer a small initial role model when designing a new app; three roles is a
+suggestion, not a limit. Preserve all materially distinct roles during migration.
+Do not omit, merge, broaden or zero-permission a role to satisfy a count.
+For pre-v15 gate replacement, follow [v15-guidance-gates.md](v15-guidance-gates.md).
 
 Registration is distinct from permission. A platform-registered role absent from
 the matrix may legitimately enter with zero permissions and produce an advisory;
@@ -343,8 +338,8 @@ provider/data/permission contract. Preserve working pages outside that scope.
 
 Preserve and complete the in-scope business-object lifecycle on management routes;
 do not add unrelated operations during a partial scaffold update. A
-workspace route is intentionally read-only only when it is a monitor, report,
-audit, or derived result and carries `READ_ONLY_SURFACE: <reason>`. Lifecycle
+workspace route can be intentionally read-only when its workflow calls for it;
+record the reason when useful, without requiring a marker to pass the build. Lifecycle
 actions must connect reachable UI, validation, permission checks, service/API
 mutation, persistence, and visible success/error feedback.
 
@@ -356,7 +351,8 @@ Interactive pages must remain usable at 375px without page-level horizontal
 overflow. An `input`, `select`, or `textarea` using `flex-1`, `grow`, or
 `flex-auto` needs a maximum or fixed width. A hard minimum width above 375px must
 sit inside a local horizontal-scroll region, such as `TableViewport`. The locked
-`responsive-contracts` gate enforces these rules during `npm run build`.
+`responsive-contracts` reports source-pattern advisories during `npm run build`;
+these do not prove a layout defect or block completion. Verify the rendered UI.
 
 Keep App identity centralized in `src/lib/app-chrome.ts`:
 
@@ -385,7 +381,8 @@ Keep App identity centralized in `src/lib/app-chrome.ts`:
 Ordinary `_app` page roots use `<div className="page-shell ...">`; preserve
 page-specific vertical rhythm on that root. The shared class supplies 16px
 horizontal / 20px vertical narrow-screen padding, 24px from 640px, and 32px
-from 1024px, with shrinkable children. `Shell` retains its centered 1440px cap.
+from 1024px, with shrinkable children. `Shell` defaults to a centered 1440px container; this is a design recipe, not
+a build invariant.
 Remove duplicate outer padding rather than nesting another inset. Station,
 review, and monitor layouts own their spacing; do not add `page-shell` there.
 Preserve intentional app customizations when reconciling this upstream default.
@@ -547,12 +544,12 @@ Use the scaffold's existing scripts and managed preview behavior:
   not launch a concurrent install. Restore dependencies manually only in a local
   or otherwise unmanaged environment, using the authoritative lockfile.
 - Run `npm run build` for normal completion and let its automatic `postbuild`
-  verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
+  verifier finish. At the verified snapshot, `postbuild` runs `test:guidance`, `build:verify`,
   `auth:union:test`, `runtime:audit`, `test:components` and `test:data`; the
   verifier also covers typecheck,
   lint, contract tests, and runtime safety. Locked contract coverage includes
-  route nesting, navigation, lifecycle/read-only content, role limits, and 375px
-  responsiveness. Do not substitute `vite build` or edit locked gates to make
+  route nesting and navigation correctness. Lifecycle/read-only, copy, component
+  and layout heuristics are advisory; role count is not capped. Do not substitute `vite build` or edit locked gates to make
   App code pass.
 - If route files change, let the TanStack Router plugin regenerate the route
   tree through dev/build tooling.
@@ -593,13 +590,12 @@ script names. Before declaring migration complete:
   For an authorized upstream scaffold update, replace changed locked files
   together with their matching verified upstream manifest; never locally weaken
   assertions or recompute hashes to conceal failing App code. At this snapshot, only
-  `src/lib/template-state.test.mjs` is App-adaptable. If a locked gate reports an
-  intentional external caller or read-only surface, use its documented marker
-  or restructure the App; editing the gate is not the fix.
-- Every mutation API route must have a reachable UI caller through `apiUrl()`,
-  or a documented external caller marker. First-load request state must render
-  through the current async-state primitive so failures do not masquerade as
-  endless loading.
+  `src/lib/template-state.test.mjs` is App-adaptable. If old locked gates block intentional external callers or read-only surfaces,
+  upgrade to the verified v15 gate set. Do not fabricate UI/actions or marker
+  comments to silence guidance; genuine correctness failures still need fixes.
+- Review mutation callers and visible loading/error/retry behavior against the
+  workflow. `apiUrl()` caller scans and `AsyncView` selection are advisories;
+  equivalent wrappers or custom state UI are valid. Verify actual behavior.
 
 ## Artifact Contract
 

@@ -93,6 +93,11 @@ When implementation, docs, and locked tests disagree, trace actual behavior and
 record the conflict. Do not grant extra access, delete business behavior, or
 weaken a gate to reconcile contradictory guidance.
 
+For any pre-v15 App aligning to v15 or later, read
+[v15-guidance-gates.md](references/v15-guidance-gates.md). Replace the complete
+verified upstream gate set and its build dependencies; changing only the marker
+or role-count test leaves old guidance blockers active.
+
 ## Initialization, Blockers, and Historical Data
 
 Read [first-ensure-and-runtime-blockers.md](references/first-ensure-and-runtime-blockers.md)
@@ -142,9 +147,9 @@ alone does not block alignment.
   requests without Tier0 runtime headers) and its Active-Role display ordering;
   the locked `gateway.test.ts` covers both. Every defined role must be
   represented in matrix, metadata, and `roles.json`.
-  The current first-version gate allows three business roles total; `admin`, if
-  business-defined, counts as one. Preserve roleless sources without inventing
-  privileges. Use the reference's environment-specific auth checks when affected.
+  Role count is generation guidance, not a build limit; preserve every distinct
+  source role, including models with more than three roles. Preserve roleless
+  sources without inventing privileges. Use the reference's environment-specific auth checks when affected.
 - For data changes, declare collections with `defineCollection` from
   `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list them in
   `collections`; the schema is a storage schema limited to the subset in the

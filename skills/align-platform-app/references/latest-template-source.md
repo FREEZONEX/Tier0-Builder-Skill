@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `a9697cc343b63699ffa25db73b6bcda9ebf32952` (merged scaffold
-PR #97, v13). Its `package.json.tier0Scaffold` is
-`{ "version": 13, "ref": "22e39fc" }`; the SDK dependency is `@tier0/sdk-v2`
+on 2026-10-28 is `c285b43b355b8bc379d50c16aadeaf25826e43eb` (merged scaffold
+PR #99, v15). Its `package.json.tier0Scaffold` is
+`{ "version": 15, "ref": "0fcc599" }`; the SDK dependency is `@tier0/sdk-v2`
 pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
 `f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
 to SDK 0.2.0 and added live record changes, the merged preview multi-role
@@ -20,6 +20,10 @@ identifies the inspected source; the marker's `ref` identifies the content
 commit stamped by the scaffold maintainer. They need not be equal. After
 successful app alignment, copy the selected scaffold's marker object verbatim,
 not the merge SHA or the Skill package version.
+
+v14 reorganized generation references; v15 removes the role-count cap and
+turns design/workflow heuristics into advisories. For old Apps, apply
+[v15-guidance-gates.md](v15-guidance-gates.md) as part of alignment.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for

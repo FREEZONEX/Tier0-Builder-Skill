@@ -126,7 +126,9 @@ When `responsive-contracts` fails or a page scrolls sideways at 375px:
   content inside.
 - Inspect the route at 375px after the build passes. A test fix is not sufficient
   if controls, dialogs, or actions remain unusable.
-- Fix the App layout; do not edit the locked responsive test or gate manifest.
+- In v15 these source-pattern findings are advisories. Review the rendered
+  layout; if an old test blocks the build, install the verified v15 gate set
+  rather than changing assertions or recomputing pins locally.
 
 ## Assets Missing
 
@@ -227,12 +229,10 @@ every business role is synchronized across `PERMISSION_MATRIX`,
 `ROLE_METADATA`, and `roles.json`, and every `role_key` matches
 `^[a-z]+(_[a-z]+)*$`.
 
-The first version supports at most three materially distinct business roles
-total, with no reserved role or implicit grant. If the source model exceeds that cap,
-stop and obtain an
-explicit user/platform-approved consolidation or phased migration. Do not make
-the build pass by silently removing roles, broadening access, merging distinct
-scopes without approval, or leaving a registered role with zero permissions.
+At v15 role count does not block builds. If an old App still reports
+`Keep at most 3 roles`, its gate set was not fully upgraded. Follow
+[v15-guidance-gates.md](v15-guidance-gates.md); preserve all distinct roles and
+retain registration, metadata, key-format and authorization checks.
 
 ## Migrated App Still Shows Logout
 
