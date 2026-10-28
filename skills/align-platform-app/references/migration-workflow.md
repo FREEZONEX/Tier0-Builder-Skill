@@ -146,11 +146,10 @@ Prefer this sequence:
    authorization rule, and registration entry across `PERMISSION_MATRIX`,
    `ROLE_METADATA`, and `roles.json`. Validate role keys against
    `^[a-z]+(_[a-z]+)*$`; authorize with `user.roles` permission union, never the
-   primary display role. The first version allows at most three materially
-   distinct business roles total, with no reserved or fallback role. If the source
-   exceeds that cap, stop
-   for an explicit user/platform-approved consolidation or phased migration;
-   never silently drop, broaden, collapse, or zero-permission a source role.
+   primary display role. There is no role-count build cap at v15. Preserve
+   distinct source roles; do not consolidate, drop or broaden permissions to
+   satisfy generation guidance. Apply [v15-guidance-gates.md](v15-guidance-gates.md)
+   when upgrading old gate files.
 10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
     removed, and—when generated or rebranded—the same platform-ready
     root `icon.png` copied byte-for-byte to `public/app-icon.png`, then
@@ -232,8 +231,8 @@ For the whole app, verify:
   follow-up.
 - Locked tests and verification scripts remain unchanged. App-specific template
   assertions are confined to the current adaptable template-state test. Locked
-  route-nesting and responsive-contract gates pass with App code fixes, not gate
-  edits.
+  route-nesting correctness remains blocking; responsive heuristics are review
+  advisories. Upgrade old gates with the verified upstream files/hash set.
 - `/api/health` and `/api/manifest` still work.
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
@@ -264,9 +263,8 @@ For the whole app, verify:
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
   `^[a-z]+(_[a-z]+)*$`; every matrix role, including a business-defined
-  `admin`, appears in `roles.json`. The result fits at most three business roles, or
-  has a traceable user/platform-approved consolidation or phased migration with
-  no silently lost, broadened, collapsed, or zero-permission source role.
+  `admin`, appears in `roles.json`. Preserve all distinct business roles;
+  role count alone does not require consolidation or phased migration.
 - Role tests cover preview view-as with one and several selected roles
   (permission union); deployed permission union across
   all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted

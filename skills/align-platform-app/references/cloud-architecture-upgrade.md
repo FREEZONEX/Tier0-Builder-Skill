@@ -8,13 +8,13 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-10-27 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-10-28 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - New `feature/cloud-new-architecture-migration`:
-  `a9697cc343b63699ffa25db73b6bcda9ebf32952`, marker
-  `{ "version": 13, "ref": "22e39fc" }`.
+  `c285b43b355b8bc379d50c16aadeaf25826e43eb`, marker
+  `{ "version": 15, "ref": "0fcc599" }`.
 
 | Surface | Old main / v7 | Cloud / v13 | Migration consequence |
 | --- | --- | --- | --- |
@@ -145,6 +145,13 @@ For v9, adapt capped counts, `execution`/`retry` errors, partial-write
 For every old SDK, apply [SDK Upgrades](platform-contract.md#sdk-upgrades):
 0.3.0 removes methods as well as changing routes. Unsupported Flow/Agent
 features remain blockers, never success-shaped stubs.
+
+## v13–v14 to v15: Guidance Gates
+
+Apply [v15-guidance-gates.md](v15-guidance-gates.md). This update needs no
+data migration, collection reset, role consolidation or UI redesign. Earlier
+versions apply it after their required architecture changes. Preserve the
+existing app data and role model throughout.
 
 ## Cross-Version Acceptance
 
