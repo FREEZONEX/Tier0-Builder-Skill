@@ -76,9 +76,10 @@ for initialization, blocked runtime checks, and the later import handoff.
    `src/data/seed-utils.ts`. Inspect imports before removal; preserve unrelated
    business logic in customized files. Reconcile old SQL gate removal as part
    of the target's complete gate set.
-5. Scan active source, runtime config, tests and dependency files for old
-   imports and database commands. Historical documentation may describe the
-   old architecture; it must not remain active runtime guidance.
+5. Scan active source, runtime config, tests, dependency files and root
+   `AGENTS.md` for old imports and database commands. Historical documentation
+   may describe the old architecture; it must not remain active runtime
+   guidance, and root `AGENTS.md` is always active guidance.
 
 | SQL behavior to inventory | Cloud equivalent or decision |
 | --- | --- |

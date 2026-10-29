@@ -293,6 +293,9 @@ For the whole app, verify:
 - `artifact.toml` uses canonical literal argv; shell behavior is explicit.
 - With a preview local URL, `smoke:routes` covers `/` and changed key routes.
 - No platform-managed Skill content is vendored under `.agents/skills/`.
+- Root `AGENTS.md` is the target scaffold's file plus only the App's own
+  still-valid rules under `## App-Specific Rules`; no retired data, runtime or
+  auth guidance remains.
 - Last, and only when every item above passes: `package.json` top-level
   `tier0Scaffold` equals the object in the inspected scaffold commit's
   `package.json` (`version` integer and `ref` hex copied as-is). If the scaffold
