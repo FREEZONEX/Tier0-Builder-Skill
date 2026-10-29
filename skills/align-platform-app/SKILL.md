@@ -119,10 +119,10 @@ For every pre-v13 source, historical records are whatever the target
 collections actually hold; an App moved to another environment gets new
 collections from its first ensure there, without the old records. Do not connect
 to the original database or environment or request connection configuration.
-Convert App-owned SQL callers and remove their connection setup before invoking
-migrated routes, loaders, or startup hooks, since legacy modules can connect on
-import; a route that still reaches the old database is unfinished, and 500
-turning into 503 is not a fix.
+During import or full alignment, convert App-owned SQL callers and remove their
+connection setup before invoking migrated routes, loaders, or startup hooks;
+legacy modules can connect on import. Do not exercise a route that still reaches
+the old database, and 500 turning into 503 is not a fix.
 If historical data is needed, guide the user to export it from the original
 application, continue reconstruction without waiting for the export, and import
 or manually enter the data only after reconstruction is ready. The original

@@ -72,14 +72,11 @@ production deployment and old data untouched; source edits do not authorize
 publication or deleting old data. Switching this App's source to collections is
 not a destructive cutover: do not keep the imported app's active SQL runtime or
 old data client to protect historical records, or because context returns 403,
-import permissions are unconfirmed, or target API acceptance is pending. If
-preview still says “configure DB_SCHEMA”, trace and replace the legacy
-dependency in the target source instead of restoring old SQL credentials or
-claiming the cloud code failed.
+import permissions are unconfirmed, or target API acceptance is pending.
 
 | Symptom | Next action |
 | --- | --- |
-| Connection error to the old database, or a request for `DATABASE_URL`, `DB_SCHEMA` or `PG*` | App-owned SQL code is still loaded. Convert that caller to collections and remove its connection setup; do not supply database settings. |
+| Connection error to the old database, or a request for `DATABASE_URL`, `DB_SCHEMA` or `PG*` | App-owned SQL code is still loaded. Convert that caller to collections and remove its connection setup; do not restore old SQL credentials or claim the cloud code failed. |
 | A failing route changes from 500 to 503 or another handled error | Only the error presentation changed. The route is fixed when it reads and writes collections. |
 | `/api/health` or the page HTML returns 200 while business APIs fail | That proves readiness only. Verify the affected business APIs before runtime acceptance. |
 
