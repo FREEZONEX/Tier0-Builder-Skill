@@ -199,6 +199,13 @@ alone does not block alignment.
   and an identical `public/app-icon.png`, plus root `cover.png` when registering
   a cover. Register root paths only; report local files and remote metadata sync
   separately. Sizes, dimensions, and identity details live in the reference.
+- Root `AGENTS.md` is scaffold-inherited guidance that every later session
+  reads, not historical documentation. A full alignment or migration replaces
+  it with the target scaffold's `AGENTS.md` and appends only the App's own
+  still-valid rules under `## App-Specific Rules`; old-base platform text such
+  as Drizzle, SQL, `db:push` or `DATABASE_URL` guidance does not survive. Find
+  the App's own rules by diffing against `AGENTS.md` at the known base ref;
+  with no known base, keep only business-domain rules.
 
 ## Verify The Changed Behavior
 
@@ -254,9 +261,10 @@ and remote publication. Keep retained compatibility boundaries and intentional
 app divergence explicit so the next update does not overwrite them.
 
 For full alignment, verify every applicable target contract before writing
-its marker. A scoped repair or partial upgrade keeps the previous marker (or
-leaves it absent), even if its own checks pass; otherwise the platform would
-mistake a mixed architecture for a fully aligned app. Required checks that
+its marker, including the root `AGENTS.md` rule above. A scoped repair or
+partial upgrade keeps the previous marker (or leaves it absent), even if its
+own checks pass; otherwise the platform would mistake a mixed architecture for
+a fully aligned app. Required checks that
 could not run are pending, not passes.
 
 After full alignment verification passes, and only then, set the app's `package.json`
