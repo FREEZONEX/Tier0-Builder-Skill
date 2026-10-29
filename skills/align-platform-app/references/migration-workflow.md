@@ -127,10 +127,12 @@ Prefer this sequence:
    `src/data/collections.ts` (listed in `collections`) -> service with `data`
    from `@/lib/data` -> thin API -> client. Map SQL behavior with the table in
    [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#drizzle--v7-and-earlier).
-6. If historical data is needed, guide the user to export it from the original
-   application and retain the files. Do not connect to its database or request
-   connection configuration. Continue reconstruction without waiting for exports;
-   import or manual entry happens only after reconstruction is ready. Follow
+6. For App-owned SQL persistence, open by telling the user the three points in
+   SKILL.md: the original database is neither connected to nor changed;
+   historical data to keep is exported from the original application, retained,
+   and imported or manually entered after reconstruction is ready;
+   reconstruction does not wait for exports. Do not request connection
+   configuration. Follow
    `first-ensure-and-runtime-blockers.md` for the handoff and pending statuses.
 7. Put valid baseline records in the declaration's `seed` (fixed `_id`s,
    `seedDate()` / `seedTimestamp()` / `requireSeedRef()`); they are written once
@@ -293,9 +295,12 @@ For the whole app, verify:
 - `artifact.toml` uses canonical literal argv; shell behavior is explicit.
 - With a preview local URL, `smoke:routes` covers `/` and changed key routes.
 - No platform-managed Skill content is vendored under `.agents/skills/`.
-- Root `AGENTS.md` is the target scaffold's file plus only the App's own
-  still-valid rules under `## App-Specific Rules`; no retired data, runtime or
-  auth guidance remains.
+- Root `AGENTS.md` is the target scaffold's file plus `## App-Specific Rules`
+  holding every App-owned section of the old file, edited sentence by sentence
+  as SKILL.md describes. When the old file had App-owned sections, that heading
+  exists and is not empty; no retired data, runtime or auth guidance remains.
+- The report lists each App-Specific Rules sentence deleted or rewritten, with
+  why.
 - Last, and only when every item above passes: `package.json` top-level
   `tier0Scaffold` equals the object in the inspected scaffold commit's
   `package.json` (`version` integer and `ref` hex copied as-is). If the scaffold

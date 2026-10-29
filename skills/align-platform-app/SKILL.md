@@ -123,9 +123,11 @@ During import or full alignment, convert App-owned SQL callers and remove their
 connection setup before invoking migrated routes, loaders, or startup hooks;
 legacy modules can connect on import. Do not exercise a route that still reaches
 the old database, and 500 turning into 503 is not a fix.
-If historical data is needed, guide the user to export it from the original
-application, continue reconstruction without waiting for the export, and import
-or manually enter the data only after reconstruction is ready. The original
+When import or full alignment finds App-owned SQL persistence, the opening
+plan tells the user all three points: the original database is neither
+connected to nor changed; historical data to keep must be exported from the
+original application and imported or manually entered after reconstruction is
+ready; reconstruction does not wait for that export. The original
 deployment and its data stay untouched; rewriting this App's source is the
 alignment itself. Report "source rewritten", "runtime acceptance pending/passed"
 and "historical data not imported/imported" separately; pending historical entry
@@ -201,11 +203,15 @@ alone does not block alignment.
   separately. Sizes, dimensions, and identity details live in the reference.
 - Root `AGENTS.md` is scaffold-inherited guidance that every later session
   reads, not historical documentation. A full alignment or migration replaces
-  it with the target scaffold's `AGENTS.md` and appends only the App's own
-  still-valid rules under `## App-Specific Rules`; old-base platform text such
-  as Drizzle, SQL, `db:push` or `DATABASE_URL` guidance does not survive. Find
-  the App's own rules by diffing against `AGENTS.md` at the known base ref;
-  with no known base, keep only business-domain rules.
+  it with the target scaffold's `AGENTS.md` and moves every App-owned section
+  of the old file under `## App-Specific Rules`. App-owned sections are those
+  absent from `AGENTS.md` at the known base ref; with no known base, every
+  section that is not scaffold text. Edit them sentence by sentence, never
+  dropping a whole section: delete, or rewrite to the collection equivalent,
+  only sentences about data storage, SQL, bootstrap, or the App's own data API
+  mechanics; keep business rules such as roles and permissions, status labels
+  and colors, field meanings, layout, copy, App name, static assets, and
+  attachment limits as written.
 
 ## Verify The Changed Behavior
 
@@ -253,19 +259,21 @@ otherwise inspect available logs/tools and report unavailable verification.
 ## Completion
 
 Report the source/target baseline, scope actually changed, behavior preserved,
-verification passed/failed/not run, and remaining concrete blockers. A partial
-scaffold update need not complete unrelated migration work; a full migration
+verification passed/failed/not run, remaining concrete blockers, and each
+`AGENTS.md` App-Specific Rules sentence deleted or rewritten, with why. A
+partial scaffold update need not complete unrelated migration work; a full migration
 cannot be called complete while its required runtime or persistence checks remain
 blocked. Distinguish local edits/packages from platform registration, deployment,
 and remote publication. Keep retained compatibility boundaries and intentional
 app divergence explicit so the next update does not overwrite them.
 
 For full alignment, verify every applicable target contract before writing
-its marker, including the root `AGENTS.md` rule above. A scoped repair or
-partial upgrade keeps the previous marker (or leaves it absent), even if its
-own checks pass; otherwise the platform would mistake a mixed architecture for
-a fully aligned app. Required checks that
-could not run are pending, not passes.
+its marker, including the root `AGENTS.md` rule above: when the old file had
+App-owned sections, `## App-Specific Rules` exists and is not empty. A scoped
+repair or partial upgrade keeps the previous marker (or leaves it absent), even
+if its own checks pass; otherwise the platform would mistake a mixed
+architecture for a fully aligned app. Required checks that could not run are
+pending, not passes.
 
 After full alignment verification passes, and only then, set the app's `package.json`
 top-level `tier0Scaffold` to the exact object in `package.json` of the inspected

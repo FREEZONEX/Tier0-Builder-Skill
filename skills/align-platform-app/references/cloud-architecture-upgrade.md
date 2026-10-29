@@ -79,7 +79,9 @@ for initialization, blocked runtime checks, and the later import handoff.
 5. Scan active source, runtime config, tests, dependency files and root
    `AGENTS.md` for old imports and database commands. Historical documentation
    may describe the old architecture; it must not remain active runtime
-   guidance, and root `AGENTS.md` is always active guidance.
+   guidance, and root `AGENTS.md` is always active guidance. In its
+   App-Specific Rules, delete or rewrite only the affected sentences as
+   SKILL.md describes; the business rules around them stay.
 
 | SQL behavior to inventory | Cloud equivalent or decision |
 | --- | --- |

@@ -96,9 +96,9 @@ reconstructing the app. Do not add a database extraction/synchronization tool,
 restore `DATABASE_URL` / `DB_SCHEMA`, or dual-write old and new storage. Not
 carrying the old records is not data loss and needs no user decision.
 
-When the user needs historical data, tell them to export it through the original
-application's existing export function and retain the files. If export is not
-available, explain that limitation and discuss an application-level export path
+Tell the user that historical data they want to keep is exported through the
+original application's existing export function, with the files retained. If
+export is not available, explain that limitation and discuss an application-level export path
 or later manual entry; do not ask for database configuration. Continue the
 reconstruction without waiting for those files. Leave the original application
 and records untouched.
