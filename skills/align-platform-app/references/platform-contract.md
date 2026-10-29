@@ -433,9 +433,6 @@ handlers, custom middleware, or Node server files. Reclassify that code:
 - LocalStorage, sessionStorage, IndexedDB, Zustand persist, in-memory mocks, and
   fixtures must not back production durable CRUD or serve as data-failure
   fallback.
-- Existing local durable data may enter a collection only through an explicit,
-  validated, idempotent import with defined identity/conflict handling and
-  reconciliation evidence.
 - Store application-generated and user-uploaded files through the platform
   File Storage API, not the sandbox filesystem.
 - Source persistence (an own database, migrations, an ORM) moves into the
@@ -491,8 +488,7 @@ authoritative; read them before changing data. The essentials for alignment:
   `seedDate()` / `seedTimestamp()` / `requireSeedRef()` from
   `src/data/seed-utils.ts`), written once when the collection is created.
   For imported/migrated durable business entities, services never insert demo,
-  sample or baseline rows on startup, on first request or when a list is empty;
-  retained legacy rows enter through an explicit validated import.
+  sample or baseline rows on startup, on first request or when a list is empty.
 - Never `deleteMany` or recreate a collection to reset a schema or test data:
   it deletes the deployed App's records too.
 - Runtime data failures are `DataError`s (`execution`, `retry`,
@@ -533,8 +529,8 @@ authoritative; read them before changing data. The essentials for alignment:
   the v9 points above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
   collections without connecting to the old database or requesting credentials.
-  Guide historical-data retention through original-app export and later import/
-  manual entry after reconstruction. Remove the Drizzle, `pg` and `db:*`
+  Historical data does not migrate; if needed, the user imports it on the UNS
+  side, outside Builder. Remove the Drizzle, `pg` and `db:*`
   dependencies, scripts and env usage together; leave the original deployment
   and database untouched.
 

@@ -71,8 +71,8 @@ Write a short migration map when the source is non-trivial:
   implementation status, external dependencies, and verification evidence
 - source data model -> target collection declaration/service/API/client path or
   external system
-- source local/mock data -> collection cutover, optional legacy import, or an
-  explicitly retained ephemeral state category
+- source local/mock data -> collection cutover or an explicitly retained
+  ephemeral state category
 - source asset path -> target asset path
 - source App name/locale/icon -> `app-chrome` identity and platform metadata
 - source env var -> platform/runtime source or removed setting
@@ -95,9 +95,7 @@ Use a compatibility boundary when:
 - Build/runtime contract work is urgent and native refactoring can follow.
 
 A compatibility boundary must not create a live dependency on the original
-storage for historical import. Guide the user to original-app export and later
-entry after reconstruction; allow no new durable local writes or data-failure
-fallback.
+storage; allow no new durable local writes or data-failure fallback.
 
 A coarse document shape (for example one collection holding a source entity's
 payload largely as-is) may complete authoritative-storage cutover without
@@ -127,18 +125,19 @@ Prefer this sequence:
    `src/data/collections.ts` (listed in `collections`) -> service with `data`
    from `@/lib/data` -> thin API -> client. Map SQL behavior with the table in
    [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#drizzle--v7-and-earlier).
-6. If historical data is needed, guide the user to export it from the original
-   application and retain the files. Do not connect to its database or request
-   connection configuration. Continue reconstruction without waiting for exports;
-   import or manual entry happens only after reconstruction is ready. Follow
-   `first-ensure-and-runtime-blockers.md` for the handoff and pending statuses.
+6. For App-owned SQL persistence, open by telling the user the three points in
+   SKILL.md: the original database is neither connected to nor changed;
+   historical data does not migrate, and if needed the user imports it on the
+   UNS side, outside Builder; reconstruction does not wait for any data. Do not
+   request connection configuration or guide an export. Follow
+   `first-ensure-and-runtime-blockers.md` for blocked runtime checks.
 7. Put valid baseline records in the declaration's `seed` (fixed `_id`s,
    `seedDate()` / `seedTimestamp()` / `requireSeedRef()`); they are written once
    when the collection is created. Remove startup- or first-request code that
    inserts demo, sample, or baseline rows for migrated durable business
-   entities, and never insert rows because a list is empty. Retain legacy data
-   through the explicit import from step 6; run development/test fixtures only
-   through an explicit development or test action.
+   entities, and never insert rows because a list is empty. Run
+   development/test fixtures only through an explicit development or test
+   action.
 8. Normalize auth, permissions, and menu visibility. Remove legacy custom login
    and all user-visible logout/sign-out buttons, personal-menu entries, pages,
    routes, and custom logout helpers, together with role-switch, role-picker, and
@@ -210,9 +209,8 @@ For each migrated route, verify:
 - Empty, loading, error, and success states are real. Scaffold request-hook
   results render through `AsyncView` so a failed first request shows error/retry
   instead of endless loading.
-- When historical data is intentionally not imported, reads from fresh
-  collections return a genuine empty (or seed-only) state with real
-  creation/onboarding actions; they do not
+- Reads from fresh collections return a genuine empty (or seed-only) state
+  with real creation/onboarding actions; they do not
   fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
 - Page content does not repeat the title or explain navigation in an
@@ -244,17 +242,10 @@ For the whole app, verify:
   namespace, not inferred from Vite dev readiness.
 - The build's data contract checks pass for every declaration and seed.
 - Normal startup and first-request paths insert no rows from services; baseline
-  records come only from `seed`, and retained legacy data and development/test
-  fixtures use explicit flows.
+  records come only from `seed`, and development/test fixtures use explicit
+  flows.
 - Repository search shows no production durable CRUD backed by browser storage,
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
-- Historical import is separate from reconstruction. When performed after the
-  rebuilt app is ready, it is validated, idempotent, and reconciled by result
-  counts and conflicts. Pending user exports do not block source reconstruction
-  or otherwise verified scaffold alignment.
-- If historical data is intentionally reset, the reset decision, rollback source
-  or explicit lack of one, fresh-collection result, and expected empty-state behavior
-  are recorded in project-local migration documentation.
 - Compatibility endpoints have current behavior/status/evidence rows; `partial`
   and `queued-only` behavior is not reported as complete.
 - Legacy runtime/deployment scan findings are classified, and no obsolete active
@@ -293,9 +284,12 @@ For the whole app, verify:
 - `artifact.toml` uses canonical literal argv; shell behavior is explicit.
 - With a preview local URL, `smoke:routes` covers `/` and changed key routes.
 - No platform-managed Skill content is vendored under `.agents/skills/`.
-- Root `AGENTS.md` is the target scaffold's file plus only the App's own
-  still-valid rules under `## App-Specific Rules`; no retired data, runtime or
-  auth guidance remains.
+- Root `AGENTS.md` is the target scaffold's file plus `## App-Specific Rules`
+  holding every App-owned section of the old file, edited sentence by sentence
+  as SKILL.md describes. When the old file had App-owned sections, that heading
+  exists and is not empty; no retired data, runtime or auth guidance remains.
+- The report lists each App-Specific Rules sentence deleted or rewritten, with
+  why.
 - Last, and only when every item above passes: `package.json` top-level
   `tier0Scaffold` equals the object in the inspected scaffold commit's
   `package.json` (`version` integer and `ref` hex copied as-is). If the scaffold

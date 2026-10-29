@@ -46,16 +46,13 @@ new scaffold-native modules.
   platform-owned for every App.
 - Guard browser-only libraries during SSR.
 - A single adapter may temporarily expose LocalStorage, sessionStorage,
-  IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility and
-  an explicit user export from the original application. Historical import
-  happens only after reconstruction, using exported files or manual entry;
-  never connect to the original database or request connection settings.
+  IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility.
+  Historical data stays outside alignment; never connect to the original
+  database or request connection settings.
 - Do not add new durable business writes to that adapter. Its collection becomes
   the only source of truth as each entity is cut over.
 - Do not catch API/data-layer errors and fall back to legacy local data or report a
   local write as success. Surface the failure and keep retry semantics explicit.
-- Keep legacy import versioned, validated, idempotent, conflict-aware, and
-  separate from ordinary application reads.
 - Baseline records belong in the collection's `seed`; do not let the boundary or
   its adapters insert demo, sample, or baseline rows for migrated durable
   business entities during startup or a first request.
@@ -75,9 +72,8 @@ Start removing the boundary only when:
 - Equivalent scaffold-native routes exist.
 - Durable data dependencies use declared collections, services with `data` from
   `@/lib/data`, thin APIs, and API-backed clients.
-- The user has been guided to preserve original-app exports for later import
-  or manual entry after reconstruction. Pending historical data does not keep
-  the old runtime adapter alive; retain the original app/data independently.
+- Historical data does not keep the old runtime adapter alive; the original
+  app and its data stay untouched.
 - No production durable CRUD or data-failure fallback depends on browser storage,
   persisted Zustand slices, IndexedDB, memory mocks, or fixtures.
 - Layout and navigation are native to the target shell, with no user-visible
@@ -102,7 +98,6 @@ Start removing the boundary only when:
 - Tables render empty because legacy store initialization was never mounted.
 - Actions appear successful but only mutate local storage or an in-memory mock.
 - API failures silently read stale local data, creating split-brain state.
-- Legacy import duplicates records because retries are not idempotent.
 - Global CSS overrides scaffold layout, buttons, or dialogs.
 - Browser-only code executes during SSR and breaks hydration.
 - A legacy personal menu still writes a role cookie or client role state, causing
