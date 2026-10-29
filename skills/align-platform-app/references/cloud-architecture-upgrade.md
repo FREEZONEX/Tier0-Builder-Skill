@@ -42,20 +42,19 @@ or recreate existing collections merely because the marker is old. Likewise,
 check what the target collections hold instead of assuming records exist: an
 App exported from one environment and imported into another gets new collections
 from its first ensure there, and its old records stay behind. At every version,
-such history follows the v7 export and later-import path, and missing old data
-never stops source alignment.
+such history stays outside alignment (the user imports it on the UNS side if
+needed), and missing old data never stops source alignment.
 
 ### Drizzle / v7 and Earlier
 
 Reconstruct from source models and business behavior without connecting to the
-old PostgreSQL database or requesting its configuration. Historical data is not
-copied during alignment: guide the user to export it from the original app and
-import or manually enter it after reconstruction. With full alignment or
-migration authorized, switch every service to collections without waiting for
-exported files or import permissions, keep no SQL path, leave the old
-deployment and database untouched, and follow
+old PostgreSQL database or requesting its configuration. Historical data does
+not migrate with alignment; if needed, the user imports it on the UNS side,
+outside Builder. With full alignment or migration authorized, switch every
+service to collections without waiting for any data, keep no SQL path, leave
+the old deployment and database untouched, and follow
 [first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md)
-for initialization, blocked runtime checks, and the later import handoff.
+for initialization and blocked runtime checks.
 
 1. Map each service's tables, SQL queries, constraints, triggers/defaults,
    transactions, scheduled writes and API response types to its business

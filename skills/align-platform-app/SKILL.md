@@ -78,9 +78,9 @@ Honor already-authorized updates without repeatedly asking for permission.
 If a needed choice changes business behavior, loses existing data, broadens
 access, or expands the requested scope, identify the concrete decision and
 continue independent work while awaiting it. Records left untouched in the
-original app or environment for a later user import are not lost and need no
-decision. Never silently consolidate source roles, or delete or reset existing
-records, to make a gate pass.
+original app or environment are not lost and need no decision. Never silently
+consolidate source roles, or delete or reset existing records, to make a gate
+pass.
 
 ## Establish The Baseline
 
@@ -109,11 +109,10 @@ assigning a cause. Context success is not a prerequisite for first ensure.
 Never override an explicit revoked grant or disabled policy.
 
 Continue independent source reconstruction and available checks while runtime
-verification is blocked. A context 403 or unconfirmed collection or import
-permissions block only runtime acceptance and the later import. Do not stop at a
-migration plan, keep the old data source to protect historical records or
-because the target API is blocked, or write a completion marker without required
-runtime evidence.
+verification is blocked. A context 403 or unconfirmed collection permissions
+block only runtime acceptance. Do not stop at a migration plan, keep the old
+data source to protect historical records or because the target API is
+blocked, or write a completion marker without required runtime evidence.
 
 For every pre-v13 source, historical records are whatever the target
 collections actually hold; an App moved to another environment gets new
@@ -125,13 +124,13 @@ legacy modules can connect on import. Do not exercise a route that still reaches
 the old database, and 500 turning into 503 is not a fix.
 When import or full alignment finds App-owned SQL persistence, the opening
 plan tells the user all three points: the original database is neither
-connected to nor changed; historical data to keep must be exported from the
-original application and imported or manually entered after reconstruction is
-ready; reconstruction does not wait for that export. The original
-deployment and its data stay untouched; rewriting this App's source is the
-alignment itself. Report "source rewritten", "runtime acceptance pending/passed"
-and "historical data not imported/imported" separately; pending historical entry
-alone does not block alignment.
+connected to nor changed; historical data does not migrate with alignment, and
+if needed the user imports it separately on the UNS side, outside Builder;
+reconstruction is unaffected and does not wait for any data. Do not guide an
+export, describe import or manual-entry steps, or import historical data
+yourself. The original deployment and its data stay untouched; rewriting this
+App's source is the alignment itself. Report "source rewritten" and "runtime
+acceptance pending/passed" separately.
 
 ## Apply The Relevant Contracts
 
@@ -169,10 +168,10 @@ alone does not block alignment.
 - HTTP routes authenticate/validate and call services; services own data access
   (`data` from `@/lib/data`), invariants, `data.transact` steps, and supported
   lifecycle transitions. Durable writes must survive reloads, and data-layer
-  errors (`DataError`) must not fall back to browser state or fixtures. Migrated
-  business data enters through explicit import; services never insert baseline
-  rows on startup or when a list is empty. Do not impose blanket CRUD on
-  ledgers, audit events, or other domain objects with restricted actions.
+  errors (`DataError`) must not fall back to browser state or fixtures.
+  Services never insert baseline rows on startup or when a list is empty. Do
+  not impose blanket CRUD on ledgers, audit events, or other domain objects
+  with restricted actions.
 - Keep Node-only modules out of client/mixed import graphs. Load Tier0 SDK
   modules lazily inside server actions through `@/lib/tier0`; values from
   `@tier0/sdk-v2/data` stay in services, `src/lib/data` and `src/start.ts`,
@@ -241,8 +240,7 @@ Scale further verification to affected behavior:
   visible data-layer failures (`DataError`) without local fallback. Preview
   writes land in the same collections as the deployed App, so write test
   records only where authorized and clean them up; never `deleteMany` or
-  recreate a collection to reset it. Verify import reconciliation when an import
-  runs.
+  recreate a collection to reset it.
 - **Runtime/deploy:** when changed or delivering a full migration, verify
   production entry, host/port binding, health, manifest, SSR and client assets
   under the target environment. A static build does not prove deployability.

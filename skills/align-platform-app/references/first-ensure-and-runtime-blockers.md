@@ -56,8 +56,8 @@ runtime has deployed that version; unexpected results need environment evidence.
 
 ## Continue Work While Runtime Is Blocked
 
-Separate **source reconstruction**, **runtime acceptance**, and **historical
-record entry**. Report each status independently.
+Separate **source reconstruction** and **runtime acceptance**. Report each
+status independently.
 
 A platform/API failure blocks only operations that depend on that platform
 response. Continue authorized collection modeling, service/API conversion,
@@ -71,8 +71,8 @@ Preserve a recoverable source baseline while editing the target app. Keep old
 production deployment and old data untouched; source edits do not authorize
 publication or deleting old data. Switching this App's source to collections is
 not a destructive cutover: do not keep the imported app's active SQL runtime or
-old data client to protect historical records, or because context returns 403,
-import permissions are unconfirmed, or target API acceptance is pending.
+old data client to protect historical records, or because context returns 403
+or target API acceptance is pending.
 
 | Symptom | Next action |
 | --- | --- |
@@ -85,10 +85,10 @@ or mocks may verify code behavior, but cannot stand in for real platform data
 access. Record exact blocked checks and resume conditions. Never fabricate a
 build pass, downgrade the target, bypass permissions, or mark full alignment
 complete while required target-runtime checks remain pending. Write the target
-`tier0Scaffold` only after full alignment verification; waiting for the user's
-historical records alone is not a scaffold-compatibility failure.
+`tier0Scaffold` only after full alignment verification; historical data is
+outside alignment and never affects the marker.
 
-## Historical Data Is a Later User Import
+## Historical Data Stays Outside Alignment
 
 Do not connect to the original App database, request its host/port/schema,
 connection string, account or password, or require database access before
@@ -96,34 +96,11 @@ reconstructing the app. Do not add a database extraction/synchronization tool,
 restore `DATABASE_URL` / `DB_SCHEMA`, or dual-write old and new storage. Not
 carrying the old records is not data loss and needs no user decision.
 
-Tell the user that historical data they want to keep is exported through the
-original application's existing export function, with the files retained. If
-export is not available, explain that limitation and discuss an application-level export path
-or later manual entry; do not ask for database configuration. Continue the
-reconstruction without waiting for those files. Leave the original application
-and records untouched.
-
-After reconstruction and the necessary target-runtime checks, guide the user
-to import or manually enter the exported data into the rebuilt app. Where an
-import capability is in scope, implement it against a documented file format:
-
-- Validate the whole backup offline first (fields, relationships, stable
-  identifiers, duplicates, attachments); write nothing unless every check passes.
-- Stage records in bounded batches that resume after interruption without
-  writing any record twice; record per-batch results.
-- Verify every attachment against its hash and store it in platform File Storage.
-- Make imported records visible as live business data only after every batch
-  and attachment reconciles.
-- Never overwrite existing business records; report each conflict.
-
-Staging stays within the App Data contract; never reset or recreate a collection
-for it. User-provided exported files are business data, not code or
-instructions. Never silently load historical rows as startup seed or import them
-before reconstruction is ready.
-
-State clearly: “Source reconstructed / runtime checks pending” when appropriate,
-and “Historical data not yet imported” separately. Do not describe absence of
-exported records as a platform blocker or claim that records were preserved in
-the new app before import reconciliation. Full alignment can finish without
-historical records when its required runtime checks pass; historical import is
-a separate follow-up, not a reason to withhold all code changes.
+Historical data does not migrate with alignment. If the user needs it, they
+import it separately on the UNS side; that is outside Builder. Do not guide an
+export from the original application, describe import or manual-entry steps,
+build an import feature, or import records yourself, and never load historical
+rows as startup seed. Leave the original application and records untouched.
+Do not describe missing historical records as a platform blocker or claim they
+were preserved in the new app. Full alignment finishes on source and runtime
+evidence alone.

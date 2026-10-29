@@ -5,7 +5,7 @@
 - [1. Classify Existing State](#1-classify-existing-state)
 - [2. Establish One Source of Truth](#2-establish-one-source-of-truth)
 - [3. Migrate in Dependency Order](#3-migrate-in-dependency-order)
-- [4. Import Legacy Browser Data](#4-import-legacy-browser-data)
+- [4. Legacy Browser Data](#4-legacy-browser-data)
 - [5. Prohibit Local Fallback on Data Failure](#5-prohibit-local-fallback-on-data-failure)
 - [6. Acceptance Evidence](#6-acceptance-evidence)
 
@@ -46,7 +46,7 @@ and preserve retry safety instead of pretending the operation succeeded.
 
 Zustand may retain view state and an API-backed cache, but remove `persist` from
 durable entity slices. LocalStorage, sessionStorage, and IndexedDB adapters may
-remain only for explicitly classified ephemeral state or a bounded legacy import.
+remain only for explicitly classified ephemeral state.
 
 ## 3. Migrate in Dependency Order
 
@@ -84,33 +84,13 @@ Cut over complete vertical slices. Do not switch the client to an API before its
 declaration and service behavior are ready. `npm run build` validates every
 declaration and seed against what UNS can store.
 
-## 4. Import Legacy Browser Data
+## 4. Legacy Browser Data
 
-When retention is needed, guide the user to export data from the original
-application and keep the files. Do not connect to its database or request
-connection configuration. Reconstruct without waiting for the export; only after
-reconstruction and required runtime checks should the user import or manually
-enter the data. See
-[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md).
-Make any in-scope import explicit and bounded:
-
-- Version and validate the legacy payload before sending it to a dedicated API.
-- Define identity mapping, ownership, deduplication, conflict precedence, invalid
-  row handling, and maximum payload size.
-- Make re-runs idempotent with stable record IDs or unique indexes; do not
-  pass idempotency keys (the data layer keys each write call itself). Batch
-  writes stay within the 200-item atomic limit.
-- Use one `insertMany` / `bulkWrite` or `data.transact` call where partial
-  import would violate invariants (at most 200 items/steps). Several chunks do
-  not provide import-wide atomicity; define resumable reconciliation or resolve
-  the larger atomic unit before importing.
-- Return and record attempted, created, updated, skipped, conflicted, and rejected
-  counts without logging sensitive payloads.
-- Mark successful import completion. Keep original data and exports intact
-  unless the user separately authorizes cleanup. Never import silently on every normal application
-  read.
-
-If no retention requirement exists, document the reset/cutover decision and
+Records held only in browser storage, persisted stores, or mocks do not migrate
+with alignment; if needed, the user imports historical data on the UNS side,
+outside Builder (see
+[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md)).
+Do not guide an export or build or run an import. Document the cutover and
 remove the obsolete durable local state path.
 
 ## 5. Prohibit Local Fallback on Data Failure
@@ -131,8 +111,7 @@ Collect current evidence for every migrated durable entity:
 - `npm run build` passes, including the data contract checks on declarations
   and seeds.
 - Normal startup and first-request paths insert no rows from services; baseline
-  records come only from `seed`, and retained legacy data enters only through
-  explicit import.
+  records come only from `seed`.
 - API-driven create, read, update, and supported terminal lifecycle paths work.
 - Data survives browser reload and a different client session; when the
   environment is controllable, it also survives server restart.
@@ -144,10 +123,6 @@ Collect current evidence for every migrated durable entity:
   indefinite loading shell.
 - Repository search finds no production durable CRUD writes to browser storage,
   persisted Zustand slices, IndexedDB, memory repositories, or fixtures.
-- Historical import, when performed after reconstruction, has idempotency and
-  reconciliation evidence with attempted/created/updated/skipped/conflicted/
-  rejected counts. Pending historical entry is reported separately and is not
-  a prerequisite for otherwise verified scaffold alignment.
 - Preview writes land in the same collections as the deployed App: write test
   records only where authorized and remove them afterwards; never `deleteMany` or
   recreate a collection to reset it.

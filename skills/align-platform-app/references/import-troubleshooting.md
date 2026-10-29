@@ -296,9 +296,8 @@ mapping is in the scaffold's `docs/platform-integration.md` → Errors.
 A service or startup path is inserting demo, sample, or baseline rows. Remove
 it: baseline records belong only in the declaration's `seed`, written once when
 the collection is created, and services never insert rows because a list is
-empty. Retained legacy rows must enter through an explicit validated import;
-development/test fixtures run only through an explicit development or test
-action.
+empty. Development/test fixtures run only through an explicit development or
+test action.
 
 ## Seed Records Missing Or Rejected
 
