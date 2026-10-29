@@ -31,6 +31,10 @@ Read the first relevant error and identify the failing layer before retrying.
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |
 | Confirmed stale owned preview process or lifecycle implementation | [Process lifecycle](references/process-lifecycle.md) |
 
+An old database connection error or a missing `DATABASE_URL` / `DB_SCHEMA` in
+an app being aligned usually means its SQL migration is unfinished; continue
+that migration in `align-platform-app` instead of supplying database settings.
+
 Do not run a second install while managed dependency restoration is active.
 Fix the evidenced cause before repeating a preview restart. Preserve the
 current managed port contract (5173 for this scaffold); do not silently move
