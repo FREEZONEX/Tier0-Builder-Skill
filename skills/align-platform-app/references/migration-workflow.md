@@ -35,7 +35,9 @@ Inspect these source areas before editing target code:
 - State: Zustand/Redux/Context stores, `persist` middleware,
   localStorage/sessionStorage calls, IndexedDB wrappers, caches, and reset paths.
 - Data access: fetch wrappers, GraphQL clients, REST clients, in-memory
-  repositories, mock handlers, JSON fixtures, and SDK clients.
+  repositories, mock handlers, JSON fixtures, SDK clients, SQL clients,
+  connection pools, ORMs and query builders, database settings (`DATABASE_URL`,
+  `PG*`, `DB_*`), and SQL bootstrap and `db:*` scripts.
 - Server/runtime: API routes, server entry, workers, adapters, cron-like jobs,
   custom middleware, and framework-specific server handlers.
 - Data layer: schema files, migrations, seed data, local JSON stores, browser
@@ -120,9 +122,11 @@ Prefer this sequence:
    to an existing non-API route.
 4. Classify local/mock state and define collections as the source of truth for
    durable entities.
-5. Replace durable local/mock CRUD in vertical slices using
-   `defineCollection` declarations in `src/data/collections.ts` (listed in
-   `collections`) -> service with `data` from `@/lib/data` -> thin API -> client.
+5. Replace durable local/mock CRUD and App-owned server-side SQL services in
+   vertical slices using `defineCollection` declarations in
+   `src/data/collections.ts` (listed in `collections`) -> service with `data`
+   from `@/lib/data` -> thin API -> client. Map SQL behavior with the table in
+   [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#drizzle--v7-and-earlier).
 6. If historical data is needed, guide the user to export it from the original
    application and retain the files. Do not connect to its database or request
    connection configuration. Continue reconstruction without waiting for exports;

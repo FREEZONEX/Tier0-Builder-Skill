@@ -59,12 +59,18 @@ writing the marker. An explicit import/migration request still proceeds.
   SDK/runtime contracts. Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
   per-surface inventory, not a version-number shortcut.
+- **App-owned server persistence:** when an import or full alignment finds the
+  app's own SQL client, connection pool, ORM, or settings such as `DATABASE_URL`,
+  follow the SQL rewrite in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#drizzle--v7-and-earlier)
+  whatever the app's origin. That database is App-owned persistence, not an
+  external system of record, unless the user says to keep it.
 - **Persistence cutover:** read
   [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
-  stores, in-memory mocks, or fixtures. UI preferences and caches are not durable
-  business records. Preserve external systems of record unless migration of
-  their ownership is explicitly in scope.
+  stores, in-memory mocks, or fixtures; server-side databases follow the entry
+  above. UI preferences and caches are not durable business records. Preserve
+  external systems of record unless migration of their ownership is explicitly
+  in scope.
 - **Review only:** inspect and report evidence and proposed changes without
   modifying the app or registering platform metadata.
 
@@ -113,6 +119,10 @@ For every pre-v13 source, historical records are whatever the target
 collections actually hold; an App moved to another environment gets new
 collections from its first ensure there, without the old records. Do not connect
 to the original database or environment or request connection configuration.
+Convert App-owned SQL callers and remove their connection setup before invoking
+migrated routes, loaders, or startup hooks, since legacy modules can connect on
+import; a route that still reaches the old database is unfinished, and 500
+turning into 503 is not a fix.
 If historical data is needed, guide the user to export it from the original
 application, continue reconstruction without waiting for the export, and import
 or manually enter the data only after reconstruction is ready. The original

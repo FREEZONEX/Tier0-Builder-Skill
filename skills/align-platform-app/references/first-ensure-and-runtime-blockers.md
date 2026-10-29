@@ -77,6 +77,12 @@ preview still says “configure DB_SCHEMA”, trace and replace the legacy
 dependency in the target source instead of restoring old SQL credentials or
 claiming the cloud code failed.
 
+| Symptom | Next action |
+| --- | --- |
+| Connection error to the old database, or a request for `DATABASE_URL`, `DB_SCHEMA` or `PG*` | App-owned SQL code is still loaded. Convert that caller to collections and remove its connection setup; do not supply database settings. |
+| A failing route changes from 500 to 503 or another handled error | Only the error presentation changed. The route is fixed when it reads and writes collections. |
+| `/api/health` or the page HTML returns 200 while business APIs fail | That proves readiness only. Verify the affected business APIs before runtime acceptance. |
+
 Run every check that can execute in the available environment. Isolated tests
 or mocks may verify code behavior, but cannot stand in for real platform data
 access. Record exact blocked checks and resume conditions. Never fabricate a
