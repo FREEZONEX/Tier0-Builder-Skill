@@ -145,6 +145,11 @@ Check:
 
 ## Tier0 SDK Files Or SSR Import Fails
 
+For browser `client.streams`, follow the browser-safe unified SDK entry in
+[SDK Upgrades](platform-contract.md#unified-sdk-090-and-stream-migration);
+never import the Node-only lazy loader there. A missing local tarball means the
+selected scaffold's referenced vendor archive must also be copied.
+
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
 matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error
 or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
@@ -152,7 +157,8 @@ or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
 follow [SDK Upgrades](platform-contract.md#sdk-upgrades). Import
 `loadTier0Sdk`, `loadTier0Files` or the other lazy helpers from `@/lib/tier0`,
 then await the loader inside the concrete server action. Do not top-level import
-the SDK root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
+server SDK modules (`@tier0/sdk-v2` root for server operations),
+`@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
 `@tier0/sdk-v2/mq`; do not move the SDK into `ssr.noExternal`, and do not replace
 it with hand-written REST/MQ fallback clients. A value import of
 `@tier0/sdk-v2/data` outside services, `src/lib/data` and `src/start.ts` pulls
@@ -227,10 +233,9 @@ every business role is synchronized across `PERMISSION_MATRIX`,
 `ROLE_METADATA`, and `roles.json`, and every `role_key` matches
 `^[a-z]+(_[a-z]+)*$`.
 
-The first version supports at most three materially distinct business roles
-total, with no reserved role or implicit grant. If the source model exceeds that cap,
-stop and obtain an
-explicit user/platform-approved consolidation or phased migration. Do not make
+The current template recommends three roles for a first version; it does not
+cap migrated business roles. Preserve distinct scopes, with no reserved role or
+implicit grant. More than three roles alone is not a blocker. Do not make
 the build pass by silently removing roles, broadening access, merging distinct
 scopes without approval, or leaving a registered role with zero permissions.
 

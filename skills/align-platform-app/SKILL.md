@@ -153,8 +153,8 @@ acceptance pending/passed" separately.
   requests without Tier0 runtime headers) and its Active-Role display ordering;
   the locked `gateway.test.ts` covers both. Every defined role must be
   represented in matrix, metadata, and `roles.json`.
-  The current first-version gate allows three business roles total; `admin`, if
-  business-defined, counts as one. Preserve roleless sources without inventing
+  The current template recommends at most three roles for a first version;
+  this is advisory, not a cap on migrating existing business roles. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
 - For data changes, declare collections with `defineCollection` from
   `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list them in
@@ -178,8 +178,11 @@ acceptance pending/passed" separately.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`; copy the exact npm version the selected
-  scaffold pins (`0.3.0` at v13). An app
+- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
+  scaffold (`file:vendor/tier0-sdk-v2-0.9.0.tgz` at v19), then reconcile the
+  authoritative lockfile. The unified package also supplies browser
+  `client.streams` requests/messages; follow its explicit browser boundary in
+  the SDK contract instead of exposing server credentials. An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
@@ -222,7 +225,7 @@ accept failing app code. Only `template-state.test.mjs` is App-adaptable under
 the current baseline. Nonblocking UI advisories are not build failures.
 
 Managed preview owns dependency installation and process startup. Use
-`preview_start` / logs / restart when available; do not race it with manual
+`preview_restart` and the selected scaffold's state/log files; do not race it with manual
 installs or dev servers. In an unmanaged environment use the authoritative
 lockfile. Distinguish exact install, full build, and runtime results; an install
 that changes the lockfile does not prove the original lockfile works.
@@ -230,7 +233,8 @@ that changes the lockfile does not prove the original lockfile works.
 Scale further verification to affected behavior:
 
 - **Routes/UI:** run `npm run smoke:routes -- <local-url> [/changed-route ...]`
-  when preview supplies a URL, inspect hydration/browser errors, exercise changed
+  using the ready preview port from `/dev/shm/.tier0/preview/state.json`;
+  inspect hydration/browser errors, exercise changed
   interactions, and check affected mobile layouts. The container-local URL is a
   self-check address, not the user-facing preview link.
 - **Roles/auth:** test relevant Preview, deployed union/empty/unknown roles,
