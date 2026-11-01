@@ -88,6 +88,14 @@ An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
   of inventing one. Workspace members are not the members who can use this App:
   App-scoped pickers use `members.listApp({ appId: resolveAppId() })`, which the
   platform rejects locally (`local-app` placeholder) — that failure is expected.
+- `members.listApp` follows where the App runs: the platform injects
+  `TIER0_RUNTIME` (`preview` in Builder preview, `deployed` online) and the SDK
+  sends the matching `scope`, so preview lists members of the current draft
+  roles, even before the first publish, and the live App lists its published
+  roles. Never pass `scope` by hand or set `TIER0_RUNTIME` in `artifact.toml`
+  or `.env`. Never block on the response's `published` flag with a 409, an
+  error, or a "publish first" message; render the returned roles and members,
+  with a normal empty state for a role nobody holds. Never hard-code members.
 - Read the Skills in `node_modules/@tier0/sdk-v2/skills/` for the exact API of
   the domain being rewritten instead of translating v1 calls by name.
 
