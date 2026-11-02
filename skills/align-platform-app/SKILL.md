@@ -165,6 +165,17 @@ acceptance pending/passed" separately.
   and narrowing or description changes go through `schema:replace` via the tier0
   MCP. Baseline records are the declaration's `seed`, written once when the
   collection is created.
+  New collections require a `directoryPath` from the workspace root; inspect
+  existing directories and use the actual ISA-95 equipment/business hierarchy,
+  with shared data at a suitable common ancestor. Do not invent missing levels
+  or default to one root-level App folder. An App/business-module directory is
+  valid within the known scope, e.g. Factory → Line → MES → Work orders.
+  Each path has 1–16 business-name segments,
+  each at most 63 characters. Preserve existing aliases, locations and grants;
+  old aliases may omit the path, and changing a declaration does not move them.
+  Resolve the business scope before creating missing aliases. Include paths
+  when preparing declarations for a new environment, and verify the actual
+  ensure payload with `npm run data:schema` and a dry-run before first creation.
 - HTTP routes authenticate/validate and call services; services own data access
   (`data` from `@/lib/data`), invariants, `data.transact` steps, and supported
   lifecycle transitions. Durable writes must survive reloads, and data-layer
