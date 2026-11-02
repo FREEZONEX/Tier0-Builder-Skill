@@ -3,13 +3,17 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
-`feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-30 is `e54abcee8d9922a882ced04c10ef9823624ee288` (merged scaffold
-PR #105, v19). Its `package.json.tier0Scaffold` is
-`{ "version": 19, "ref": "aec4692" }`; the unified SDK dependency is
-`@tier0/sdk-v2` at `file:vendor/tier0-sdk-v2-0.9.0.tgz`. Copy that spec and
-archive together with a reconciled lockfile. The archive SHA-256 is
-`25f503028e245e9351f648a509bb1285f547c79003f4b7b3fed549d39015e94b`.
+`feature/cloud-new-architecture-migration` (Tier0 cloud). The replacement
+package prepared on 2026-11-02 is local commit
+`c6099212fbc95430bf98a65bcb92089474634c1f` (v21), based on upstream
+`5af2bde7fd7d350c1482c6a4d761bf21671a1060` (v20). This local delivery is
+not yet merged or deployed. When the user supplies this replacement ZIP, use
+its exact contents rather than silently fetching the older upstream template.
+Its `package.json.tier0Scaffold` is
+`{ "version": 21, "ref": "c08b370" }`; the unified SDK dependency is
+`@tier0/sdk-v2` at `file:vendor/tier0-sdk-v2-0.9.6.tgz`. Copy that spec and
+archive together with a reconciled lockfile. The official archive SHA-256 is
+`5138b27cee9762c3f703ccd86e5822105bce6c959a90732591d12d52bce10092`.
 The same package supplies data/platform APIs and browser Stream requests/messages;
 the previous dual-package Stream candidate is superseded. Generation heuristics
 are advisories; auth/data/runtime contracts remain hard checks. Root AGENTS.md
@@ -23,7 +27,7 @@ not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v19 the App data layer is the
+each alignment and honor a user-selected ref. At v21 the App data layer is the
 `@tier0/sdk-v2/data` client: collections are declared in
 `src/data/collections.ts` with `defineCollection` from
 `@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`

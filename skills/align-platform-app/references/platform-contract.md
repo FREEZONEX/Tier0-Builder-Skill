@@ -57,8 +57,8 @@ Required target invariants:
 ## SDK Upgrades
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target. At v19 this is the exact spec
-`file:vendor/tier0-sdk-v2-0.9.0.tgz`, not a bare npm version. Copy the referenced
+scaffold commit as the target. At v21 this is the exact spec
+`file:vendor/tier0-sdk-v2-0.9.6.tgz`, not a bare npm version. Copy the referenced
 archive byte-for-byte, verify its hash against the selected source, reconcile
 that dependency into the App manifest and regenerate its authoritative lockfile
 while preserving business dependencies. Copy the template lockfile only for an
@@ -124,7 +124,7 @@ include these historical 0.3.0 changes. Platform calls use only
 - A write whose outcome was unknown before the upgrade is reconciled by
   reading back, never by resending it to the new route with its old key.
 
-### Unified SDK 0.9.0 and Stream Migration
+### Unified SDK 0.9.6 and Stream Migration
 
 Apps using the earlier dual-package candidate (`@tier0/sdk/cloud` for Streams,
 `@tier0/sdk-v2` for data) move to one `@tier0/sdk-v2` package. Remap browser

@@ -132,6 +132,11 @@ the current draft roles, so never ask the user to publish first. App code picks
 people with `members.listApp` at runtime: never hard-code members, pass
 `scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
 `published` flag with a 409 or a "publish first" message.
+If an App member picker is unexpectedly empty, use the draft-members tool to
+compare assignments when available, then inspect the installed SDK, App ID,
+filters and preview runtime. An Agent shell does not necessarily receive the
+preview process's `TIER0_RUNTIME`. Do not turn API errors into an empty list or
+claim that publishing will repair a preview integration failure.
 
 ## Specialist Routing
 

@@ -179,7 +179,7 @@ acceptance pending/passed" separately.
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
 - The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
-  scaffold (`file:vendor/tier0-sdk-v2-0.9.0.tgz` at v19), then reconcile the
+  scaffold (`file:vendor/tier0-sdk-v2-0.9.6.tgz` at v21), then reconcile the
   authoritative lockfile. The unified package also supplies browser
   `client.streams` requests/messages; follow its explicit browser boundary in
   the SDK contract instead of exposing server credentials. An app
@@ -260,6 +260,24 @@ For failures, load only the relevant section of
 [import-troubleshooting.md](references/import-troubleshooting.md).
 Use `preview-runtime-stability` for managed preview failures only when injected;
 otherwise inspect available logs/tools and report unavailable verification.
+
+## Preview Member Repair
+
+For a scoped member-picker repair, preserve business code and data while
+updating the selected SDK vendor archive, dependency and lockfile together.
+Use the SDK bundled with the replacement scaffold (0.9.6 in the v21 delivery).
+Remove only publish-state guards that block draft member selection; retain
+business-role checks and filters. Refresh injected SDK/Builder guidance and
+restart the managed preview so both dependencies and process environment reload.
+Do not mark a narrow SDK repair as a full scaffold alignment.
+
+Verify a never-deployed App with an assigned draft role: the App's server call
+must send draft scope automatically and return the assigned active members,
+including group inheritance. Check production scope separately. If the
+preview process lacks its platform runtime injection, or Gateway/SYS does not
+forward scope, report that platform prerequisite instead of setting runtime
+variables in App source or telling the user to publish. Build success is not
+runtime membership acceptance.
 
 ## Completion
 
