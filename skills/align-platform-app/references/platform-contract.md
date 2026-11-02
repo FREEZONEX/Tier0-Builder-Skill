@@ -480,7 +480,14 @@ authoritative; read them before changing data. The essentials for alignment:
   by the platform; never add them to `.env.example` or UI.
 - Declare every collection with `defineCollection` from
   `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list it in
-  `collections`. The schema is a storage schema limited to the documented
+  `collections`. Give new aliases a `directoryPath` (1–16 business-name segments,
+  each ≤63 characters) from the workspace root. First inspect and reuse real
+  directories; industrial data follows its known ISA-95 equipment scope and
+  shared data a suitable common ancestor. Do not invent missing levels or use
+  a default root-level App container. An App/business-module directory such as
+  MES is valid within a known factory/line scope. A new alias without a path fails; ensure never moves an
+  existing alias when a path is omitted or changed. Directory placement does
+  not change collection ownership or grants. The schema is a storage schema limited to the documented
   subset; `npm run build` rejects anything UNS cannot store and validates every
   seed. Keep input rules (formats, lengths, defaults) in API input schemas.
 - The App ensures every declared collection on first data access; do not add

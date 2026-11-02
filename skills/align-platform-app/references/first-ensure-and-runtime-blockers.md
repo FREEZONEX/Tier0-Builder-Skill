@@ -19,7 +19,13 @@ Do not require context to succeed before attempting the first ensure diagnostic.
    platform system-key path. An unbound Agent session, personal/OAuth key, or
    external App key is not interchangeable with the App runtime identity.
 2. Prepare the actual intended declarations in `src/data/collections.ts` and
-   obtain their ensure payload with `npm run data:schema`. Use those declarations
+   assign each new alias a `directoryPath` from the workspace root. Inspect and
+   reuse real directories; industrial data uses its known ISA-95 equipment
+   scope and shared data its common ancestor. Do not invent missing levels or
+   default to a root-level App container. An App/module directory such as MES
+   is valid below the real factory/line scope. Keep existing aliases and their
+   locations unchanged.
+   Obtain their ensure payload with `npm run data:schema`. Use those declarations
    for `POST /openapi/v2/uns/app/collections/ensure` with `dryRun: true` through
    the available platform tool. Do not create a throwaway collection just to
    test access. If the command is unavailable until code/dependencies are
@@ -42,6 +48,9 @@ Do not require context to succeed before attempting the first ensure diagnostic.
 | Credential/identity rejection or no bound App | Verify the App binding and credential route, not the browser's selected role. Report the specific binding/injection gap without asking for secrets. |
 | `APP_NOT_READY`, dependency failure, timeout, unreachable host | Runtime/environment issue. Follow structured retry advice with bounded attempts; then retain runtime checks as pending and continue source work. |
 | `SCHEMA_CONFLICT`, invalid declaration/index/seed | Correct the declaration or resolve the concrete schema decision. Do not reset/recreate collections or weaken gates. |
+| `INVALID_REQUEST` at `collections/<index>/directoryPath` | A new alias needs a valid business path (1–16 names, each ≤63 characters). Resolve the real scope; do not fall back to a root-level App container. App/module directories remain valid inside the real scope. |
+| `SCHEMA_CONFLICT` with `data.reason=DIRECTORY_PATH_CONFLICT` | Inspect the conflicting directory segment and intended business scope. Do not overwrite, move or rename unrelated data, or add random suffixes. |
+| `DIRECTORY_PATH_NOT_APPLIED` note | The alias already exists at another location. Ensure preserves that location; moving it is a separate authorized operation. |
 | Generic 403 from ensure too, or unknown code | Keep the cause unconfirmed. Preserve the envelope and request ID, check backend version/binding with available evidence; do not label it “no policy” or “platform broken” without further evidence. |
 
 Source basis verified on 2026-10-27: Tier0-Backend commit

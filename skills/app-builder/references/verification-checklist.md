@@ -81,8 +81,14 @@ Use this before reporting a generated app or substantial change as complete.
 Apply these checks to the affected data paths using the selected scaffold's
 current App Data contract:
 
-- Collections are declared and listed in `src/data/collections.ts`; services
-  use `@/lib/data`. Baseline seeds run only on collection creation, never because
+- Collections are declared and listed in `src/data/collections.ts` with
+  per-collection `directoryPath` values grounded in existing directories
+  and the real ISA-95/business scope. Shared data uses a suitable common ancestor;
+  an App/module such as MES may sit below the known factory/line scope, while
+  no default root-level App container or invented equipment replaces that scope.
+  `npm run data:schema` preserves paths and ensure dry-run verifies placement.
+  Existing aliases keep their identity, location and access; path edits do not
+  migrate data. Services use `@/lib/data`. Baseline seeds run only on collection creation, never because
   a list is empty. Existing collections are not reseeded by changing `seed`.
 - Business requests retain the SDK employee context; verify data-scope behavior
   separately from role/action checks. Do not bypass restrictions with `runAsApp`.

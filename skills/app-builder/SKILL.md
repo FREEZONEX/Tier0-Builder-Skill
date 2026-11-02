@@ -110,6 +110,21 @@ employee data rules apply; do not add a second context or use App-level calls
 to bypass a request's restrictions. Baseline records belong in declaration
 `seed`, written on collection creation, never service startup or empty reads.
 
+Before declaring data, inspect and reuse existing business directories through
+the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
+from the workspace root (1–16 real business-name segments, each ≤63 characters).
+Industrial data follows the known ISA-95 equipment hierarchy: Enterprise → Site
+→ Area → Work Center → Work Unit. Use only meaningful known levels; do not
+force five levels, invent facilities, or substitute control activity Levels 0–4.
+Shared data belongs at its suitable common ancestor; other domains use their
+business hierarchy. An App or business-module directory is valid within a known
+scope: for example, Factory → Line → MES → Work orders uses MES as the App
+directory. Do not default to one root-level App container for unrelated data.
+Resolve missing business scope before first creation. Generate the ensure
+payload with `npm run data:schema` and verify placement in its dry-run. A new
+alias without a path fails. Existing aliases stay in place when declarations
+change; do not move existing data or expand grants to organize directories.
+
 For App record views, use `useRecordChanges` with collection aliases and reload
 through authorized App APIs on changes, resets, and collection invalidations.
 Do not poll App records with `refetchInterval` or `usePolling`; those are only
