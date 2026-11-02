@@ -8,20 +8,21 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-10-27 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-02 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- New `feature/cloud-new-architecture-migration`:
-  `a9697cc343b63699ffa25db73b6bcda9ebf32952`, marker
-  `{ "version": 13, "ref": "22e39fc" }`.
+- New local v21 delivery based on `feature/cloud-new-architecture-migration`
+  (not yet merged or deployed):
+  `c6099212fbc95430bf98a65bcb92089474634c1f`, marker
+  `{ "version": 21, "ref": "c08b370" }`.
 
-| Surface | Old main / v7 | Cloud / v13 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v21 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` exact `0.3.0` | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.9.6 via the pinned vendor archive | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | Same plus SDK `runWithRequestContext(request, ...)` | Preserve employee data subject and cancellation on all requests |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -147,6 +148,17 @@ For v9, adapt capped counts, `execution`/`retry` errors, partial-write
 For every old SDK, apply [SDK Upgrades](platform-contract.md#sdk-upgrades):
 0.3.0 removes methods as well as changing routes. Unsupported Flow/Agent
 features remain blockers, never success-shaped stubs.
+
+### Later Cloud Apps / v12–v18
+
+Preserve existing collections and business code. Reconcile the selected target's
+SDK archive/spec/lockfile and complete gate set; apps with the dual-package
+Stream candidate consolidate to `@tier0/sdk-v2` 0.9.6. Apply
+[Unified SDK migration](platform-contract.md#unified-sdk-090-and-stream-migration)
+for browser imports, retired Controls, request/message semantics and scope
+checks. Refresh root AGENTS.md and its referenced docs while retaining App-owned
+rules as described in the entrypoint. UI guidance and role-count advisories do
+not authorize a redesign or role consolidation.
 
 ## Cross-Version Acceptance
 

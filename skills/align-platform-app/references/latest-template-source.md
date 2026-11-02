@@ -3,19 +3,23 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
-`feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `a9697cc343b63699ffa25db73b6bcda9ebf32952` (merged scaffold
-PR #97, v13). Its `package.json.tier0Scaffold` is
-`{ "version": 13, "ref": "22e39fc" }`; the SDK dependency is `@tier0/sdk-v2`
-pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
-`f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
-to SDK 0.2.0 and added live record changes, the merged preview multi-role
-change (`4dbe4ce`) made Preview a view-as role set, v11 (`dbe3547`) dropped the
-production run image from `artifact.toml`, v12 (`d5b173c`) moved to SDK
-0.3.0, whose platform calls all use `/openapi/v2`, and v13 (`22e39fc`) checks
-subscribe requests against passed-in declarations, so the change-stream test no
-longer depends on the App's collections, and grants a deployed Active-Role
-nothing unless it is a business role. The repository commit
+`feature/cloud-new-architecture-migration` (Tier0 cloud). The replacement
+package prepared on 2026-11-02 is local commit
+`c6099212fbc95430bf98a65bcb92089474634c1f` (v21), based on upstream
+`5af2bde7fd7d350c1482c6a4d761bf21671a1060` (v20). This local delivery is
+not yet merged or deployed. When the user supplies this replacement ZIP, use
+its exact contents rather than silently fetching the older upstream template.
+Its `package.json.tier0Scaffold` is
+`{ "version": 21, "ref": "c08b370" }`; the unified SDK dependency is
+`@tier0/sdk-v2` at `file:vendor/tier0-sdk-v2-0.9.6.tgz`. Copy that spec and
+archive together with a reconciled lockfile. The official archive SHA-256 is
+`5138b27cee9762c3f703ccd86e5822105bce6c959a90732591d12d52bce10092`.
+The same package supplies data/platform APIs and browser Stream requests/messages;
+the previous dual-package Stream candidate is superseded. Generation heuristics
+are advisories; auth/data/runtime contracts remain hard checks. Root AGENTS.md
+now routes detailed rules to `docs/app-data.md`, `docs/ui-rules.md`,
+`docs/component-kit.md` and `docs/platform-integration.md`; reconcile those
+references with the root file during full alignment. The repository commit
 identifies the inspected source; the marker's `ref` identifies the content
 commit stamped by the scaffold maintainer. They need not be equal. After
 successful app alignment, copy the selected scaffold's marker object verbatim,
@@ -23,7 +27,7 @@ not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v13 the App data layer is the
+each alignment and honor a user-selected ref. At v21 the App data layer is the
 `@tier0/sdk-v2/data` client: collections are declared in
 `src/data/collections.ts` with `defineCollection` from
 `@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`
@@ -31,7 +35,7 @@ instance, `src/start.ts` opens the SDK request context with the `Request`, and
 `src/lib/data/changes.ts` feeds the `/api/uns/subscribe` change stream behind
 `useRecordChanges()` (`src/lib/record-changes.ts`). There is no
 Drizzle, `pg`, `DATABASE_URL`, `DB_SCHEMA`, `drizzle.config.ts` or `db:*`
-script. The scaffold's AGENTS.md → App Data and `docs/platform-integration.md`
+script. The scaffold's `docs/app-data.md` and `docs/platform-integration.md`
 are authoritative for the data contract; the SDK's own Skills ship in
 `node_modules/@tier0/sdk-v2/skills/`. For in-scope UI work, inspect
 `docs/component-kit.md`, affected components and the current `AGENTS.md`;
@@ -60,7 +64,7 @@ Read the relevant current files and their changes since the app's known base:
 | Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
 | Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
 | Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
-| SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
+| SDK/assets | `src/lib/tier0.ts`, `package.json`, `vendor/README.md`, referenced SDK archive, `tests/app-streams.test.ts`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
 For the old-main/new-cloud comparison, implementation fingerprints, and
 version-specific upgrade paths, read

@@ -57,12 +57,14 @@ Required target invariants:
 ## SDK Upgrades
 
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target: copy its exact npm version (`0.3.0` at the
-verified v13 snapshot). Reconcile that dependency into the App manifest and
-regenerate its authoritative lockfile while preserving business dependencies;
-copy the template lockfile only for an otherwise matching template dependency
-graph. Check the package spec,
-authoritative lockfile, and actual installed version separately.
+scaffold commit as the target. At v21 this is the exact spec
+`file:vendor/tier0-sdk-v2-0.9.6.tgz`, not a bare npm version. Copy the referenced
+archive byte-for-byte, verify its hash against the selected source, reconcile
+that dependency into the App manifest and regenerate its authoritative lockfile
+while preserving business dependencies. Copy the template lockfile only for an
+otherwise matching dependency graph. Check the package spec, lockfile integrity,
+and actual installed package name/version separately. Include the referenced
+archive in source ZIPs; a file dependency without its archive cannot install.
 Preserve an explicitly pinned user version and report unsupported behavior
 instead of silently overriding it. Managed preview owns dependency
 installation/restart; use a clean lockfile install only in an unmanaged checkout.
@@ -76,7 +78,7 @@ An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
   `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi` and
   `getTier0ClientHelpers` no longer exist.
 - `createClient()` exposes `system`, `members`, `notifications`, `files`,
-  `mqttAuth`, `capabilities`, `controls`, `source`, `stream`, `uns` and `agent`.
+  `mqttAuth`, `capabilities`, `source`, `stream`, `uns` and `agent`.
   Reuse one client for work done as the App; create a fresh client per request
   when passing employee data delegation. The App key never reaches the browser.
 - v2 has no UNS v1, legacy Flow, project member queries or
@@ -86,17 +88,26 @@ An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
   of inventing one. Workspace members are not the members who can use this App:
   App-scoped pickers use `members.listApp({ appId: resolveAppId() })`, which the
   platform rejects locally (`local-app` placeholder) — that failure is expected.
+- `members.listApp` follows where the App runs: the platform injects
+  `TIER0_RUNTIME` (`preview` in Builder preview, `deployed` online) and the SDK
+  sends the matching `scope`, so preview lists members of the current draft
+  roles, even before the first publish, and the live App lists its published
+  roles. Never pass `scope` by hand or set `TIER0_RUNTIME` in `artifact.toml`
+  or `.env`. Never block on the response's `published` flag with a 409, an
+  error, or a "publish first" message; render the returned roles and members,
+  with a normal empty state for a role nobody holds. Never hard-code members.
 - Read the Skills in `node_modules/@tier0/sdk-v2/skills/` for the exact API of
   the domain being rewritten instead of translating v1 calls by name.
 
-An app on `@tier0/sdk-v2` 0.1.x / 0.2.x moves to 0.3.0, which calls only
-`/openapi/v2` and removes retired methods without a fallback route:
+When moving an app on `@tier0/sdk-v2` 0.1.x / 0.2.x to the selected target,
+include these historical 0.3.0 changes. Platform calls use only
+`/openapi/v2`; removed methods have no fallback route:
 
 - Platform calls (`system`, `members`, `notifications`, `files`, `mqttAuth`,
-  `capabilities`, `agent`) go to `/openapi/v2/*` and Controls to
-  `/openapi/v2/uns/controls/*`; the SDK does this, so delete any hand-written
-  call to `/openapi/v1`. `tier0.api` / `loadTier0OpenApi()` expose the 44
-  platform v2 operations only.
+  `capabilities`, `agent`) go to `/openapi/v2/*`; delete hand-written calls
+  to `/openapi/v1`. Inspect the installed generated operations rather than
+  relying on a historical operation count. Controls are retired in the current
+  target; migrate their business intent through the Stream contract below.
 - Source: `source.list` / `get` / `create` / `update` and
   `source.connection.update` are gone; use `source.documents.*`.
 - Stream: `stream.programs.get` / `create` / `update` / `validate` / `disable`
@@ -110,12 +121,57 @@ An app on `@tier0/sdk-v2` 0.1.x / 0.2.x moves to 0.3.0, which calls only
   `insertOne` items, `recordUpdateOne` / `recordReplaceOne` / `recordDeleteOne`
   with `returnDocument`, and an aggregate `$group`. App records still go through
   `@/lib/data`, whose `insertMany`, `findOneAnd*` and `distinct` stay.
-- `ControlError.errorCode` is the UNS `error.code`, with `requestId`,
-  `execution` and `retry` alongside; branch on those codes.
 - A write whose outcome was unknown before the upgrade is reconciled by
   reading back, never by resending it to the new route with its old key.
 
-Notification behavior:
+### Unified SDK 0.9.6 and Stream Migration
+
+Apps using the earlier dual-package candidate (`@tier0/sdk/cloud` for Streams,
+`@tier0/sdk-v2` for data) move to one `@tier0/sdk-v2` package. Remap browser
+`import { client } from "@tier0/sdk/cloud"` to `"@tier0/sdk-v2"`; remove the old
+`@tier0/sdk` dependency only after inspecting and migrating its remaining callers.
+Keep server platform operations behind `@/lib/tier0`, App records behind
+`@/lib/data`, and exactly one SDK data request context. Preserve collection
+aliases, IDs and existing records. Reconcile declarations against the installed
+`defineCollection` contract, including display `name`; never replace business
+collections with the blank template array.
+
+Browser Stream interactions are the explicit browser-safe exception to the
+server SDK loading rule: use the exported `client.streams.requests` and
+`client.streams.messages` from browser actions/effects, as shown in the selected
+scaffold's `docs/platform-integration.md`. Do not import the Node-only
+`@/lib/tier0` helper or SDK data values into browser code. Inspect the installed
+SDK Skills/types for request `use`, `describe`, `invoke` and message `use`,
+`subscribe`, `publish`; dispose subscriptions on view cleanup.
+
+- The trusted Gateway runtime provider supplies App/user identity. Missing
+  provider in Preview fails closed; never install a fake provider, synthesize
+  identity, expose an App key, or fall back to server data credentials.
+- Retired Controls, `ControlError`, legacy execution aliases and interpreter
+  selectors are not current APIs. Preserve the business intent using supported
+  Streams or report a concrete unsupported operation. Keep `tier0-stream/v3`.
+- Stream requests make one POST without automatic retries. Preserve command
+  idempotency; reconcile an uncertain outcome before deliberate replay with the
+  same key. `outcomeUnknown: false` is not proof of non-execution or permission
+  to retry. This Stream rule is distinct from App data calls, whose retry and
+  idempotency are SDK-owned.
+- Messages use ephemeral NATS Core WSS credentials, with no offline queue,
+  replay or receiver ACK. Preserve topic/direction grants and cleanup behavior.
+- Node Apps read injected `TIER0_API_HOST`, `TIER0_API_KEY` and `APP_ID`.
+  Existing keys without persisted unified Stream scopes need an explicitly
+  authorized migration/reissue; never silently expand access. DataKeys stay
+  data-only. App policy and entry/topic grants still apply.
+- Source/Stream management uses `source.documents.*`, `stream.documents.*`
+  and `stream.programs.*`. HTTP Sources use `http-api` with
+  `config.role: client | server`, without new `configVersion` fields; native
+  Stream documents use `script: { code, timeoutMs }` without `sdkVersion`.
+  Consult installed types for the separate Runtime program input.
+
+Verify the installed archive and target `test:streams` checks, then the affected
+browser/Node behavior in an authorized environment. A passing fixture/build
+cannot establish Gateway, SYS, broker deployment, live grants or real delivery.
+
+### Notification behavior
 
 - Omitted or `undefined` channels expand to `['web', 'mobile']`. `web` covers
   Web & Desktop; there is no `desktop` value. Explicit arrays are deduplicated
@@ -294,14 +350,10 @@ as the durable platform source.
 
 The scaffold starts with empty role definitions and reserves no role name.
 Default the first version to no more than three business roles total, chosen
-for materially different permission scopes. The current locked gate checks
-matrix and metadata counts; a business-defined `admin` counts toward the three. Do not
-create one role per page, action, or job title. When a source App
-has more materially distinct roles, do not silently omit them, merge them into
-broader access, or register them with zero permissions. Stop and obtain an
-explicit user/platform decision for a safe consolidation or phased migration,
-then keep the approved mapping traceable across permissions, metadata,
-navigation, API guards, and `roles.json`.
+for materially different permission scopes. This is a first-version recommendation,
+not a hard gate. Preserve materially distinct source roles and their permissions;
+do not stop solely because there are more than three. Consolidation or phased
+migration is a business decision, never an automatic way to silence an advisory.
 
 Registration is distinct from permission. A platform-registered role absent from
 the matrix may legitimately enter with zero permissions and produce an advisory;
@@ -355,8 +407,9 @@ keep role summaries out of page content.
 Interactive pages must remain usable at 375px without page-level horizontal
 overflow. An `input`, `select`, or `textarea` using `flex-1`, `grow`, or
 `flex-auto` needs a maximum or fixed width. A hard minimum width above 375px must
-sit inside a local horizontal-scroll region, such as `TableViewport`. The locked
-`responsive-contracts` gate enforces these rules during `npm run build`.
+sit inside a local horizontal-scroll region, such as `TableViewport`. The
+`responsive-contracts` checks report layout advisories during `npm run build`;
+inspect actual affected layouts rather than treating heuristics as hard failures.
 
 Keep App identity centralized in `src/lib/app-chrome.ts`:
 
@@ -422,7 +475,9 @@ handlers, custom middleware, or Node server files. Reclassify that code:
   `loadTier0OpenApi`, `loadTier0Files`, and `loadTier0Mq`. Invoke loaders inside
   the concrete server action that needs I/O. Do not top-level import the SDK
   root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files`, or `@tier0/sdk-v2/mq`,
-  and do not replace the SDK with hand-written REST/MQ/UNS fallbacks.
+  and do not replace the SDK with hand-written REST/MQ/UNS fallbacks. Browser
+  `client.streams` uses the explicit exception under SDK Upgrades; do not apply
+  the server lazy loader to that browser-safe entry.
 - Do not derive Tier0 resource namespaces from the default
   `package.json` name `scaffold`. Resolve the human App name from requirements
   or branding; use `APP_ID` or `/api/manifest` `appId` only as the distinct
@@ -544,11 +599,13 @@ Use the scaffold's existing scripts and managed preview behavior:
   or otherwise unmanaged environment, using the authoritative lockfile.
 - Run `npm run build` for normal completion and let its automatic `postbuild`
   verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
-  `auth:union:test`, `runtime:audit`, `test:components` and `test:data`; the
+  `test:guidance`, `auth:union:test`, `runtime:audit`, `test:components`,
+  `test:data` and `test:streams`; the
   verifier also covers typecheck,
   lint, contract tests, and runtime safety. Locked contract coverage includes
-  route nesting, navigation, lifecycle/read-only content, role limits, and 375px
-  responsiveness. Do not substitute `vite build` or edit locked gates to make
+  route correctness, auth, data and runtime boundaries. Generation heuristics
+  (role count, copy, lifecycle/caller and layout patterns) are nonblocking
+  advisories; inspect them against the actual workflow. Do not substitute `vite build` or edit locked gates to make
   App code pass.
 - If route files change, let the TanStack Router plugin regenerate the route
   tree through dev/build tooling.
@@ -560,8 +617,10 @@ Use the scaffold's existing scripts and managed preview behavior:
   writes are not application source and must not amplify into reloads.
 - Preserve preview Gateway header injection when aligning `vite.config.ts`; do
   not add App-session injection.
-- When preview returns a local URL, run
-  `npm run smoke:routes -- <url> [/changed-route ...]`. Treat the URL as a local
+- Once `/dev/shm/.tier0/preview/state.json` is `ready`, use its port and run
+  `npm run smoke:routes -- http://127.0.0.1:<port> [/changed-route ...]`.
+  `preview_restart` only triggers restart; inspect that state file and
+  `/dev/shm/.tier0/preview/preview.log` for completion/failure. Treat the URL as a local
   self-check address, not a user-facing link.
 - Use `preview-runtime-stability` for managed install, port/process lifecycle,
   readiness timeout, and HMR failures when the orchestrator injected it. Never
