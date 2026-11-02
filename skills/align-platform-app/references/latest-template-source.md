@@ -5,15 +5,21 @@
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud). The replacement
 package prepared on 2026-11-02 is local commit
-`c6099212fbc95430bf98a65bcb92089474634c1f` (v21), based on upstream
-`5af2bde7fd7d350c1482c6a4d761bf21671a1060` (v20). This local delivery is
+`09e58f5c9783732618c454915a17b086e1374e8e` (v22), based on upstream
+`4295721` (v20) plus the previous preview-member repair. This local delivery is
 not yet merged or deployed. When the user supplies this replacement ZIP, use
 its exact contents rather than silently fetching the older upstream template.
 Its `package.json.tier0Scaffold` is
-`{ "version": 21, "ref": "c08b370" }`; the unified SDK dependency is
-`@tier0/sdk-v2` at `file:vendor/tier0-sdk-v2-0.9.6.tgz`. Copy that spec and
-archive together with a reconciled lockfile. The official archive SHA-256 is
-`5138b27cee9762c3f703ccd86e5822105bce6c959a90732591d12d52bce10092`.
+`{ "version": 22, "ref": "4acf6cf" }`; the unified SDK dependency is
+`@tier0/sdk-v2` at `file:vendor/tier0-sdk-v2-0.9.8.tgz`. Copy that spec and
+archive together with a reconciled lockfile. The bundled archive SHA-256 is
+`be4742d2713c972f41f40a0b47ba2ebbf8576a091c3850ab81f03d3e90eb1835`.
+SDK source is `52351e231c9e6eb878ba7eb9a00fc5dbce915f94`; this archive is not
+published to npm. It requires Backend `5c77d6f21e6332cb09e3212df9203eb01bf7f129`
+contracts `app-collections/2` and `source-lifecycle/2`, plus matching worker
+guidance. Follow the target scaffold's `docs/collection-directory-release.md`
+for coordinated rollout; local validation does not establish deployment.
+
 The same package supplies data/platform APIs and browser Stream requests/messages;
 the previous dual-package Stream candidate is superseded. Generation heuristics
 are advisories; auth/data/runtime contracts remain hard checks. Root AGENTS.md
@@ -27,7 +33,7 @@ not the merge SHA or the Skill package version.
 
 This is a verified source snapshot, not a permanent version pin or deployment
 proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v21 the App data layer is the
+each alignment and honor a user-selected ref. At v22 the App data layer is the
 `@tier0/sdk-v2/data` client: collections are declared in
 `src/data/collections.ts` with `defineCollection` from
 `@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`

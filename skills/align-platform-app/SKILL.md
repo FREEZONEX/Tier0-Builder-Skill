@@ -190,7 +190,7 @@ acceptance pending/passed" separately.
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
 - The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
-  scaffold (`file:vendor/tier0-sdk-v2-0.9.6.tgz` at v21), then reconcile the
+  scaffold (`file:vendor/tier0-sdk-v2-0.9.8.tgz` at v22), then reconcile the
   authoritative lockfile. The unified package also supplies browser
   `client.streams` requests/messages; follow its explicit browser boundary in
   the SDK contract instead of exposing server credentials. An app
@@ -276,7 +276,7 @@ otherwise inspect available logs/tools and report unavailable verification.
 
 For a scoped member-picker repair, preserve business code and data while
 updating the selected SDK vendor archive, dependency and lockfile together.
-Use the SDK bundled with the replacement scaffold (0.9.6 in the v21 delivery).
+Use the SDK bundled with the replacement scaffold (0.9.8 in the v22 delivery).
 Remove only publish-state guards that block draft member selection; retain
 business-role checks and filters. Refresh injected SDK/Builder guidance and
 restart the managed preview so both dependencies and process environment reload.

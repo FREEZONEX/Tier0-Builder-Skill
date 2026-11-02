@@ -56,9 +56,15 @@ Required target invariants:
 
 ## SDK Upgrades
 
+The v22 delivery uses bundled SDK 0.9.8, not an npm registry release. New
+collection aliases require business `directoryPath`; existing aliases are not
+relocated by ensure. Confirm the matching backend contracts and worker rollout
+from the scaffold's `docs/collection-directory-release.md` before runtime
+acceptance. Do not add a root App-folder fallback for an incompatible backend.
+
 The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target. At v21 this is the exact spec
-`file:vendor/tier0-sdk-v2-0.9.6.tgz`, not a bare npm version. Copy the referenced
+scaffold commit as the target. At v22 this is the exact spec
+`file:vendor/tier0-sdk-v2-0.9.8.tgz`, not a bare npm version. Copy the referenced
 archive byte-for-byte, verify its hash against the selected source, reconcile
 that dependency into the App manifest and regenerate its authoritative lockfile
 while preserving business dependencies. Copy the template lockfile only for an
@@ -124,7 +130,7 @@ include these historical 0.3.0 changes. Platform calls use only
 - A write whose outcome was unknown before the upgrade is reconciled by
   reading back, never by resending it to the new route with its old key.
 
-### Unified SDK 0.9.6 and Stream Migration
+### Unified SDK 0.9.8 and Stream Migration
 
 Apps using the earlier dual-package candidate (`@tier0/sdk/cloud` for Streams,
 `@tier0/sdk-v2` for data) move to one `@tier0/sdk-v2` package. Remap browser
