@@ -198,7 +198,10 @@ acceptance pending/passed" separately.
   Skills shipped in `node_modules/@tier0/sdk-v2/skills/` before rewriting SDK
   calls. Skill replacement alone does not change the installed SDK. For MQTT
   authentication failures, check the installed SDK and key type before
-  replacing credentials or overriding identity.
+  replacing credentials or overriding identity. Delete App code that blocks on
+  the `published` flag of `members.listApp` (a 409, an error, or a "publish
+  first" message) and keep the rest of that feature as it was; the SDK contract
+  has the member-query rules.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
   duplicate outer insets. Station/review/monitor keep their own spacing.
