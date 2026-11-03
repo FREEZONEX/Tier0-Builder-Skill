@@ -116,8 +116,9 @@ blocked, or write a completion marker without required runtime evidence.
 
 For every pre-v13 source, historical records are whatever the target
 collections actually hold; an App moved to another environment gets new
-collections from its first ensure there, without the old records. Do not connect
-to the original database or environment or request connection configuration.
+collections from its first ensure there, without the old records unless the
+user included collection records in a Bundle export. Do not connect to the
+original database or environment or request connection configuration.
 During import or full alignment, convert App-owned SQL callers and remove their
 connection setup before invoking migrated routes, loaders, or startup hooks;
 legacy modules can connect on import. Do not exercise a route that still reaches

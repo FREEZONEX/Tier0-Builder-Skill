@@ -41,7 +41,8 @@ aligned app may still carry v7 while already using collections. Never migrate
 or recreate existing collections merely because the marker is old. Likewise,
 check what the target collections hold instead of assuming records exist: an
 App exported from one environment and imported into another gets new collections
-from its first ensure there, and its old records stay behind. At every version,
+from its first ensure there, and its old records stay behind unless the user
+included collection records in a Bundle export. At every version,
 such history stays outside alignment (the user imports it on the UNS side if
 needed), and missing old data never stops source alignment.
 
