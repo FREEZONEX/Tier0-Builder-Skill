@@ -109,7 +109,10 @@ Historical data does not migrate with alignment. If the user needs it, they
 import it separately on the UNS side; that is outside Builder. Do not guide an
 export from the original application, describe import or manual-entry steps,
 build an import feature, or import records yourself, and never load historical
-rows as startup seed. Leave the original application and records untouched.
+rows as startup seed. The one exception is the platform's Bundle export and
+import, which can carry collection records: the platform does that, not you,
+so do not take part in or imitate it. Leave the original application and
+records untouched.
 Do not describe missing historical records as a platform blocker or claim they
 were preserved in the new app. Full alignment finishes on source and runtime
 evidence alone.

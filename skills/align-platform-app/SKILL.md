@@ -128,9 +128,11 @@ connected to nor changed; historical data does not migrate with alignment, and
 if needed the user imports it separately on the UNS side, outside Builder;
 reconstruction is unaffected and does not wait for any data. Do not guide an
 export, describe import or manual-entry steps, or import historical data
-yourself. The original deployment and its data stay untouched; rewriting this
-App's source is the alignment itself. Report "source rewritten" and "runtime
-acceptance pending/passed" separately.
+yourself. The one exception is the platform's Bundle export and import, which
+can carry collection records: the platform does that, not you, so do not take
+part in or imitate it. The original deployment and its data stay untouched;
+rewriting this App's source is the alignment itself. Report "source rewritten"
+and "runtime acceptance pending/passed" separately.
 
 ## Apply The Relevant Contracts
 
