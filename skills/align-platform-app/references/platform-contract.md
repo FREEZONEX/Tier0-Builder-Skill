@@ -133,8 +133,17 @@ Notification behavior:
   choices as they are. If an existing call's intended scope is unclear, resolve
   that concrete choice before changing its reminder behavior. The expansion is
   SDK runtime behavior, not a raw backend API default.
-- Preview/development sends use `mode: 'test'`; published sends use `'live'`.
-  Do not synthesize or detect a `[Test]` title prefix; use message mode.
+- Do not set `mode`; the platform decides it and ignores the request value.
+  Sends from preview or the sandbox are test and appear only in that App's
+  Building preview bell; a deployed App's sends are live. Do not synthesize or
+  detect a `[Test]` title prefix.
+- When the user asks you, the Builder Agent, to send a notification, call
+  `POST /openapi/v2/notifications/send` from the Tier0 MCP `execute` tool.
+  `sender: { type: 'app' }` sends a test notification for this App, shown only
+  in its preview bell, e.g. to try a business notification while building;
+  `sender: { type: 'system', id: 'uns-agent' }` sends a live system
+  notification to the message center, for news the user needs outside this
+  App. `link` stays optional.
 - Identify the App with `sender: { type: 'app', id: resolveAppId() }`. Preserve
   recipient selection and business-event idempotency. Verify request
   serialization with a stubbed transport; do not send real notifications solely
