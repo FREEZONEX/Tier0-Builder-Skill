@@ -115,10 +115,9 @@ data source to protect historical records or because the target API is
 blocked, or write a completion marker without required runtime evidence.
 
 For every pre-v13 source, historical records are whatever the target
-collections actually hold; an App moved to another environment gets new
-collections from its first ensure there, without the old records unless the
-user included collection records in a Bundle export. Do not connect to the
-original database or environment or request connection configuration.
+collections actually hold, including any the platform's export carried over.
+Do not connect to the original database or environment or request connection
+configuration.
 During import or full alignment, convert App-owned SQL callers and remove their
 connection setup before invoking migrated routes, loaders, or startup hooks;
 legacy modules can connect on import. Do not exercise a route that still reaches
@@ -129,11 +128,9 @@ connected to nor changed; historical data does not migrate with alignment, and
 if needed the user imports it separately on the UNS side, outside Builder;
 reconstruction is unaffected and does not wait for any data. Do not guide an
 export, describe import or manual-entry steps, or import historical data
-yourself. The one exception is the platform's Bundle export and import, which
-can carry collection records: the platform does that, not you, so do not take
-part in or imitate it. The original deployment and its data stay untouched;
-rewriting this App's source is the alignment itself. Report "source rewritten"
-and "runtime acceptance pending/passed" separately.
+yourself. The original deployment and its data stay untouched; rewriting this
+App's source is the alignment itself. Report "source rewritten" and "runtime
+acceptance pending/passed" separately.
 
 ## Apply The Relevant Contracts
 
