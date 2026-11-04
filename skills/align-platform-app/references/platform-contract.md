@@ -678,3 +678,5 @@ Packaging rules depend on the target import environment. The stable baseline is:
   real local secret/env files; retain tracked `.env.example` when applicable.
 - Do not package platform-managed Skill content in `.agents/skills/`; the
   orchestrator owns Skill selection and injection.
+- Do not create a package-root `tier0-collections/`; the platform reserves it
+  for exported collection records.
