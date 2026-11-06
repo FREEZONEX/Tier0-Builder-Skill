@@ -146,8 +146,9 @@ before implementation; never silently discard business roles or widen access.
 plan card in the chat and end the turn. Do not retry, change a `role_key` to
 get around it, or suggest publishing while it waits. The user's next message
 reports the result; after a cancellation, adjust the roles as the user says and
-sync again. A reused role keeps its existing name, and its description is
-merged with yours.
+sync again. You may propose a new name for a reused role but never change its
+`role_key`; the user chooses on the card whether to use the new name. Its
+description is merged with yours.
 
 When you need to know who holds a role, call `list_app_role_members`; it reads
 the current draft roles, so never ask the user to publish first. App code picks
