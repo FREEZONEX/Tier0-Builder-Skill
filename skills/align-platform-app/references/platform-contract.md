@@ -310,6 +310,14 @@ uses `roles.json` to create/reuse and bind roles. On export, the platform
 regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
 
+`sync_business_roles` writes nothing when it returns
+`status: "confirmation_required"`: tell the user to confirm or cancel the role
+plan card in the chat and end the turn. Do not retry, change a `role_key` to
+get around it, or suggest publishing while it waits. The user's next message
+reports the result; after a cancellation, adjust the roles as the user says and
+sync again. A reused role keeps its existing name, and its description is
+merged with yours.
+
 The scaffold starts with empty role definitions and reserves no role name.
 Default the first version to no more than three business roles total, chosen
 for materially different permission scopes. The current locked gate checks
