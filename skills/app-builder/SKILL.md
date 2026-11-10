@@ -141,6 +141,20 @@ current empty-role behavior; preserve roleless scope when appropriate. No
 release allows at most three business roles total. If an inherited SRS exceeds
 that limit or contains a development-only role, reconcile the concrete conflict
 before implementation; never silently discard business roles or widen access.
+`sync_business_roles` writes nothing when it returns
+`status: "confirmation_required"`: tell the user to confirm or cancel the role
+plan card in the chat and end the turn. Do not retry, change a `role_key` to
+get around it, or suggest publishing while it waits. The user's next message
+reports the result; after a cancellation, adjust the roles as the user says and
+sync again. You may propose a new name for a reused role but never change its
+`role_key`; the user chooses on the card whether to use the new name. Its
+description is merged with yours.
+
+When you need to know who holds a role, call `list_app_role_members`; it reads
+the current draft roles, so never ask the user to publish first. App code picks
+people with `members.listApp` at runtime: never hard-code members, pass
+`scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
+`published` flag with a 409 or a "publish first" message.
 
 When you need to know who holds a role, call `list_app_role_members`; it reads
 the current draft roles, so never ask the user to publish first. App code picks

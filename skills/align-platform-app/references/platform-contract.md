@@ -187,8 +187,18 @@ cannot establish Gateway, SYS, broker deployment, live grants or real delivery.
   choices as they are. If an existing call's intended scope is unclear, resolve
   that concrete choice before changing its reminder behavior. The expansion is
   SDK runtime behavior, not a raw backend API default.
-- Preview/development sends use `mode: 'test'`; published sends use `'live'`.
-  Do not synthesize or detect a `[Test]` title prefix; use message mode.
+- Do not set `mode`; the platform decides it and ignores the request value.
+  Sends from preview or the sandbox are test and appear only in that App's
+  Building preview bell; a deployed App's sends are live. Do not synthesize or
+  detect a `[Test]` title prefix.
+- When the user asks you, the Builder Agent, to send a notification, call
+  `POST /openapi/v2/notifications/send` from the Tier0 MCP `execute` tool.
+  `sender: { type: 'app', id: <this App's ID> }` (id is required; the platform
+  uses the session's App) sends a test notification shown only in this App's
+  preview bell, e.g. to try a business notification while building;
+  `sender: { type: 'system', id: 'uns-agent' }` sends a live system
+  notification to the message center, for news the user needs outside this
+  App. `link` is optional; without it, opening the message does not navigate.
 - Identify the App with `sender: { type: 'app', id: resolveAppId() }`. Preserve
   recipient selection and business-event idempotency. Verify request
   serialization with a stubbed transport; do not send real notifications solely
@@ -353,6 +363,15 @@ and must be registered just like every other matrix role. On import, the platfor
 uses `roles.json` to create/reuse and bind roles. On export, the platform
 regenerates it from registered state; do not treat a hand-edited exported copy
 as the durable platform source.
+
+`sync_business_roles` writes nothing when it returns
+`status: "confirmation_required"`: tell the user to confirm or cancel the role
+plan card in the chat and end the turn. Do not retry, change a `role_key` to
+get around it, or suggest publishing while it waits. The user's next message
+reports the result; after a cancellation, adjust the roles as the user says and
+sync again. You may propose a new name for a reused role but never change its
+`role_key`; the user chooses on the card whether to use the new name. Its
+description is merged with yours.
 
 The scaffold starts with empty role definitions and reserves no role name.
 Default the first version to no more than three business roles total, chosen
@@ -735,3 +754,5 @@ Packaging rules depend on the target import environment. The stable baseline is:
   real local secret/env files; retain tracked `.env.example` when applicable.
 - Do not package platform-managed Skill content in `.agents/skills/`; the
   orchestrator owns Skill selection and injection.
+- Do not create a package-root `tier0-collections/`; the platform reserves it
+  for exported collection records.
