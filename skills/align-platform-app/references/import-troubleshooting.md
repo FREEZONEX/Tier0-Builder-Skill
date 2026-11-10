@@ -145,9 +145,9 @@ Check:
 
 ## Tier0 SDK Files Or SSR Import Fails
 
-For browser `client.streams`, follow the browser-safe unified SDK entry in
-[SDK Upgrades](platform-contract.md#unified-sdk-090-and-stream-migration);
-never import the Node-only lazy loader there. A missing local tarball means the
+Browser `client.streams` is retired: move calls behind authenticated App server
+routes following [SDK Upgrades](platform-contract.md#unified-sdk-and-stream-migration).
+Never import Node-only loaders into pages. A missing local tarball means the
 selected scaffold's referenced vendor archive must also be copied.
 
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
@@ -180,9 +180,10 @@ while MQTT fails, distinguish configuration from invalid credentials:
    sends the key opaquely.
 2. Inspect injection into the failing runtime (`TIER0_MQTT_HOST`,
    `TIER0_MQTT_PORT`, `TIER0_API_KEY`), key revocation/expiry/permissions, the
-   broker endpoint and `ws`/`wss`, then backend support for the key type. Use
-   dedicated credentials from `mqttAuth.create()` when the injected key cannot
-   carry an MQTT identity.
+   broker endpoint and `ws`/`wss`, then backend support for the key type.
+   Hosted Apps cannot call `mqttAuth.create()`; report incompatible injection
+   instead of inventing a second credential. SDK helpers consume the key;
+   App code does not read or expose it.
 3. Let managed preview install/restart after an authorized dependency change,
    then check the actual installed version again. Do not race managed
    installation with `npm install`.
@@ -191,6 +192,13 @@ while MQTT fails, distinguish configuration from invalid credentials:
    identity only when the deployment calls for it. Disconnect before changing
    connection credentials; retry the affected connection/subscription and
    report separately when runtime verification is unavailable.
+
+A connection can succeed while a topic is refused. For v28 check every topic
+comes from `appTopic()` under this App's matching preview/deployed namespace.
+Other Apps, the opposite runtime and arbitrary topics are refused. Local
+development lacks `TIER0_RUNTIME`, so `appTopic()` throws; do not spoof it.
+Browser MQTT tokens are retired: the App server subscribes and forwards only
+what the authenticated visitor may see through an App route.
 
 ## Auth Or API Calls Fail
 
@@ -215,18 +223,19 @@ authorization rule, and related metadata entry was migrated.
 Issue a new request or refresh after platform assignment or preview view-as
 changes. Then verify:
 
-- Preview unions permissions across the comma-separated
-  `X-Tier0-Preview-Role` set the developer selected.
-- Deployed mode unions permissions across every
-  `X-Tier0-Business-Roles` value. `X-Tier0-Active-Role` is primary display
-  metadata only.
+- Preview uses the selected view-as set in the visitor header, with permission
+  union across all assigned roles.
+- Both runtimes use `app_roles` from the front door's `X-Tier0-Visitor`.
+  `active_role` only orders the assigned roles for display. Do not restore
+  `X-Tier0-Business-Roles` or other legacy header fallbacks.
 - `can(user.roles, action)` and route guards use the assigned-role set, not
   `primaryRole`.
 - A trusted unknown Tier0 role contributes zero permissions without erasing
   known-role permissions.
 - An explicit deployed empty role set stays empty. Preview without a selected
   view-as role likewise has zero roles and permissions; never add a fallback.
-- An unknown legacy/untrusted role fails closed.
+- Missing, malformed or wrong-App visitor headers fail authentication.
+  Check trusted front-door ingress; never accept a client-supplied identity.
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
 every business role is synchronized across `PERMISSION_MATRIX`,

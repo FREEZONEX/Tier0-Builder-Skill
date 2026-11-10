@@ -6,6 +6,14 @@ prerequisite failure for all source reconstruction.
 
 ## Distinguish Context from Initialization
 
+The diagnostic below describes the historical App **data policy** bootstrap,
+not a v28 per-App platform-capability policy. In v28 capabilities are fixed,
+and external collection grants are managed by Owner/Admin in App settings.
+Apply the historical error interpretation only when the target returns that
+error; verify its actual SDK/backend contract before assigning the cause.
+Do not tell a user to configure platform capabilities or confirm collections
+at publish time based on these older messages.
+
 `POST /openapi/v2/uns/app/context` reads an already active App data policy; it
 does not initialize one. `403 active hosted App data policy required` can mean
 **no policy yet** or **an existing policy is disabled**. The text alone cannot

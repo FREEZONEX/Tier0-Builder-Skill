@@ -72,9 +72,11 @@ Use this before reporting a generated app or substantial change as complete.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
 - App record views use `useRecordChanges` with aliases, not declarations or
-  polling. Changes, `batch.reset`, and employee-filtered `batch.collections`
-  invalidate the affected reads through authorized APIs; events are not record
-  payloads. Poll only data subscriptions cannot cover, with cleanup.
+  polling. Changes and `batch.reset` invalidate reads through authorized App
+  APIs; events are not record payloads. `canSeeChange` filters event visibility
+  consistently with service permissions, including record-ID disclosure.
+  No removed `batch.collections` or `restricted` event logic remains. Poll only
+  data subscriptions cannot cover, with cleanup.
 
 ## App Data
 
@@ -90,8 +92,13 @@ current App Data contract:
   Existing aliases keep their identity, location and access; path edits do not
   migrate data. Services use `@/lib/data`. Baseline seeds run only on collection creation, never because
   a list is empty. Existing collections are not reseeded by changing `seed`.
-- Business requests retain the SDK employee context; verify data-scope behavior
-  separately from role/action checks. Do not bypass restrictions with `runAsApp`.
+- Every platform data call acts as the App. Verify service read/write/field
+  restrictions for each relevant visitor role, separately from UI action gates;
+  use negative cases, not only successful reads. `runWithAbortSignal` preserves
+  request cancellation; detached work preserves its business authorization.
+- Stream and MQTT stay server-side; App routes authorize browser callers.
+  Verify request grants/manifest directions and `appTopic()` namespaces for
+  affected integrations. Do not send real messages solely for a source check.
 - Supported writes survive reload and, where controllable, server restart.
   Data failures are visible with no browser/mock persistence fallback.
 - List adapters preserve capped-count semantics with `toQueryResult` where
@@ -112,9 +119,10 @@ current App Data contract:
   the scaffold contract lists (permission matrix, role metadata, platform
   role mirror) in one pass.
 - No development-only `root` / Full Access or invented role is shipped.
-  Roleless scope remains roleless. The current first release has at most three
-  business roles total; any conflicting SRS role model is resolved explicitly,
-  without silently dropping roles or broadening permissions.
+  Roleless scope remains roleless. Three roles is a first-release recommendation,
+  not a build limit; preserve materially distinct business permissions.
+  Pending role-plan confirmation is reported separately from source completion;
+  preserve role keys and the user's choice about renaming reused roles.
 - No reserved admin role or preview fallback is assumed. Verify current
   empty-role behavior and each defined role's intended access. Cover Preview
   and deployed multi-role permission union, and verify a missing/unknown role

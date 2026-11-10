@@ -38,7 +38,7 @@ new scaffold-native modules.
   while keeping `/api/auth/me` and the hidden `/login` error bridge when present
   in the current Gateway-only template.
 - Treat Gateway identity and assigned roles as read-only. Deployed authorization
-  uses the permission union of all assigned `X-Tier0-Business-Roles`; the primary
+  uses the permission union of `app_roles` in `X-Tier0-Visitor`; the primary
   role is display metadata only. Do not let legacy code select or override roles
   through localStorage, sessionStorage, cookies, query parameters, request
   bodies, or request headers.
@@ -81,8 +81,8 @@ Start removing the boundary only when:
   entry and no App-local session/logout/select-role implementation.
 - Role-aware Apps verify preview view-as role sets, deployed assigned-role
   union, known plus trusted unknown roles, explicit deployed empty roles, preview
-  without a selected role (zero roles and permissions), and legacy untrusted
-  unknown-role rejection. Authorization
+  without a selected role (zero roles and permissions), and invalid/missing/
+  wrong-App visitor headers. No legacy identity-header fallback remains. Authorization
   never uses the primary display role. Roleless Apps contain no invented
   business-role requirement.
 - Normal startup and first-request paths do not auto-insert demo, sample, or

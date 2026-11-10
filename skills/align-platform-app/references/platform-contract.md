@@ -3,6 +3,7 @@
 ## Contents
 
 - [Target Shape](#target-shape)
+- [SDK Upgrades](#sdk-upgrades)
 - [Dependency And Lockfile Compatibility](#dependency-and-lockfile-compatibility)
 - [Routing Contract](#routing-contract)
 - [Gateway Identity And Assigned Roles](#gateway-identity-and-assigned-roles)
@@ -56,126 +57,101 @@ Required target invariants:
 
 ## SDK Upgrades
 
-The v22 delivery uses bundled SDK 0.9.8, not an npm registry release. New
-collection aliases require business `directoryPath`; existing aliases are not
-relocated by ensure. Confirm the matching backend contracts and worker rollout
-from the scaffold's `docs/collection-directory-release.md` before runtime
-acceptance. Do not add a root App-folder fallback for an incompatible backend.
+v28 pins `@tier0/sdk-v2` to
+`file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz`, not an npm registry release.
+Use the selected source's archive byte-for-byte and reconcile the dependency
+and authoritative lockfile while preserving business dependencies. Copy a
+template lockfile only for an otherwise matching graph. Verify archive hash,
+lockfile integrity and installed package version separately; source ZIPs must
+include the referenced archive. Honor a user-pinned target.
 
-The platform SDK is `@tier0/sdk-v2`; use the version pinned by the selected
-scaffold commit as the target. At v22 this is the exact spec
-`file:vendor/tier0-sdk-v2-0.9.8.tgz`, not a bare npm version. Copy the referenced
-archive byte-for-byte, verify its hash against the selected source, reconcile
-that dependency into the App manifest and regenerate its authoritative lockfile
-while preserving business dependencies. Copy the template lockfile only for an
-otherwise matching dependency graph. Check the package spec, lockfile integrity,
-and actual installed package name/version separately. Include the referenced
-archive in source ZIPs; a file dependency without its archive cannot install.
-Preserve an explicitly pinned user version and report unsupported behavior
-instead of silently overriding it. Managed preview owns dependency
-installation/restart; use a clean lockfile install only in an unmanaged checkout.
+Pre-v27 Apps need the coordinated visitor, data, change-relay and credential
+migration in [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#cloud-apps-before-v27).
+Updating only the SDK leaves removed imports and can broaden data visibility.
+Managed preview owns installation/restart; exact lockfile installs belong in
+an unmanaged checkout. Read API Skills/types from the actual installed archive.
 
-An app still on `@tier0/sdk` (v1) moves to v2 as part of alignment:
+Keep server SDK loading through `@/lib/tier0`: `loadTier0Sdk()` for
+`createClient()`, plus `loadTier0OpenApi()`, `loadTier0Files()` and
+`loadTier0Mq()`. Keep Vite SSR external `["@tier0/sdk-v2", "mqtt"]`.
+The platform injects `TIER0_API_HOST`, `TIER0_API_KEY`, `TIER0_APP_ID`,
+`TIER0_MQTT_HOST`, `TIER0_MQTT_PORT` and `TIER0_RUNTIME` into the App runtime.
+Preview and deployment have different App keys. The SDK consumes the key;
+App code never reads, copies, logs or returns it, and no browser receives it.
+Do not implement hand-written platform REST calls or retired node-proxy headers.
 
-- Replace the dependency and keep the scaffold's loading contract: SSR external
-  `["@tier0/sdk-v2", "mqtt"]` in `vite.config.ts` and the `@/lib/tier0` lazy
-  loaders `loadTier0Sdk()` (root module, `createClient()`),
-  `loadTier0OpenApi()`, `loadTier0Files()` and `loadTier0Mq()`. The v1 helpers
-  `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi` and
-  `getTier0ClientHelpers` no longer exist.
-- `createClient()` exposes `system`, `members`, `notifications`, `files`,
-  `mqttAuth`, `capabilities`, `source`, `stream`, `uns` and `agent`.
-  Reuse one client for work done as the App; create a fresh client per request
-  when passing employee data delegation. The App key never reaches the browser.
-- v2 has no UNS v1, legacy Flow, project member queries or
-  `getCurrentProjectId()`. App records move to the scaffold data layer (see
-  [App Data Contract](#app-data-contract)); there is no Flow replacement, so
-  report a source feature that depended on Flow as a concrete blocker instead
-  of inventing one. Workspace members are not the members who can use this App:
-  App-scoped pickers use `members.listApp({ appId: resolveAppId() })`, which the
-  platform rejects locally (`local-app` placeholder) — that failure is expected.
-- `members.listApp` follows where the App runs: the platform injects
-  `TIER0_RUNTIME` (`preview` in Builder preview, `deployed` online) and the SDK
-  sends the matching `scope`, so preview lists members of the current draft
-  roles, even before the first publish, and the live App lists its published
-  roles. Never pass `scope` by hand or set `TIER0_RUNTIME` in `artifact.toml`
-  or `.env`. Never block on the response's `published` flag with a 409, an
-  error, or a "publish first" message; render the returned roles and members,
-  with a normal empty state for a role nobody holds. Never hard-code members.
-- Read the Skills in `node_modules/@tier0/sdk-v2/skills/` for the exact API of
-  the domain being rewritten instead of translating v1 calls by name.
+### Fixed App capabilities and external collections
 
-When moving an app on `@tier0/sdk-v2` 0.1.x / 0.2.x to the selected target,
-include these historical 0.3.0 changes. Platform calls use only
-`/openapi/v2`; removed methods have no fallback route:
+All Apps have the same platform capabilities: member queries, notification
+sending, files, Stream requests and Stream messages. Effective access is still
+bounded by the key's permissions/mode and workspace plan. No per-App platform
+policy, message-topic settings or publish-time capability confirmation exists.
 
-- Platform calls (`system`, `members`, `notifications`, `files`, `mqttAuth`,
-  `capabilities`, `agent`) go to `/openapi/v2/*`; delete hand-written calls
-  to `/openapi/v1`. Inspect the installed generated operations rather than
-  relying on a historical operation count. Controls are retired in the current
-  target; migrate their business intent through the Stream contract below.
-- Source: `source.list` / `get` / `create` / `update` and
-  `source.connection.update` are gone; use `source.documents.*`.
-- Stream: `stream.programs.get` / `create` / `update` / `validate` / `disable`
-  are gone; drafts use `stream.documents.*` (disable passes both
-  `expectedRevision` and `expectedActiveRelease`), publish and rollback stay on
-  `stream.programs.deploy` / `rollback`.
-- Agent: `agent.nodes.*` and `agent.relations.*` are gone with no v2
-  replacement; report a source feature that needs them as a blocker.
-- Low-level UNS calls (`tier0.uns`, `createUnsV2Client()`): `recordInsertMany`,
-  `recordFindOneAnd*` and `recordDistinct` are gone; use `recordBulkWrite` with
-  `insertOne` items, `recordUpdateOne` / `recordReplaceOne` / `recordDeleteOne`
-  with `returnDocument`, and an aggregate `$group`. App records still go through
-  `@/lib/data`, whose `insertMany`, `findOneAnd*` and `distinct` stay.
-- A write whose outcome was unknown before the upgrade is reconciled by
-  reading back, never by resending it to the new route with its old key.
+The hosted App allowlist includes data operations, `members.listWorkspace`,
+`members.listApp`, `notifications.send`, `client.files` (`assets/files/**`),
+`client.streams.requests`, `client.streams.messages`, `capabilities.discover`
+and `system.info`. `assets/upload`, `system.whoami`, `notifications.get`,
+`mqttAuth` and `agent` are unsupported for hosted Apps; Source/Stream management
+is refused too. SDK method existence does not establish hosted App access.
 
-### Unified SDK 0.9.8 and Stream Migration
+The App can access collections it owns and external collections granted by a
+workspace Owner/Admin in App settings. Use `data.collection({ collectionId })`
+for a granted external collection. A grant or removal applies on the next
+request, without republishing. The Builder agent cannot grant access; report
+the missing grant and do not create a same-named substitute. This App-level
+grant is separate from service-level permissions for the current visitor.
 
-Apps using the earlier dual-package candidate (`@tier0/sdk/cloud` for Streams,
-`@tier0/sdk-v2` for data) move to one `@tier0/sdk-v2` package. Remap browser
-`import { client } from "@tier0/sdk/cloud"` to `"@tier0/sdk-v2"`; remove the old
-`@tier0/sdk` dependency only after inspecting and migrating its remaining callers.
-Keep server platform operations behind `@/lib/tier0`, App records behind
-`@/lib/data`, and exactly one SDK data request context. Preserve collection
-aliases, IDs and existing records. Reconcile declarations against the installed
-`defineCollection` contract, including display `name`; never replace business
-collections with the blank template array.
+### Members and older SDK callers
 
-Browser Stream interactions are the explicit browser-safe exception to the
-server SDK loading rule: use the exported `client.streams.requests` and
-`client.streams.messages` from browser actions/effects, as shown in the selected
-scaffold's `docs/platform-integration.md`. Do not import the Node-only
-`@/lib/tier0` helper or SDK data values into browser code. Inspect the installed
-SDK Skills/types for request `use`, `describe`, `invoke` and message `use`,
-`subscribe`, `publish`; dispose subscriptions on view cleanup.
+App-scoped pickers use `members.listApp({ appId: resolveAppId() })`;
+workspace members are not equivalent to people who can use the App. The SDK
+maps injected `TIER0_RUNTIME=preview` to draft roles and `deployed` to published
+roles. Never pass `scope`, set runtime variables in App config, hard-code
+members or block on `published` with a 409/error/"publish first" message.
+Render actual members and a normal empty state for an unassigned role.
+Hosted member responses have no email; use `userName` for labels.
+The local `local-app` placeholder cannot perform App-scoped calls.
 
-- The trusted Gateway runtime provider supplies App/user identity. Missing
-  provider in Preview fails closed; never install a fake provider, synthesize
-  identity, expose an App key, or fall back to server data credentials.
-- Retired Controls, `ControlError`, legacy execution aliases and interpreter
-  selectors are not current APIs. Preserve the business intent using supported
-  Streams or report a concrete unsupported operation. Keep `tier0-stream/v3`.
-- Stream requests make one POST without automatic retries. Preserve command
-  idempotency; reconcile an uncertain outcome before deliberate replay with the
-  same key. `outcomeUnknown: false` is not proof of non-execution or permission
-  to retry. This Stream rule is distinct from App data calls, whose retry and
-  idempotency are SDK-owned.
-- Messages use ephemeral NATS Core WSS credentials, with no offline queue,
-  replay or receiver ACK. Preserve topic/direction grants and cleanup behavior.
-- Node Apps read injected `TIER0_API_HOST`, `TIER0_API_KEY` and `APP_ID`.
-  Existing keys without persisted unified Stream scopes need an explicitly
-  authorized migration/reissue; never silently expand access. DataKeys stay
-  data-only. App policy and entry/topic grants still apply.
-- Source/Stream management uses `source.documents.*`, `stream.documents.*`
-  and `stream.programs.*`. HTTP Sources use `http-api` with
-  `config.role: client | server`, without new `configVersion` fields; native
-  Stream documents use `script: { code, timeoutMs }` without `sdkVersion`.
-  Consult installed types for the separate Runtime program input.
+An App on v1 (`@tier0/sdk`) migrates its remaining callers before removing the
+dependency. Retired `getTier0UnsApi`, `getTier0FlowApi`, `getTier0SystemApi`,
+`getTier0ClientHelpers`, UNS v1, project-member and legacy Flow calls have no
+name-only translation. App records use `@/lib/data`, not raw `tier0.uns`.
+Use the installed SDK types for the business operation or report an unsupported
+feature. Do not replace an unsupported hosted route with Source/Stream
+management or an extra credential. When crossing older data API versions,
+retain capped counts, conditional writes, SDK-owned retries and the error
+semantics under [App Data Contract](#app-data-contract).
 
-Verify the installed archive and target `test:streams` checks, then the affected
-browser/Node behavior in an authorized environment. A passing fixture/build
-cannot establish Gateway, SYS, broker deployment, live grants or real delivery.
+### Unified SDK and Stream Migration
+
+The earlier dual-package/browser candidate (`@tier0/sdk/cloud`, browser
+`client.streams`, `@tier0/sdk-v2/runtime`) is retired. Move those calls to the
+App server through `createClient()` with the App key. Pages call authenticated
+App routes that enforce user permissions; never import server SDK values into
+the browser or fabricate a runtime identity/provider. Remove the old package
+only after migrating all callers; preserve business behavior and data identities.
+
+- The workspace plan must include Stream. Each request code needs a grant to
+  this App in Stream request grants. Messages follow published manifests:
+  subscribe to what a published Stream publishes and publish to what an active
+  Stream subscribes to. There is no per-App topic list. Stream logical topics
+  are separate from the MQTT namespace below.
+- Retired Controls, `ControlError`, execution aliases and interpreter selectors
+  are not current APIs. Preserve supported business intent using Stream calls;
+  keep `tier0-stream/v3` rather than inventing a compatibility route.
+- Requests make one POST without automatic retries. Preserve command
+  idempotency; reconcile uncertain outcomes before deliberate replay with the
+  same key. `outcomeUnknown: false` is not proof that execution never started.
+  This differs from App data calls, where SDK owns retries/idempotency.
+- Messages use ephemeral NATS Core WSS credentials (Node.js 22+), with no
+  offline queue, replay or receiver ACK. Preserve direction grants, dispose
+  resources, and do not promise delivery guarantees the API lacks.
+- Pure DataKeys remain data-only. Report missing grants, plan or runtime
+  support; do not expand permissions or add a second control credential.
+
+Run the selected target's `test:streams` and verify affected server routes and
+browser behavior in an authorized environment. A fixture/build does not prove
+Gateway/SYS/broker deployment, live grants or message delivery.
 
 ### Notification behavior
 
@@ -204,35 +180,31 @@ cannot establish Gateway, SYS, broker deployment, live grants or real delivery.
   serialization with a stubbed transport; do not send real notifications solely
   to validate an upgrade. Delivery requires separate authorized verification.
 
-For MQTT, use `toWebSocketUrl()` for a platform broker string and
-`parseMqttBroker()` when endpoint fields are needed. Explicit WebSocket URLs
-retain scheme/port/path/query. For non-WebSocket inputs, `toWebSocketUrl()` uses
-`wssPort` (default 8084); `Tier0MQClient` instead honors a bare `host:port`
-(e.g. `emqx:8083` uses WS in Node.js). Do not reuse an explicit TCP/MQTT URL's
-port for WebSocket. Port 8084 or an HTTPS browser context selects WSS; other
-ports use WS outside HTTPS browsers. `secure: true/false` overrides inference,
-while explicit `ws://`/`wss://` URLs retain transport. A server cannot infer the
-eventual browser's scheme; pass `secure: true` for browser WSS on other ports.
-Handle undefined URL conversion as a configuration error.
+### MQTT
 
-`Tier0MQClient` reads `TIER0_MQTT_HOST` / `TIER0_MQTT_PORT` and uses
-`TIER0_API_KEY` as the password. A workspace-encoded key
-(`sk-<type>-ws<base36>_<secret>`) supplies the MQTT identity: the client derives
-username and clientId from it. A key it cannot parse is rejected unless
-username, clientId and password are all passed explicitly; there is no
-Enterprise fallback. Dedicated credentials can be created with
-`mqttAuth.create()` (returned only once). Do not invent hard-coded identity to
-bypass failed authentication. A changed key passed to `connect({ password })`
-recalculates auto-derived fields and preserves each explicit identity field.
-Disconnect an established connection before changing credentials and
-reconnecting.
+Use `Tier0MQClient` on the App server through `loadTier0Mq()`. It reads the
+platform-injected host/port/key. Browsers never connect to the broker; remove
+`getMqttToken` and browser token sources. Use a server subscription and an App
+route to forward only messages the authenticated visitor may see. Other App
+SSE routes use `openEventStream` so hidden pages close, resume positions are
+preserved and App wake/reconnect works; do not substitute raw `EventSource`.
 
-After a relevant upgrade, verify the installed version following managed
-restart (or clean unmanaged install), then exercise the affected connection and
-subscription in an authorized environment. A build or local key-format check
-does not prove broker authorization or message delivery. For authentication
-failures, follow [MQTT authentication diagnostics](import-troubleshooting.md#mqtt-authentication-fails)
-before changing credentials. Keep platform injection and server-side lazy loading.
+Build every publish/subscribe topic with `appTopic(suffix)` from the same lazy
+module, e.g. `mq.subscribe(appTopic("alarms/#"), onAlarm)`. Topics are confined
+to `apps/<TIER0_APP_ID>/<preview|deployed>/`; wildcards work inside that prefix.
+Other Apps, the opposite runtime and arbitrary topics are refused. External
+producers for the live App use its deployed namespace with their own credential.
+Do not change those systems unless authorized. `appTopic()` throws when App ID
+or a valid runtime is absent; do not spoof `TIER0_RUNTIME` for local development.
+
+The SDK derives MQTT identity from a workspace-encoded key and has no Enterprise
+fallback. Hosted Apps cannot call `mqttAuth.create()` to work around a failure.
+Check actual installed SDK, platform injection, key type and broker support
+without exposing credentials. Keep intentional transport configuration and use
+the installed SDK's `parseMqttBroker` / `toWebSocketUrl` when needed; do not
+guess a WebSocket port from a TCP URL. For diagnostics see
+[MQTT authentication failures](import-troubleshooting.md#mqtt-authentication-fails).
+An install/build pass is separate from broker connection and topic authorization.
 
 ## Dependency And Lockfile Compatibility
 
@@ -297,52 +269,39 @@ Do not import from `next/link`, `next/navigation`, `next/image`, or
 
 ## Gateway Identity And Assigned Roles
 
-Identity and roles are read-only Gateway inputs resolved on every request. The
-App does not own an authentication session.
+At v28, the only identity is the front door's plain, unsigned base64url JSON
+`X-Tier0-Visitor`. The front door strips client-supplied `X-Tier0-*` before
+setting it and must be the only production ingress. Use `parseVisitorHeader`
+through `src/lib/visitor.ts` to validate the payload and expected App. Do not
+trust this header through an independently exposed App port or implement a
+legacy header/session fallback. No JWT/JWKS verifier remains.
 
-Resolve roles by runtime:
+- `app_roles` is the complete role set in both runtimes. Preview uses its
+  selected view-as set. Effective permissions are the union of actions for
+  `AppUser.roles`; `active_role` orders display only when it is assigned.
+- Unknown trusted roles grant zero actions without erasing known-role actions.
+  Empty roles mean zero permissions; no admin/first-role fallback exists.
+- Missing, malformed or wrong-App identity is unauthenticated; missing required
+  runtime App identity is a configuration fault. Keep target tests/statuses.
+- `machine` visitors can reach only declared webhook paths; ordinary server
+  functions require an employee unless explicitly named `publicServerFn<Name>`.
+  Preserve the target's same-origin mutation checks.
+- All platform calls act as the App and carry no visitor delegation. Services
+  must filter reads, reject unauthorized writes and trim fields using the
+  authenticated user and `can(user.roles, action)`. Menu hiding or role
+  registration alone cannot protect data.
 
-1. Preview: use every comma-separated `X-Tier0-Preview-Role` value as the
-   developer-selected view-as role set (one or several roles, permission
-   union); the first value is the primary display role.
-2. Deployed: use every comma-separated `X-Tier0-Business-Roles` value.
-   Deduplicate roles and keep `X-Tier0-Active-Role` first only as primary display
-   metadata, and only when it is one of them; otherwise it grants nothing.
-3. Legacy fallback: `X-Tier0-Active-Role`, `X-Tier0-Preview-Role`,
-   `X-App-User-Role`, then JSON `user.role`. These legacy sources remain
-   single-role and matrix-gated.
+Preserve roleless sources without invented roles. For role-aware sources,
+preserve every business scope across services, UI, matrix, metadata and
+registration. Remove App-local login/register/session/logout, role pickers,
+impersonation and Gateway Cookie mutations. Keep `/api/auth/me` and the hidden
+`/login` error bridge if present in the target. Client storage, query/body fields
+and arbitrary headers cannot override identity. Assignment/view-as changes are
+read on subsequent requests; existing event streams reauthenticate on reconnect.
 
-Authorization rules:
-
-- Use `AppUser.roles` for authorization. Effective actions are the union of
-  `PERMISSION_MATRIX` actions across all assigned roles. Never authorize with
-  `AppUser.primaryRole`.
-- Do not rank roles or choose a "highest" role. A known assigned role still
-  grants its actions when another trusted assigned role is unknown.
-- A trusted Tier0 runtime role missing from `PERMISSION_MATRIX` enters with zero
-  permissions. It does not fail the request and does not elevate.
-- An unknown role from a forgeable legacy source fails closed.
-- An explicit deployed empty role set stays empty and never receives admin
-  fallback.
-- A preview Gateway identity without a selected role enters with zero roles
-  and zero permissions. There is no built-in or reserved fallback role.
-- Gateway identity with no applicable role context is denied. No Gateway
-  identity is unauthenticated.
-- The client must not select or write roles through localStorage,
-  sessionStorage, cookies, query parameters, request bodies, or request headers.
-  Platform assignment or preview view-as changes take effect on the next request
-  or refresh.
-
-First determine whether the source is roleless or role-aware. Do not invent
-business roles for a roleless source. For a role-aware source, migrate all roles,
-permission mappings, navigation/page/action guards, API authorization, and
-registration metadata before calling alignment complete.
-
-During import or update, remove custom login/register, App-local session code,
-user-visible logout/sign-out, logout/select-role endpoints, role pickers,
-impersonation, and Gateway Cookie mutation. Keep `/api/auth/me` and the hidden
-`/login` error bridge when they are present in the current template. Logout is
-platform-owned for every App.
+For pre-v27 migration, do not copy stale signed-token wording from
+`docs/role-registration.md`; the implementation and migration notes at the
+[recorded baseline](latest-template-source.md) establish the current parser.
 
 ## Platform Role Registration
 
@@ -395,8 +354,12 @@ Separate these surfaces:
   role with zero roles/permissions.
 - Deployed: two known assigned roles with permission union; known plus trusted
   unknown; explicit empty assigned-role set; active-role display ordering.
-- Legacy: recognized single role and unknown untrusted role failing closed.
-- No identity: unauthenticated behavior.
+- Invalid identity: missing/malformed/wrong-App `X-Tier0-Visitor`; legacy
+  headers alone never authenticate. Production needs the trusted front door.
+- Caller kind: machine visitors only on declared webhooks; employee-required
+  server functions remain protected.
+- Data: reads, writes, fields and change-event visibility for each relevant
+  role, including denied cases. Platform App access is not visitor authorization.
 - Browser mutations: same-origin protection when the current scaffold provides
   it.
 
@@ -500,9 +463,9 @@ handlers, custom middleware, or Node server files. Reclassify that code:
   `loadTier0OpenApi`, `loadTier0Files`, and `loadTier0Mq`. Invoke loaders inside
   the concrete server action that needs I/O. Do not top-level import the SDK
   root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files`, or `@tier0/sdk-v2/mq`,
-  and do not replace the SDK with hand-written REST/MQ/UNS fallbacks. Browser
-  `client.streams` uses the explicit exception under SDK Upgrades; do not apply
-  the server lazy loader to that browser-safe entry.
+  and do not replace the SDK with hand-written REST/MQ/UNS fallbacks.
+  Stream and MQTT calls stay server-side; browser pages use authorized App
+  routes, never a browser platform client or credential.
 - Do not derive Tier0 resource namespaces from the default
   `package.json` name `scaffold`. Resolve the human App name from requirements
   or branding; use `APP_ID` or `/api/manifest` `appId` only as the distinct
@@ -531,10 +494,10 @@ Respect the latest scaffold's explicit boundaries:
 - `src/start.ts`, API route handlers, and `createServerFn` handler bodies are
   server-only boundaries. Keep server work there or in services called from those
   boundaries; do not force `src/start.ts` through a browser-safe wrapper.
-- `src/start.ts` opens the SDK data request context
-  (`runWithRequestContext(request, ...)` from `@tier0/sdk-v2/data`, which also
-  cancels data calls when the caller goes away); do not add a second context,
-  or data calls silently lose the employee subject.
+- `src/start.ts` wraps every request in `runWithAbortSignal(request.signal, ...)`
+  from `@tier0/sdk-v2/data`; queued/in-flight calls cancel with the request.
+  There is no employee data context. Work that must outlive the request uses
+  `runDetached` with the required business authorization retained.
 - `src/routes/api/uns/subscribe.ts` is the one route that imports a data-layer
   module (`@/lib/data/changes`); keep it and its `requireAuth()` as upstream.
 - Treat `react-router-dom` `BrowserRouter` as browser-only compatibility code.
@@ -586,8 +549,17 @@ authoritative; read them before changing data. The essentials for alignment:
   (`execution: "unknown"`) means a write may have landed — read back before
   writing again. Branch on `code` / `reason`, never on message text.
 - App records shown live refresh through `useRecordChanges(aliases, ...)` from
-  `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass collection
-  aliases, never declarations, from pages.
+  `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass aliases from
+  pages. `batch.changes` and `batch.reset` invalidate authorized API reads, not
+  client records reconstructed from event order. There is no `restricted` flag,
+  collection-level event or `batch.collections` in the v28 contract.
+- Keep one `createChangeRelay` upstream per server process. Adapt
+  `canSeeChange(user, change)` in `src/lib/change-visibility.ts` to the service
+  policy; its blank-template default allows all changes. Record IDs can reveal
+  existence. The callback is synchronous and cannot read records; if visibility
+  cannot be decided from user/event metadata, suppress that event rather than
+  leaking it. Leave the authenticated subscription route and locked relay intact.
+  Verify reset, reconnect and hidden-page close/resume through `openEventStream`.
 - A v9 app (`@tier0/sdk-v2` 0.1.0) keeps the target's existing collections and
   records. SDK 0.2.0 and later (UNS v2 contract 5.0.0) change App data code in
   these places:
@@ -609,11 +581,11 @@ authoritative; read them before changing data. The essentials for alignment:
 - A v8 app already stores records in UNS collections through its own
   `src/lib/data`: keep the target's existing collections and records, keep only
   the selected scaffold's `src/lib/data/**` (`index`, `query`, `changes`),
-  import declarations from `@tier0/sdk-v2/data/define`, and open the request
-  context only through `runWithRequestContext` from `@tier0/sdk-v2/data` — a
-  leftover second context makes data calls silently run as the App. Take the
-  upstream data gates with their gate-integrity manifest; services then follow
-  the v9 points above.
+  import declarations from `@tier0/sdk-v2/data/define`, and use the selected
+  target's `runWithAbortSignal` request wrapper. Complete the pre-v27 visitor
+  and service-authorization migration; all target data calls act as the App.
+  Take upstream data gates with their gate-integrity manifest; services also
+  follow the result/error adaptations above.
 - A v7-or-earlier app on Drizzle/PostgreSQL replaces that layer with
   collections without connecting to the old database or requesting credentials.
   Historical data does not migrate; if needed, the user imports it on the UNS

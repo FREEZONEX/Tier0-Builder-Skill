@@ -261,10 +261,10 @@ For the whole app, verify:
   role is silently lost, broadened, collapsed, or left with zero permissions.
 - Role tests cover preview view-as with one and several selected roles
   (permission union); deployed permission union across
-  all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
-  unknown roles; explicit deployed empty roles; preview without a selected role (zero
-  roles and permissions); legacy
-  recognized and untrusted unknown roles. Authorization never uses
+  `app_roles` from `X-Tier0-Visitor`; `active_role` display ordering; known plus
+  trusted unknown roles; explicit deployed empty roles; preview without a
+  selected role (zero permissions); malformed/missing/wrong-App visitor headers
+  and machine callers outside declared webhook paths. Authorization never uses
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or
   refresh; the App never writes role state optimistically.
