@@ -4,9 +4,11 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-10 at `96d6e275069b4154709fb6dec2492b6ed7a0a8a5`
-(merged PR #122). Its `package.json.tier0Scaffold` is
-`{ "version": 28, "ref": "97a6501" }`.
+Inspected on 2026-11-10 at `b52dbf47a846dbdafed496f5d0e1ad32b4cf890b`.
+Its `package.json.tier0Scaffold` is
+`{ "version": 29, "ref": "7f2a3f6" }`.
+v29 records the external-collection confirmation workflow; its SDK is unchanged
+from v28.
 
 The SDK dependency is `file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz`.
 Copy that archive, dependency spec and reconciled lockfile together. Its SHA-256
@@ -36,7 +38,8 @@ only production ingress.
 `/api/uns/subscribe`. `useRecordChanges` reloads through authorized App APIs.
 Stream requests/messages and MQTT are server-only. MQTT topics use `appTopic()`
 under the App's own preview/deployed namespace. Platform capabilities are fixed;
-external collection grants require a workspace Owner/Admin in App settings.
+linking external collections or expanding access follows
+[external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
 
 Read root `AGENTS.md` with `docs/app-data.md`, `docs/ui-rules.md`,
 `docs/component-kit.md` and `docs/platform-integration.md`. Read API Skills from

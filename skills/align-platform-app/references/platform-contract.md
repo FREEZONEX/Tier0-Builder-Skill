@@ -94,12 +94,14 @@ and `system.info`. `assets/upload`, `system.whoami`, `notifications.get`,
 `mqttAuth` and `agent` are unsupported for hosted Apps; Source/Stream management
 is refused too. SDK method existence does not establish hosted App access.
 
-The App can access collections it owns and external collections granted by a
-workspace Owner/Admin in App settings. Use `data.collection({ collectionId })`
+The App accesses its own collections and external collections granted to it.
+Before linking an external collection or expanding access, confirm the target
+collection, purpose and required access (read, write, delete) with the user.
+Use available platform tools within the current session's permissions and
+verify the resulting grant. App code uses `data.collection({ collectionId })`
 for a granted external collection. A grant or removal applies on the next
-request, without republishing. The Builder agent cannot grant access; report
-the missing grant and do not create a same-named substitute. This App-level
-grant is separate from service-level permissions for the current visitor.
+request, without republishing. App-level grants are separate from service-level
+permissions for the current visitor.
 
 ### Members and older SDK callers
 
@@ -604,7 +606,7 @@ Use the scaffold's existing scripts and managed preview behavior:
 - Run `npm run build` for normal completion and let its automatic `postbuild`
   verifier finish. At the verified snapshot, `postbuild` runs `build:verify`,
   `test:guidance`, `auth:union:test`, `runtime:audit`, `test:components`,
-  `test:data` and `test:streams`; the
+  `test:data`, `test:streams` and `test:user-display`; the
   verifier also covers typecheck,
   lint, contract tests, and runtime safety. Locked contract coverage includes
   route correctness, auth, data and runtime boundaries. Generation heuristics

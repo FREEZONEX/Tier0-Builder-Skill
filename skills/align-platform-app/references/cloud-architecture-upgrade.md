@@ -12,11 +12,11 @@ Compared on 2026-11-10 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- Cloud v28, `feature/cloud-new-architecture-migration`:
-  `96d6e275069b4154709fb6dec2492b6ed7a0a8a5`, marker
-  `{ "version": 28, "ref": "97a6501" }`; runtime deployment not verified.
+- Cloud v29, `feature/cloud-new-architecture-migration`:
+  `b52dbf47a846dbdafed496f5d0e1ad32b4cf890b`, marker
+  `{ "version": 29, "ref": "7f2a3f6" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v28 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v29 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -200,10 +200,18 @@ Replace the vendor archive/spec/lockfile with the selected v28 set. All MQTT
 publish/subscribe topics use `appTopic(suffix)`; coordinate external producers
 with the live App namespace without changing devices outside the task scope.
 Remove per-App platform-policy configuration. App capabilities are fixed,
-external collections require an Owner/Admin grant in App settings, Stream
-requests require request grants, and Stream messages follow published manifests.
+external collections require App grants, Stream requests require request grants,
+and Stream messages follow published manifests.
 Refresh root guidance and verify affected server/browser integration separately
 from the source build. Preserve a user-pinned older target when requested.
+
+### v28 to v29
+
+Refresh the App's inherited guidance from the selected scaffold. Linking an
+external collection or expanding access now follows
+[external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
+The SDK version is unchanged. Compare the selected source for other inherited
+changes before copying its version marker.
 
 ## Cross-Version Acceptance
 

@@ -8,7 +8,8 @@ prerequisite failure for all source reconstruction.
 
 The diagnostic below describes the historical App **data policy** bootstrap,
 not a v28 per-App platform-capability policy. In v28 capabilities are fixed,
-and external collection grants are managed by Owner/Admin in App settings.
+and external collections require App grants. For linking or expanding access,
+follow [external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
 Apply the historical error interpretation only when the target returns that
 error; verify its actual SDK/backend contract before assigning the cause.
 Do not tell a user to configure platform capabilities or confirm collections

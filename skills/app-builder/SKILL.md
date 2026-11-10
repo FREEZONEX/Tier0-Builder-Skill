@@ -166,12 +166,6 @@ the current draft roles, so never ask the user to publish first. App code picks
 people with `members.listApp` at runtime: never hard-code members, pass
 `scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
 `published` flag with a 409 or a "publish first" message.
-
-When you need to know who holds a role, call `list_app_role_members`; it reads
-the current draft roles, so never ask the user to publish first. App code picks
-people with `members.listApp` at runtime: never hard-code members, pass
-`scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
-`published` flag with a 409 or a "publish first" message.
 If an App member picker is unexpectedly empty, use the draft-members tool to
 compare assignments when available, then inspect the installed SDK, App ID,
 filters and preview runtime. An Agent shell does not necessarily receive the
@@ -192,10 +186,11 @@ identity header or App-local session supplies authority.
 
 Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no
-per-App platform policy to configure or approve. External collections need a
-workspace Owner/Admin grant in App settings; the agent cannot create the grant
-or replace an inaccessible collection with a same-named one. Grant changes take
-effect on the next request without republishing.
+per-App platform policy to configure or approve. Before linking an external
+collection or expanding access, confirm the target collection, purpose and
+required access (read, write, delete) with the user. Use available platform
+tools within the current session's permissions and verify the resulting grant.
+Grant changes take effect on the next request without republishing.
 
 `client.streams` and `Tier0MQClient` run on the server through lazy SDK loaders.
 Browser pages call App routes that enforce their business permissions. Stream

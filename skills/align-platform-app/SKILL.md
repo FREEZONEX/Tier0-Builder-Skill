@@ -206,9 +206,9 @@ acceptance pending/passed" separately.
   must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
   Fixed platform capabilities remain constrained by the key and workspace
   plan. Stream requests need request grants; Stream messages use published
-  manifests. External collections require an Owner/Admin grant in App settings,
-  effective from the next request without republishing; the agent cannot grant
-  them or create same-named substitutes. An app
+  manifests. Before linking an external collection or expanding access, follow
+  the [external collection confirmation workflow](references/platform-contract.md#fixed-app-capabilities-and-external-collections).
+  Grant changes apply from the next request without republishing. An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
