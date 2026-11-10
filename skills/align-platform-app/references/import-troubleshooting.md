@@ -145,6 +145,11 @@ Check:
 
 ## Tier0 SDK Files Or SSR Import Fails
 
+Browser `client.streams` is retired: move calls behind authenticated App server
+routes following [SDK Upgrades](platform-contract.md#unified-sdk-and-stream-migration).
+Never import Node-only loaders into pages. A missing local tarball means the
+selected scaffold's referenced vendor archive must also be copied.
+
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
 matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error
 or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
@@ -152,7 +157,8 @@ or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
 follow [SDK Upgrades](platform-contract.md#sdk-upgrades). Import
 `loadTier0Sdk`, `loadTier0Files` or the other lazy helpers from `@/lib/tier0`,
 then await the loader inside the concrete server action. Do not top-level import
-the SDK root, `@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
+server SDK modules (`@tier0/sdk-v2` root for server operations),
+`@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
 `@tier0/sdk-v2/mq`; do not move the SDK into `ssr.noExternal`, and do not replace
 it with hand-written REST/MQ fallback clients. A value import of
 `@tier0/sdk-v2/data` outside services, `src/lib/data` and `src/start.ts` pulls
@@ -174,9 +180,10 @@ while MQTT fails, distinguish configuration from invalid credentials:
    sends the key opaquely.
 2. Inspect injection into the failing runtime (`TIER0_MQTT_HOST`,
    `TIER0_MQTT_PORT`, `TIER0_API_KEY`), key revocation/expiry/permissions, the
-   broker endpoint and `ws`/`wss`, then backend support for the key type. Use
-   dedicated credentials from `mqttAuth.create()` when the injected key cannot
-   carry an MQTT identity.
+   broker endpoint and `ws`/`wss`, then backend support for the key type.
+   Hosted Apps cannot call `mqttAuth.create()`; report incompatible injection
+   instead of inventing a second credential. SDK helpers consume the key;
+   App code does not read or expose it.
 3. Let managed preview install/restart after an authorized dependency change,
    then check the actual installed version again. Do not race managed
    installation with `npm install`.
@@ -185,6 +192,13 @@ while MQTT fails, distinguish configuration from invalid credentials:
    identity only when the deployment calls for it. Disconnect before changing
    connection credentials; retry the affected connection/subscription and
    report separately when runtime verification is unavailable.
+
+A connection can succeed while a topic is refused. For v28 check every topic
+comes from `appTopic()` under this App's matching preview/deployed namespace.
+Other Apps, the opposite runtime and arbitrary topics are refused. Local
+development lacks `TIER0_RUNTIME`, so `appTopic()` throws; do not spoof it.
+Browser MQTT tokens are retired: the App server subscribes and forwards only
+what the authenticated visitor may see through an App route.
 
 ## Auth Or API Calls Fail
 
@@ -209,28 +223,28 @@ authorization rule, and related metadata entry was migrated.
 Issue a new request or refresh after platform assignment or preview view-as
 changes. Then verify:
 
-- Preview unions permissions across the comma-separated
-  `X-Tier0-Preview-Role` set the developer selected.
-- Deployed mode unions permissions across every
-  `X-Tier0-Business-Roles` value. `X-Tier0-Active-Role` is primary display
-  metadata only.
+- Preview uses the selected view-as set in the visitor header, with permission
+  union across all assigned roles.
+- Both runtimes use `app_roles` from the front door's `X-Tier0-Visitor`.
+  `active_role` only orders the assigned roles for display. Do not restore
+  `X-Tier0-Business-Roles` or other legacy header fallbacks.
 - `can(user.roles, action)` and route guards use the assigned-role set, not
   `primaryRole`.
 - A trusted unknown Tier0 role contributes zero permissions without erasing
   known-role permissions.
 - An explicit deployed empty role set stays empty. Preview without a selected
   view-as role likewise has zero roles and permissions; never add a fallback.
-- An unknown legacy/untrusted role fails closed.
+- Missing, malformed or wrong-App visitor headers fail authentication.
+  Check trusted front-door ingress; never accept a client-supplied identity.
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
 every business role is synchronized across `PERMISSION_MATRIX`,
 `ROLE_METADATA`, and `roles.json`, and every `role_key` matches
 `^[a-z]+(_[a-z]+)*$`.
 
-The first version supports at most three materially distinct business roles
-total, with no reserved role or implicit grant. If the source model exceeds that cap,
-stop and obtain an
-explicit user/platform-approved consolidation or phased migration. Do not make
+The current template recommends three roles for a first version; it does not
+cap migrated business roles. Preserve distinct scopes, with no reserved role or
+implicit grant. More than three roles alone is not a blocker. Do not make
 the build pass by silently removing roles, broadening access, merging distinct
 scopes without approval, or leaving a registered role with zero permissions.
 

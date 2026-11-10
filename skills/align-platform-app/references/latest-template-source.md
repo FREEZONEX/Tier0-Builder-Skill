@@ -3,39 +3,57 @@
 ## Canonical Repository
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
-`feature/cloud-new-architecture-migration` (Tier0 cloud). The baseline verified
-on 2026-10-27 is `a9697cc343b63699ffa25db73b6bcda9ebf32952` (merged scaffold
-PR #97, v13). Its `package.json.tier0Scaffold` is
-`{ "version": 13, "ref": "22e39fc" }`; the SDK dependency is `@tier0/sdk-v2`
-pinned to the exact npm version `0.3.0`. Since the previous baseline (v9,
-`f8a3202`), v10 (PR #92: `2779aea`, `b2ea8dd`, `bc8daa8`) moved the data layer
-to SDK 0.2.0 and added live record changes, the merged preview multi-role
-change (`4dbe4ce`) made Preview a view-as role set, v11 (`dbe3547`) dropped the
-production run image from `artifact.toml`, v12 (`d5b173c`) moved to SDK
-0.3.0, whose platform calls all use `/openapi/v2`, and v13 (`22e39fc`) checks
-subscribe requests against passed-in declarations, so the change-stream test no
-longer depends on the App's collections, and grants a deployed Active-Role
-nothing unless it is a business role. The repository commit
-identifies the inspected source; the marker's `ref` identifies the content
-commit stamped by the scaffold maintainer. They need not be equal. After
-successful app alignment, copy the selected scaffold's marker object verbatim,
-not the merge SHA or the Skill package version.
+`feature/cloud-new-architecture-migration` (Tier0 cloud).
+Inspected on 2026-11-10 at `b52dbf47a846dbdafed496f5d0e1ad32b4cf890b`.
+Its `package.json.tier0Scaffold` is
+`{ "version": 29, "ref": "7f2a3f6" }`.
+v29 records the external-collection confirmation workflow; its SDK is unchanged
+from v28.
 
-This is a verified source snapshot, not a permanent version pin or deployment
-proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment and honor a user-selected ref. At v13 the App data layer is the
-`@tier0/sdk-v2/data` client: collections are declared in
-`src/data/collections.ts` with `defineCollection` from
-`@tier0/sdk-v2/data/define`, `src/lib/data/index.ts` builds the App's `data`
-instance, `src/start.ts` opens the SDK request context with the `Request`, and
-`src/lib/data/changes.ts` feeds the `/api/uns/subscribe` change stream behind
-`useRecordChanges()` (`src/lib/record-changes.ts`). There is no
-Drizzle, `pg`, `DATABASE_URL`, `DB_SCHEMA`, `drizzle.config.ts` or `db:*`
-script. The scaffold's AGENTS.md → App Data and `docs/platform-integration.md`
-are authoritative for the data contract; the SDK's own Skills ship in
-`node_modules/@tier0/sdk-v2/skills/`. For in-scope UI work, inspect
-`docs/component-kit.md`, affected components and the current `AGENTS.md`;
-MetaListPage remains the default list-page foundation.
+The SDK dependency is `file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz`.
+Copy that archive, dependency spec and reconciled lockfile together. Its SHA-256
+is `2cd25e8df1a78d3aac394cdeda9b2efb07de4278d3b4e48848fce24817713189`;
+the archive was built from SDK commit `171b29f`, not published to npm.
+The v28 change targets Backend `1e6b2d7b6`, `app-key-model/1`; directory
+contracts and rollout dependencies remain in `docs/collection-directory-release.md`.
+These are source dependencies, not evidence of deployment or live authorization.
+
+The repository commit is the inspected tree; the marker's `ref` is the content
+commit stamped by the maintainer. After full App alignment passes, copy the
+marker verbatim, not the merge SHA or a Skill version. This snapshot is not a
+permanent pin: recheck the remote for a latest-scaffold request; a user-selected
+ref or supplied replacement package takes precedence within its chosen scope.
+
+v28 uses SDK data with collections declared in `src/data/collections.ts` and
+the App instance in `src/lib/data/index.ts`. All platform data calls act as the
+App; services enforce the visitor's read/write/field rules. `src/start.ts` passes
+only the request abort signal with `runWithAbortSignal`. Identity comes from
+the front door's plain base64url JSON `X-Tier0-Visitor`, parsed by
+`src/lib/visitor.ts`; no legacy identity-header fallback or JWT/JWKS verifier
+remains. The front door strips client-supplied Tier0 headers and must be the
+only production ingress.
+
+`src/lib/data/changes.ts` uses `createChangeRelay` for one upstream per process;
+`src/lib/change-visibility.ts` filters what each user may learn through
+`/api/uns/subscribe`. `useRecordChanges` reloads through authorized App APIs.
+Stream requests/messages and MQTT are server-only. MQTT topics use `appTopic()`
+under the App's own preview/deployed namespace. Platform capabilities are fixed;
+linking external collections or expanding access follows
+[external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
+
+Read root `AGENTS.md` with `docs/app-data.md`, `docs/ui-rules.md`,
+`docs/component-kit.md` and `docs/platform-integration.md`. Read API Skills from
+the installed archive's `node_modules/@tier0/sdk-v2/skills/`; do not substitute
+an older globally installed SDK Skill. MetaListPage remains the default list
+foundation for in-scope UI work; generation heuristics remain advisories.
+
+Known source inconsistencies: at this SHA, the trust-model paragraph in
+`docs/role-registration.md` still mentions signed tokens, and a paragraph in
+`docs/platform-integration.md` still says Preview/deployed use the same key.
+Use `src/lib/visitor.ts`, `src/start.ts`, the v27/v28 migration sections and
+`docs/app-data.md`: identity is an unsigned trusted-ingress header, and the
+runtime injects separate preview/deployed keys while records remain shared.
+Do not propagate the stale paragraphs or infer production readiness from them.
 
 ## Verify A Target Commit
 
@@ -58,9 +76,9 @@ Read the relevant current files and their changes since the app's known base:
 | Generation/design | `AGENTS.md`, `DESIGN.md`, `src/styles/globals.css`, affected components |
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
 | Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
-| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
-| Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (request context), `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
-| SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
+| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{visitor,auth,server-fn-policy,webhooks,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
+| Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (abort signal), `src/lib/change-visibility.ts`, `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
+| SDK/assets | `src/lib/tier0.ts`, `package.json`, `vendor/README.md`, referenced SDK archive, `tests/app-streams.test.ts`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
 For the old-main/new-cloud comparison, implementation fingerprints, and
 version-specific upgrade paths, read

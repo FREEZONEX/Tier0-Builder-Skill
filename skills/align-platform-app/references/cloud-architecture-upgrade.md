@@ -8,28 +8,28 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-10-27 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-10 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- New `feature/cloud-new-architecture-migration`:
-  `a9697cc343b63699ffa25db73b6bcda9ebf32952`, marker
-  `{ "version": 13, "ref": "22e39fc" }`.
+- Cloud v29, `feature/cloud-new-architecture-migration`:
+  `b52dbf47a846dbdafed496f5d0e1ad32b4cf890b`, marker
+  `{ "version": 29, "ref": "7f2a3f6" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v13 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v29 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` exact `0.3.0` | Rewrite removed APIs; package rename alone is insufficient |
-| Request scope | Gateway auth and CSRF middleware | Same plus SDK `runWithRequestContext(request, ...)` | Preserve employee data subject and cancellation on all requests |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.10.0-aenv.11 via the pinned vendor archive | Rewrite removed APIs; package rename alone is insufficient |
+| Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
 | Production run | Explicit image in artifact | Platform-selected image | Remove run image pin; keep literal argv and Node entry |
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{gateway,auth,tier0}.ts`, `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v28 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -113,8 +113,9 @@ implementations with the selected target's `index.ts`, `query.ts`, and
 - `@/lib/data/define` becomes `@tier0/sdk-v2/data/define`.
 - Types such as `WithMeta` and values such as `DataError` from retired modules
   move to the target's `@/lib/data` exports or SDK data exports.
-- `src/start.ts` opens only the SDK context. A leftover local context may
-  silently execute employee work as the App.
+- `src/start.ts` uses the target's abort-signal wrapper. Remove the old
+  local/employee context; preserve equivalent service-level user authorization
+  before calls that now run as the App.
 - Keep collection aliases and existing declaration/record identities. Do not
   copy the template's empty `collections` array over business declarations.
 - Reconcile v1 SDK calls, changed data result/error shapes and live subscriptions
@@ -135,7 +136,7 @@ import, or report them.
 Reconcile changed runtime surfaces together: `src/start.ts`,
 `src/lib/route-handlers.ts`, `src/lib/data/**`,
 `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`,
-Gateway/auth/preview-bridge helpers, route error boundary, and the kit's
+visitor/auth/preview-bridge helpers, route error boundary, and the kit's
 `Pagination` / `QueryResult`. Take the matching gate manifest and its listed
 files, `eslint.config.mjs`, relevant `tests/*.test.ts` and `test:data` wiring.
 Preserve customized business behavior when merging these files.
@@ -147,17 +148,82 @@ For every old SDK, apply [SDK Upgrades](platform-contract.md#sdk-upgrades):
 0.3.0 removes methods as well as changing routes. Unsupported Flow/Agent
 features remain blockers, never success-shaped stubs.
 
+### Later Cloud Apps / v12–v26
+
+Preserve existing collections and business code. Reconcile the selected target's
+SDK archive/spec/lockfile and complete gate set; apps with the dual-package
+Stream candidate consolidate to `@tier0/sdk-v2` 0.10.0-aenv.11. Apply
+[Unified SDK migration](platform-contract.md#unified-sdk-and-stream-migration)
+for removing browser platform calls, retired Controls, request/message semantics
+and scope checks. Apply the pre-v27 migration below as one coordinated change. Refresh root AGENTS.md and its referenced docs while retaining App-owned
+rules as described in the entrypoint. UI guidance and role-count advisories do
+not authorize a redesign or role consolidation.
+
+### Cloud Apps Before v27
+
+Installing the v28 SDK alone breaks pre-v27 imports and can remove implicit
+user filtering. Use the selected target's migration sections and bring over
+these surfaces together, merging business customizations deliberately:
+
+- Replace `src/lib/visitor.ts`, its tests and `src/lib/auth.ts` with the plain
+  header parser (`parseVisitorHeader`). Retire JWT/JWKS and legacy role-header
+  fallbacks; remove `dev-signer.ts` after migrating callers. Reconcile
+  `vite.config.ts`'s local front door with `TIER0_RUNTIME` session detection.
+- Replace `src/start.ts`, `src/lib/data/index.ts` and the matching lint rules.
+  `runWithAbortSignal` replaces employee context; `runAsApp` callers move to
+  `runDetached` only when work must outlive the request. Audit every service's
+  read, write and field restrictions: the platform now sees only the App key.
+  Preserve the existing business policy; unresolved user-scope rules block the
+  affected slice rather than silently broadening access.
+- Reconcile `src/lib/data/changes.ts`, `src/lib/record-changes.ts` and
+  `src/routes/api/uns/subscribe.ts`. Add/adapt `src/lib/change-visibility.ts`.
+  `canSeeChange` must match service visibility and must not expose restricted
+  record IDs; it is synchronous and does not fetch records. Remove old
+  `restricted`, collection-level events and `batch.collections` handling.
+- Move browser MQTT and Stream calls into authenticated App server routes.
+  Remove `getMqttToken`, browser token sources and `@tier0/sdk-v2/runtime`.
+  Use the platform-injected key through SDK helpers, never node-proxy header
+  workarounds or browser credentials.
+- Take the target's locked files and gate-integrity manifest together, with
+  the SDK archive/spec/lockfile. Do not regenerate hashes over customized gates.
+
+Scan active App source/config for removed `createVisitorTokenVerifier`,
+`visitorReady`, `dev-signer`, `TIER0_JWKS_DIR`, `TIER0_JWKS_URL`,
+`runWithRequestContext`, `runWithRequiredEmployeeContext`, `currentDataSubject`,
+`X-Tier0-Delegation`, `runAsApp`, `getMqttToken` and `sdk-v2/runtime`.
+Historical text can explain them; no active caller or configuration may rely
+on them after full alignment.
+
+### v27 to v28
+
+Replace the vendor archive/spec/lockfile with the selected v28 set. All MQTT
+publish/subscribe topics use `appTopic(suffix)`; coordinate external producers
+with the live App namespace without changing devices outside the task scope.
+Remove per-App platform-policy configuration. App capabilities are fixed,
+external collections require App grants, Stream requests require request grants,
+and Stream messages follow published manifests.
+Refresh root guidance and verify affected server/browser integration separately
+from the source build. Preserve a user-pinned older target when requested.
+
+### v28 to v29
+
+Refresh the App's inherited guidance from the selected scaffold. Linking an
+external collection or expanding access now follows
+[external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
+The SDK version is unchanged. Compare the selected source for other inherited
+changes before copying its version marker.
+
 ## Cross-Version Acceptance
 
 - Merge target dependencies into the App manifest and regenerate its lockfile;
   preserve business dependencies. Do not copy a blank scaffold lockfile over a
   customized dependency graph. Verify an exact install separately from build.
-- Preserve one SDK request context and test employee-scoped behavior through
-  authenticated requests, including server functions. Keep background work's
-  `runAsApp` scope explicit; do not turn request services into App-level calls
-  to bypass a permission failure.
+- Preserve request cancellation through `runWithAbortSignal`. Test the App's
+  service-level user filtering, write guards and field trimming through HTTP
+  and server functions, including denied cases. Detached work keeps explicit
+  business authorization; it does not create a different data identity.
 - Refresh App record views through `useRecordChanges` with aliases. Cover
-  `batch.reset` and collection-level invalidations for employee-filtered data;
+  changes, resets, hidden-page close/resume and `canSeeChange` filtering;
   reload through authorized APIs instead of applying event payloads as records.
 - In an authorized test environment, exercise state/revision conflicts and
   all-or-nothing behavior, not only happy-path CRUD. Verify unknown write

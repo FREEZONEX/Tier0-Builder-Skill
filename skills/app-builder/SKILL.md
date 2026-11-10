@@ -105,10 +105,13 @@ Keep controls legible, field groups stable, and dense content within intentional
 scroll regions. Follow the target scaffold's server/client and data boundaries:
 declare collections in `src/data/collections.ts` and access records only from
 services through `data` from `@/lib/data`. Read the target scaffold's App Data
-contract before implementing persistence. Keep its SDK request context so
-employee data rules apply; do not add a second context or use App-level calls
-to bypass a request's restrictions. Baseline records belong in declaration
-`seed`, written on collection creation, never service startup or empty reads.
+contract before implementing persistence. In v28 every data call acts as the
+App; the platform does not filter records by employee. Services receive the
+authenticated visitor and apply read filters, write guards and field visibility
+using the App's role rules. Keep `runWithAbortSignal` in `src/start.ts`;
+`runDetached` is for work that must outlive a request, not an authorization
+mechanism. Do not reintroduce employee delegation or legacy identity headers.
+Baseline records belong in declaration `seed`, written on collection creation, never service startup or empty reads.
 
 Before declaring data, inspect and reuse existing business directories through
 the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
@@ -126,8 +129,16 @@ alias without a path fails. Existing aliases stay in place when declarations
 change; do not move existing data or expand grants to organize directories.
 
 For App record views, use `useRecordChanges` with collection aliases and reload
-through authorized App APIs on changes, resets, and collection invalidations.
-Do not poll App records with `refetchInterval` or `usePolling`; those are only
+through authorized App APIs on changes and resets. Keep the process-wide
+`createChangeRelay`; adapt `canSeeChange(user, change)` in
+`src/lib/change-visibility.ts` to the same visibility rules as the services.
+The template allows all events until adapted, and record IDs can disclose
+existence. The filter is synchronous and cannot fetch records: where the
+event metadata cannot establish visibility, withhold the event. Do not use
+removed `restricted` flags or collection-level events.
+Use `openEventStream` for other App SSE routes, preserving hidden-page close,
+resume and App-wake handling. Do not poll App records with `refetchInterval`
+or `usePolling`; those are only
 for data subscriptions cannot cover. Preserve capped counts, revision conflicts,
 atomic business operations and unknown-write-outcome handling from the current
 data contract. Preview shares deployed collections: validation does not
@@ -138,9 +149,9 @@ scaffold's required surfaces in one pass. Do not assume a reserved admin role
 or preview fallback. Verify each defined role's intended permissions and the
 current empty-role behavior; preserve roleless scope when appropriate. No
 `root` or Full Access role is generated for development. The current first
-release allows at most three business roles total. If an inherited SRS exceeds
-that limit or contains a development-only role, reconcile the concrete conflict
-before implementation; never silently discard business roles or widen access.
+release recommendation is at most three materially distinct business roles;
+it is not a hard limit. Preserve additional roles when business scope requires
+them; never silently discard roles or widen access to satisfy an advisory.
 `sync_business_roles` writes nothing when it returns
 `status: "confirmation_required"`: tell the user to confirm or cancel the role
 plan card in the chat and end the turn. Do not retry, change a `role_key` to
@@ -155,6 +166,40 @@ the current draft roles, so never ask the user to publish first. App code picks
 people with `members.listApp` at runtime: never hard-code members, pass
 `scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
 `published` flag with a 409 or a "publish first" message.
+If an App member picker is unexpectedly empty, use the draft-members tool to
+compare assignments when available, then inspect the installed SDK, App ID,
+filters and preview runtime. An Agent shell does not necessarily receive the
+preview process's `TIER0_RUNTIME`. Do not turn API errors into an empty list or
+claim that publishing will repair a preview integration failure.
+
+## Platform Calls
+
+Follow the selected scaffold's dependency and SDK Skills. v28 pins the bundled
+`@tier0/sdk-v2@0.10.0-aenv.11`; ordinary feature work does not upgrade it.
+An older App needing new contracts first uses the authorized alignment scope;
+do not install the new SDK alone or mark a partial repair fully aligned.
+
+The platform injects the App's key into its server process; SDK helpers use it.
+App code does not read/log/return it or expose it to the browser. Identity is
+the front door's `X-Tier0-Visitor`, with `app_roles` permission union; no other
+identity header or App-local session supplies authority.
+
+Members, notification sending, files, Stream requests and messages are fixed
+App capabilities, still bounded by the key and workspace plan. There is no
+per-App platform policy to configure or approve. Before linking an external
+collection or expanding access, confirm the target collection, purpose and
+required access (read, write, delete) with the user. Use available platform
+tools within the current session's permissions and verify the resulting grant.
+Grant changes take effect on the next request without republishing.
+
+`client.streams` and `Tier0MQClient` run on the server through lazy SDK loaders.
+Browser pages call App routes that enforce their business permissions. Stream
+requests require request grants; messages use published Stream manifests and
+have no per-App topic list. MQTT uses `appTopic(suffix)` under
+`apps/<TIER0_APP_ID>/<preview|deployed>/`; preview/live messages are isolated,
+even though App records are shared. Do not hard-code IDs, runtime segments,
+broker credentials, or use browser MQTT tokens. `appTopic()` throws outside
+Preview/deployed runtimes; do not spoof `TIER0_RUNTIME` locally.
 
 ## Specialist Routing
 

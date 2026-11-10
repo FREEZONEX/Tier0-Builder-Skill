@@ -56,7 +56,9 @@ writing the marker. An explicit import/migration request still proceeds.
   [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md).
   Select the path using both provenance and actual code: v7/Drizzle needs a
   persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
-  SDK/runtime contracts. Whether records exist depends on the target
+  SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
+  service-authorization and change-relay migration before the v28 SDK can run.
+  Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
   per-surface inventory, not a version-number shortcut.
 - **App-owned server persistence:** when an import or full alignment finds the
@@ -149,12 +151,13 @@ acceptance pending/passed" separately.
   Authorize with `user.roles` permission union, never `primaryRole`. Preview
   carries the developer's view-as role set with the same union; without a
   selected role it has zero roles/permissions; there is no admin fallback.
-  Keep the scaffold's legacy single-role parsing (matrix-gated, only for
-  requests without Tier0 runtime headers) and its Active-Role display ordering;
-  the locked `gateway.test.ts` covers both. Every defined role must be
-  represented in matrix, metadata, and `roles.json`.
-  The current first-version gate allows three business roles total; `admin`, if
-  business-defined, counts as one. Preserve roleless sources without inventing
+  Read identity only through the target's `X-Tier0-Visitor` parser: the front
+  door strips client-supplied Tier0 headers before setting it. Do not retain
+  legacy identity-header fallbacks, token verifiers or JWKS configuration.
+  `app_roles` supplies every assigned role; `active_role` only orders display.
+  Every defined role must be represented in matrix, metadata, and `roles.json`.
+  The current template recommends at most three roles for a first version;
+  this is advisory, not a cap on migrating existing business roles. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
 - For data changes, declare collections with `defineCollection` from
   `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list them in
@@ -178,7 +181,14 @@ acceptance pending/passed" separately.
   ensure payload with `npm run data:schema` and a dry-run before first creation.
 - HTTP routes authenticate/validate and call services; services own data access
   (`data` from `@/lib/data`), invariants, `data.transact` steps, and supported
-  lifecycle transitions. Durable writes must survive reloads, and data-layer
+  lifecycle transitions. All data calls act as the App; services must receive
+  the authenticated visitor and enforce read filters, write authorization and
+  field visibility. The platform no longer narrows App data by employee.
+  Keep `runWithAbortSignal` in request middleware and use `runDetached` only
+  for work that must outlive the request; carry its business authorization
+  deliberately. Align `canSeeChange` in `src/lib/change-visibility.ts` with
+  those service rules so record IDs do not reveal inaccessible records.
+  Durable writes must survive reloads, and data-layer
   errors (`DataError`) must not fall back to browser state or fixtures.
   Services never insert baseline rows on startup or when a list is empty. Do
   not impose blanket CRUD on ledgers, audit events, or other domain objects
@@ -189,8 +199,16 @@ acceptance pending/passed" separately.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`; copy the exact npm version the selected
-  scaffold pins (`0.3.0` at v13). An app
+- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
+  scaffold (`file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz` at v28), then reconcile
+  the authoritative lockfile. `client.streams` and `Tier0MQClient` run only on
+  the App server; browser pages call authenticated App routes. MQTT topics
+  must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
+  Fixed platform capabilities remain constrained by the key and workspace
+  plan. Stream requests need request grants; Stream messages use published
+  manifests. Before linking an external collection or expanding access, follow
+  the [external collection confirmation workflow](references/platform-contract.md#fixed-app-capabilities-and-external-collections).
+  Grant changes apply from the next request without republishing. An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
   project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
@@ -236,7 +254,7 @@ accept failing app code. Only `template-state.test.mjs` is App-adaptable under
 the current baseline. Nonblocking UI advisories are not build failures.
 
 Managed preview owns dependency installation and process startup. Use
-`preview_start` / logs / restart when available; do not race it with manual
+`preview_restart` and the selected scaffold's state/log files; do not race it with manual
 installs or dev servers. In an unmanaged environment use the authoritative
 lockfile. Distinguish exact install, full build, and runtime results; an install
 that changes the lockfile does not prove the original lockfile works.
@@ -244,11 +262,14 @@ that changes the lockfile does not prove the original lockfile works.
 Scale further verification to affected behavior:
 
 - **Routes/UI:** run `npm run smoke:routes -- <local-url> [/changed-route ...]`
-  when preview supplies a URL, inspect hydration/browser errors, exercise changed
+  using the ready preview port from `/dev/shm/.tier0/preview/state.json`;
+  inspect hydration/browser errors, exercise changed
   interactions, and check affected mobile layouts. The container-local URL is a
   self-check address, not the user-facing preview link.
 - **Roles/auth:** test relevant Preview, deployed union/empty/unknown roles,
-  untrusted legacy roles, and unauthenticated cases from the contract reference.
+  malformed/missing/wrong-App visitor headers, machine caller restrictions,
+  and unauthenticated cases from the contract reference. Verify service data
+  scope and change-event visibility separately from menu/action permissions.
 - **Persistence:** prove supported operations through HTTP, validation and
   authorization failures, reload/restart durability where controllable, and
   visible data-layer failures (`DataError`) without local fallback. Preview
@@ -267,6 +288,29 @@ For failures, load only the relevant section of
 [import-troubleshooting.md](references/import-troubleshooting.md).
 Use `preview-runtime-stability` for managed preview failures only when injected;
 otherwise inspect available logs/tools and report unavailable verification.
+
+## Preview Member Repair
+
+For a scoped member-picker repair, preserve business code and data while
+updating the selected SDK vendor archive, dependency and lockfile together.
+Use the SDK bundled with the selected scaffold (0.10.0-aenv.11 at v28).
+For pre-v27 Apps this also requires the coordinated auth/data/stream migration
+in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
+Do not install this archive alone into code that still uses removed SDK APIs.
+If a narrow repair does not authorize that migration, keep a compatible SDK
+and report the concrete upgrade dependency instead of expanding the scope.
+Remove only publish-state guards that block draft member selection; retain
+business-role checks and filters. Refresh injected SDK/Builder guidance and
+restart the managed preview so both dependencies and process environment reload.
+Do not mark a narrow SDK repair as a full scaffold alignment.
+
+Verify a never-deployed App with an assigned draft role: the App's server call
+must send draft scope automatically and return the assigned active members,
+including group inheritance. Check production scope separately. If the
+preview process lacks its platform runtime injection, or Gateway/SYS does not
+forward scope, report that platform prerequisite instead of setting runtime
+variables in App source or telling the user to publish. Build success is not
+runtime membership acceptance.
 
 ## Completion
 
