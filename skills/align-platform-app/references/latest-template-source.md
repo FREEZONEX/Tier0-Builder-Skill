@@ -4,14 +4,15 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-11 at `b5c0950b511147ce44351c4aa075b8d454d27985`
-(scaffold PR #137). Its `package.json.tier0Scaffold` is
-`{ "version": 35, "ref": "f1b0d85" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-11 at `de125195200abca3974240a55260f2011824bc1e`
+(scaffold PR #139). Its `package.json.tier0Scaffold` is
+`{ "version": 36, "ref": "9e53884" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
-the forwarded request origin, and v35 installs the SDK from npm and deletes
-`vendor/`. v31 was an intermediate stamp inside the v32 change and never
-landed separately.
+the forwarded request origin, v35 installs the SDK from npm and deletes
+`vendor/`, and v36 drops the scaffold test of the default `canSeeChange`
+rule, whose tests belong to the App. v31 was an intermediate stamp inside the
+v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.11.0"`, the exact npm release of the
 employee-only SDK that v32–v34 shipped as the local `0.10.1-aenv.13` archive.
