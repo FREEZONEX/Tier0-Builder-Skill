@@ -57,19 +57,19 @@ Required target invariants:
 
 ## SDK Upgrades
 
-v30 pins `@tier0/sdk-v2` to
-`file:vendor/tier0-sdk-v2-0.10.1.tgz`, the unchanged npm release archive.
-Use the selected source's archive byte-for-byte and reconcile the dependency
-and authoritative lockfile while preserving business dependencies. Copy a
-template lockfile only for an otherwise matching graph. Verify archive hash,
-lockfile integrity and installed package version separately; source ZIPs must
-include the referenced archive. Honor a user-pinned target.
+v35 pins `@tier0/sdk-v2` to the exact npm release `0.11.0`. Copy that
+dependency spec and reconcile the authoritative lockfile while preserving
+business dependencies, so the SDK entry resolves from registry.npmjs.org. Copy
+a template lockfile only for an otherwise matching graph. Verify lockfile
+integrity and installed package version separately. Delete an old local SDK
+archive (`vendor/tier0-sdk-v2-*.tgz`) with its `file:` spec, and `vendor/`
+itself when nothing else uses it. Honor a user-pinned target.
 
 Pre-v27 Apps need the coordinated visitor, data, change-relay and credential
 migration in [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#cloud-apps-before-v27).
 Updating only the SDK leaves removed imports and can broaden data visibility.
 Managed preview owns installation/restart; exact lockfile installs belong in
-an unmanaged checkout. Read API Skills/types from the actual installed archive.
+an unmanaged checkout. Read API Skills/types from the actual installed package.
 
 Keep server SDK loading through `@/lib/tier0`: `loadTier0Sdk()` for
 `createClient()`, plus `loadTier0OpenApi()`, `loadTier0Files()` and
@@ -293,7 +293,8 @@ legacy header/session fallback. No JWT/JWKS verifier remains.
   Empty roles mean zero permissions; no admin/first-role fallback exists.
 - Missing, malformed or wrong-App identity is unauthenticated; missing required
   runtime App identity is a configuration fault. Keep target tests/statuses.
-- `machine` visitors can reach only declared webhook paths; ordinary server
+- Only employee visitors are accepted: a machine identity is 401 on every
+  path, and there is no `src/lib/webhooks.ts` or `[[webhooks]]`. Server
   functions require an employee unless explicitly named `publicServerFn<Name>`.
   Preserve the target's same-origin mutation checks.
 - All platform calls act as the App and carry no visitor delegation. Services
@@ -325,6 +326,16 @@ Keep every business role aligned across:
 `^[a-z]+(_[a-z]+)*$`: lowercase letters separated by single underscores. Digits,
 hyphens, uppercase, leading/trailing underscores, and double underscores are
 invalid and cause platform import registration to fail.
+
+Each entry also needs a non-empty `name`. The platform reads only `role_key`
+(or the legacy `key`), `name` and `description`; it ignores `display_name` and
+`label`, and one entry without `name` rejects the whole file
+(`roles[i].name is required`). The App is still imported, but none of its
+roles is linked. When aligning, move a `display_name` or `label` value into
+`name` and delete the old field; if neither exists, use the role's label in
+the App's `ROLE_METADATA`, and ask the user when that is missing too. Editing
+the file does not register roles: if they were not linked on import, call
+`sync_business_roles` after alignment and follow its confirmation below.
 
 Keep `roles.json` as `{ "roles": [] }` for a roleless App. Do not add demo/test roles. A
 business-defined `admin` is an ordinary role
@@ -366,7 +377,7 @@ Separate these surfaces:
   unknown; explicit empty assigned-role set; active-role display ordering.
 - Invalid identity: missing/malformed/wrong-App `X-Tier0-Visitor`; legacy
   headers alone never authenticate. Production needs the trusted front door.
-- Caller kind: machine visitors only on declared webhooks; employee-required
+- Caller kind: machine identities are rejected on every path; employee-required
   server functions remain protected.
 - Data: reads, writes, fields and change-event visibility for each relevant
   role, including denied cases. Platform App access is not visitor authorization.
@@ -678,6 +689,10 @@ shape:
 - `deployment.deploymentTarget = "autoscale"`
 - production `serve = "dynamic"` describes deployment serving mode, not a gate
 - production build runs `npm ci && npm run build && npm prune --omit=dev`
+- the build's app layer is `include = ["dist", "server.mjs", "server-url.mjs"]`
+  (with `artifact.toml`, `package.json` and `roles.json`); a runtime file left
+  out of it is missing after deployment
+- `[static]` serves `dir = "dist/client"` under `url_prefixes = ["/assets/"]`
 - production run is `["node", "server.mjs"]` with no `image`: the platform
   supplies each environment's default runtime image. When aligning an older
   App, delete a hardcoded `[services.production.run].image`; `node:22-alpine`

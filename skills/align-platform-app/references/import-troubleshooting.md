@@ -65,7 +65,11 @@ Check:
 
 - `server.mjs` still points to the built server entry.
 - `artifact.toml` still runs `node server.mjs` in production and checks
-  `/api/health`.
+  `/api/health`, and its `include` lists every file `server.mjs` imports
+  (`server-url.mjs` from v34).
+- Same-origin POSTs rejected as cross-origin after deployment mean
+  `server.mjs` still builds the request URL from `Host`; use the target's
+  `requestBaseUrl(...)` from `server-url.mjs`.
 - Build output exists where the runtime expects it.
 - Browser-only libraries are not executed during SSR.
 - Client and mixed modules do not statically pull Node-only dependencies into the
@@ -147,8 +151,9 @@ Check:
 
 Browser `client.streams` is retired: move calls behind authenticated App server
 routes following [SDK Upgrades](platform-contract.md#unified-sdk-and-stream-migration).
-Never import Node-only loaders into pages. A missing local tarball means the
-selected scaffold's referenced vendor archive must also be copied.
+Never import Node-only loaders into pages. A missing local tarball means the App
+still has an old `file:vendor/...` SDK spec; set the selected scaffold's exact
+npm version and reconcile the lockfile instead of restoring the archive.
 
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
 matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error
@@ -239,8 +244,12 @@ changes. Then verify:
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
 every business role is synchronized across `PERMISSION_MATRIX`,
-`ROLE_METADATA`, and `roles.json`, and every `role_key` matches
-`^[a-z]+(_[a-z]+)*$`.
+`ROLE_METADATA`, and `roles.json`, every `role_key` matches
+`^[a-z]+(_[a-z]+)*$`, and every entry has a non-empty `name`. An import warning
+`roles_invalid` / `roles_failed` or `roles[i].name is required` means no role
+was linked; fix the file as in
+[Platform Role Registration](platform-contract.md#platform-role-registration)
+and sync again.
 
 The current template recommends three roles for a first version; it does not
 cap migrated business roles. Preserve distinct scopes, with no reserved role or

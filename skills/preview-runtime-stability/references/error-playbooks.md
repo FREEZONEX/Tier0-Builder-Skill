@@ -60,9 +60,10 @@ Fix sequence:
    target scaffold versions. Resolve, replace, or isolate the incompatible
    package; do not hide the conflict with force or legacy-peer flags.
 4. For an unavailable or missing package, verify the intended package name and
-   published version before editing the manifest. Copy the exact npm version
-   of `@tier0/sdk-v2` that the scaffold pins; do not change it to a GitHub
-   reference or another version.
+   published version before editing the manifest. Copy the exact
+   `@tier0/sdk-v2` version the scaffold pins; replace an old `file:vendor/...`
+   spec whose archive is missing with it instead of restoring the archive. Do
+   not change it to a GitHub reference or another version.
 5. Regenerate the authoritative lockfile only in a controlled, unmanaged install
    step, then verify an exact install from it.
 6. Restart preview once after the dependency graph resolves so Vite can rebuild
@@ -152,7 +153,7 @@ rg -n '@tier0/sdk-v2' src --glob '!routeTree.gen.ts'
 
    Expected homes: `src/lib/tier0.ts` (lazy loaders), `src/lib/data/**` and
    `src/services/**` (`@tier0/sdk-v2/data`), `src/start.ts`
-   (`runWithRequestContext`), and declarations in `src/data/**` or anywhere
+   (`runWithAbortSignal`), and declarations in `src/data/**` or anywhere
    from `@tier0/sdk-v2/data/define` (browser-safe). A value import of
    `@tier0/sdk-v2/data` from a route component, component or client hook pulls
    Node-only code into the browser bundle; `npm run build` flags it.
@@ -180,7 +181,7 @@ Common causes:
 
 1. An API route calls `requireAuth()` or a service that throws `HttpError`, but the handler is not wrapped in `withErrors(...)`.
 2. A service or loader throws `new HttpError(...)` from a route `beforeLoad`, loader, or `createServerFn` where no route error mapper converts it to a Response.
-3. Gateway identity headers are missing, so `requireAuth()` throws 401 on a public path such as `/_serverFn`; other paths already get a 401 or 403 JSON from `src/start.ts`.
+3. No valid `X-Tier0-Visitor` reached the App, so `requireAuth()` throws 401 on a public path such as `/_serverFn`; other paths already get a 401 JSON from `src/start.ts`. Under local `vite dev` this means `PREVIEW_USER_ID` is unset; in a platform session, a browser request reached the dev server without passing the front door.
 4. The preview role set lacks a role the page requires; that failure reaches the Builder as kind `role`, see [Preview role error](#preview-role-error-kind-role).
 5. A public endpoint needed by preview, especially `/api/health`, was changed to require auth or throw.
 
@@ -189,9 +190,9 @@ Fix sequence:
 1. Identify the request path that returned the JSON error. Do not assume it is `/api/health`.
 2. For `src/routes/api/**`, wrap every handler in `withErrors(...)` and keep the route body thin: auth, parse, service call, `Response.json`.
 3. Keep `HttpError` throwing in services and route handlers only when a `withErrors` boundary will catch it. In page loaders or `createServerFn` calls, return `null`, throw `redirect(...)`, or map the error locally.
-4. Identity and roles come only from Gateway headers; the App has no session
-   cookie or session secret. Keep `src/start.ts`, `src/lib/auth.ts`,
-   `src/lib/gateway.ts`, and the `previewGatewayHeaders()` plugin in
+4. Identity and roles come only from the front door's `X-Tier0-Visitor`; the
+   App has no session cookie or session secret. Keep `src/start.ts`,
+   `src/lib/auth.ts`, `src/lib/visitor.ts`, and the `devFrontDoor()` plugin in
    `vite.config.ts` as the scaffold ships them.
 5. Keep `/login`, `/api/health`, `/api/manifest`, and the TanStack runtime/build paths public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
 
@@ -218,13 +219,15 @@ or a server-function error whose message contains `Requires role:`
 roles the preview is viewing as do not grant this page. Do not rewrite the
 page or add a fallback role to clear the error.
 
-Preview roles arrive as `X-Tier0-Runtime: preview` plus `X-Tier0-Preview-Role`,
-a comma-separated set chosen in the preview role picker (one or several
-roles, absent when none is selected). Permissions are the union across that
-set: `requireAuth("a", "b")` passes when any selected role matches, and
-`can(user.roles, action)` is true when any selected role grants the action. A
-role missing from `PERMISSION_MATRIX` contributes zero permissions; with no
-role selected, the request enters with zero roles and every role check fails.
+Preview roles arrive in the `app_roles` of `X-Tier0-Visitor`
+(`runtime: preview`): the set chosen in the preview role picker, one or
+several roles or empty when none is selected. The agent's loopback route smoke
+instead gets the roles in `PREVIEW_USER_ROLE` from `devFrontDoor()`.
+Permissions are the union across that set: `requireAuth("a", "b")` passes when
+any selected role matches, and `can(user.roles, action)` is true when any
+selected role grants the action. A role missing from `PERMISSION_MATRIX`
+contributes zero permissions; with no role selected, the request enters with
+zero roles and every role check fails.
 
 Fix sequence:
 

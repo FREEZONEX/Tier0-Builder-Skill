@@ -8,20 +8,20 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-11-10 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- Cloud v30 companion, `codex/sdk-0101-harness`:
-  `ee6f30682954e737fa55b38ba2f20a50953b3c9a`, marker
-  `{ "version": 30, "ref": "5d1fc93" }`; canonical merge and runtime deployment pending.
+- Cloud `feature/cloud-new-architecture-migration`:
+  `b5c0950b511147ce44351c4aa075b8d454d27985`, marker
+  `{ "version": 35, "ref": "f1b0d85" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v29 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v35 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.10.1 via the pinned vendor archive | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.11.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -29,7 +29,7 @@ Compared on 2026-11-10 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v30 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v35 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -151,8 +151,8 @@ features remain blockers, never success-shaped stubs.
 ### Later Cloud Apps / v12–v26
 
 Preserve existing collections and business code. Reconcile the selected target's
-SDK archive/spec/lockfile and complete gate set; apps with the dual-package
-Stream candidate consolidate to `@tier0/sdk-v2` 0.10.1. Apply
+SDK spec/lockfile and complete gate set; apps with the dual-package
+Stream candidate consolidate to the target's `@tier0/sdk-v2`. Apply
 [Unified SDK migration](platform-contract.md#unified-sdk-and-stream-migration)
 for removing browser platform calls, retired Controls, request/message semantics
 and scope checks. Apply the pre-v27 migration below as one coordinated change. Refresh root AGENTS.md and its referenced docs while retaining App-owned
@@ -185,7 +185,7 @@ these surfaces together, merging business customizations deliberately:
   Use the platform-injected key through SDK helpers, never node-proxy header
   workarounds or browser credentials.
 - Take the target's locked files and gate-integrity manifest together, with
-  the SDK archive/spec/lockfile. Do not regenerate hashes over customized gates.
+  the SDK spec/lockfile. Do not regenerate hashes over customized gates.
 
 Scan active App source/config for removed `createVisitorTokenVerifier`,
 `visitorReady`, `dev-signer`, `TIER0_JWKS_DIR`, `TIER0_JWKS_URL`,
@@ -196,7 +196,7 @@ on them after full alignment.
 
 ### v27 to v28
 
-Replace the vendor archive/spec/lockfile with the selected v28 set. All MQTT
+Replace the SDK spec/lockfile with the selected target's. All MQTT
 publish/subscribe topics use `appTopic(suffix)`; coordinate external producers
 with the live App namespace without changing devices outside the task scope.
 Remove per-App platform-policy configuration. App capabilities are fixed,
@@ -245,3 +245,33 @@ discovery to the nested `skills/tier0-sdk-v2/SKILL.md` entry and reconcile
 Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
+
+## Cloud Apps At v30 → v35
+
+Apps at v28–v29 first apply the v30 guidance and grant changes above, then
+this section; install only the v35 SDK. Bring these over together:
+
+- SDK (v35): set `@tier0/sdk-v2` to the target's exact npm version (`0.11.0`)
+  and reconcile the lockfile so its entry resolves from the npm registry.
+  Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the v32–v34
+  `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses it.
+  Check the lockfile entry against
+  [latest-template-source.md](latest-template-source.md).
+- Employee-only visitors (v32): delete `src/lib/webhooks.ts` and take the
+  target's locked `src/start.ts`, `src/lib/auth.ts`, `src/lib/visitor.test.ts`
+  and `scripts/gate-integrity.json`. A machine identity is 401 on every path.
+  When the App declared webhook paths or `[[webhooks]]`, remove them and tell
+  the user in the report that machine visitors are rejected from v32 and those
+  webhooks no longer work; do not keep or emulate an inbound machine path.
+- Roles (v33): take the target's `src/lib/permissions.test.mjs` and
+  `tests/role-contract.test.mjs`, then migrate `roles.json` as in
+  [Platform Role Registration](platform-contract.md#platform-role-registration).
+- Request origin (v34): copy `server-url.mjs` and `tests/server-url.test.mjs`,
+  merge the `requestBaseUrl(...)` call into a customized `server.mjs`, set
+  `artifact.toml` `include = ["dist", "server.mjs", "server-url.mjs"]`, and add
+  the `test:server` script to `postbuild` and `test`.
+- Shell (v35): `src/components/Shell.tsx` hides the sidebar role line when no
+  role is assigned; merge it into a customized shell.
+- Refresh root `AGENTS.md`, `docs/platform-integration.md` and
+  `docs/role-registration.md` as the entrypoint describes, then write the v35
+  marker only after full verification.

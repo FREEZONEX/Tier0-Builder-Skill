@@ -58,8 +58,8 @@ writing the marker. An explicit import/migration request still proceeds.
   persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
   SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
   service-authorization and change-relay migration before the v28 SDK can run.
-  Already aligned v28–v29 Apps follow the v30 section for the SDK and guidance
-  refresh, without another persistence rewrite.
+  Already aligned v28–v29 Apps follow the v30 and v30 → v35 sections for the
+  SDK and guidance refresh, without another persistence rewrite.
   Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
   per-surface inventory, not a version-number shortcut.
@@ -157,7 +157,8 @@ acceptance pending/passed" separately.
   door strips client-supplied Tier0 headers before setting it. Do not retain
   legacy identity-header fallbacks, token verifiers or JWKS configuration.
   `app_roles` supplies every assigned role; `active_role` only orders display.
-  Every defined role must be represented in matrix, metadata, and `roles.json`.
+  Every defined role must be represented in matrix, metadata, and `roles.json`;
+  each `roles.json` entry needs a non-empty `name`, not `display_name`.
   The current template recommends at most three roles for a first version;
   this is advisory, not a cap on migrating existing business roles. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
@@ -201,10 +202,11 @@ acceptance pending/passed" separately.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
-  scaffold (`file:vendor/tier0-sdk-v2-0.10.1.tgz` at v30), then reconcile
-  the authoritative lockfile. `client.streams` and `Tier0MQClient` run only on
-  the App server; browser pages call authenticated App routes. MQTT topics
+- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec from the
+  selected scaffold (npm `0.11.0` at v35), reconcile the authoritative
+  lockfile and delete any old local SDK archive. `client.streams` and
+  `Tier0MQClient` run only on the App server; browser pages call
+  authenticated App routes. MQTT topics
   must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
   Fixed platform capabilities remain constrained by the key and workspace
   plan. Stream requests need request grants; Stream messages use published
@@ -269,7 +271,7 @@ Scale further verification to affected behavior:
   interactions, and check affected mobile layouts. The container-local URL is a
   self-check address, not the user-facing preview link.
 - **Roles/auth:** test relevant Preview, deployed union/empty/unknown roles,
-  malformed/missing/wrong-App visitor headers, machine caller restrictions,
+  malformed/missing/wrong-App visitor headers, machine identities rejected,
   and unauthenticated cases from the contract reference. Verify service data
   scope and change-event visibility separately from menu/action permissions.
 - **Persistence:** prove supported operations through HTTP, validation and
@@ -294,11 +296,11 @@ otherwise inspect available logs/tools and report unavailable verification.
 ## Preview Member Repair
 
 For a scoped member-picker repair, preserve business code and data while
-updating the selected SDK vendor archive, dependency and lockfile together.
-Use the SDK bundled with the selected scaffold (0.10.1 at v30).
+updating the selected SDK dependency and lockfile together.
+Use the SDK version the selected scaffold pins (0.11.0 at v35).
 For pre-v27 Apps this also requires the coordinated auth/data/stream migration
 in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
-Do not install this archive alone into code that still uses removed SDK APIs.
+Do not install this SDK alone into code that still uses removed SDK APIs.
 If a narrow repair does not authorize that migration, keep a compatible SDK
 and report the concrete upgrade dependency instead of expanding the scope.
 Remove only publish-state guards that block draft member selection; retain
