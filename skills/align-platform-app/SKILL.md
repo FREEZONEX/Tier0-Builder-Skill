@@ -139,6 +139,11 @@ weaken a gate to reconcile contradictory guidance.
   a cover. Register root paths only; report local files and remote metadata sync
   separately. Sizes, dimensions, and identity details live in the reference.
 
+For in-scope reference fields or document lifecycle alignment, read
+[document field alignment](references/document-field-alignment.md). Preserve
+existing business state meanings and history; missing upstream APIs or changed
+workflow semantics must not be hidden by a marker-only update.
+
 ## Verify The Changed Behavior
 
 Use the scaffold's full `npm run build`, including automatic postbuild checks;

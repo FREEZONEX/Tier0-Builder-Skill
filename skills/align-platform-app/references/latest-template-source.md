@@ -95,3 +95,17 @@ When updating this Skill against a new commit:
 
 Check freshness when a task needs it. This guidance does not schedule a recurring
 job or require a network refresh for unrelated product edits.
+
+## Reference and lifecycle capability snapshot (2026-10-20)
+
+Scaffold PR #89 was verified OPEN at
+`c221b50e91308835fad97ffdad2ef05bd35f862c`; it is not a merged-main baseline.
+It adds ReferenceInput code display/confirmation text and persistent search icon,
+`widget.stateManagement`, protected MetaForm rendering, lifecycle definitions /
+transaction execution helpers and LifecycleActions. See
+[document-field-alignment.md](document-field-alignment.md) for affected surfaces.
+Its marker remains `{ "version": 7, "ref": "3a96b2b" }`, so marker equality does
+not prove these capabilities are present. Record actual source SHA and inspect
+files. Recheck PR/main before alignment; use main by default, this candidate only
+when explicitly selected. Do not bump the app marker or switch targets merely
+because newer Skill instructions mention these APIs.
