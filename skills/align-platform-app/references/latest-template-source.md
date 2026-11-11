@@ -4,23 +4,28 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-11 at `de125195200abca3974240a55260f2011824bc1e`
-(scaffold PR #139). Its `package.json.tier0Scaffold` is
-`{ "version": 36, "ref": "9e53884" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-11 at `ffe0b53e1056357d502707568843762f8d074451`
+(scaffold PR #142). Its `package.json.tier0Scaffold` is
+`{ "version": 37, "ref": "cb679d7" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
-`vendor/`, and v36 drops the scaffold test of the default `canSeeChange`
-rule, whose tests belong to the App. v31 was an intermediate stamp inside the
-v32 change and never landed separately.
+`vendor/`, v36 drops the scaffold test of the default `canSeeChange` rule,
+whose tests belong to the App, and v37 moves to SDK 0.12.2 and keeps handled
+API failures inside the App: `requestJson()` no longer sends a 5xx to the
+Builder preview as a blocking error (scaffold PR #141). v31 was an
+intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.11.0"`, the exact npm release of the
-employee-only SDK that v32–v34 shipped as the local `0.10.1-aenv.13` archive.
-Install it with npm from that spec and reconcile the lockfile: `resolved`
-`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.11.0.tgz`, integrity
-`sha512-GAjwCPNpwuOLIrgz9l5GGT4skrBGZ4aAfBj/1mTg4zaZoPN0RZTxpyZXJXYYCIcp+aibM2zhzBt1IgEeMPw9fg==`.
+The dependency is `"@tier0/sdk-v2": "0.12.2"`, an exact npm release. Like
+0.11.0 and the local `0.10.1-aenv.13` archive of v32–v34, it accepts only
+employee visitors. Install it with npm from that spec and reconcile the
+lockfile: `resolved`
+`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.12.2.tgz`, integrity
+`sha512-PY3UmSF5wwQbGYtKoEfBVHHgjXZVSJ3XOOaAg2yb5wWjHvJvOUaNiGoXbnHkjf8BNsZfqZlGsiwdJ4Jnr1Zq2g==`.
 It keeps SDK 0.10.1's Backend contract
-`07ef8cd30a5465a98c8e6ee0892d02360aee8761`.
+`07ef8cd30a5465a98c8e6ee0892d02360aee8761` and updates the Source/Stream
+public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
+request contracts may omit both `sideEffect` and `idempotency`.
 Source compatibility is not evidence of deployment or live authorization.
 
 The repository commit is the inspected tree; the marker's `ref` is the content

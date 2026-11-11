@@ -13,15 +13,15 @@ Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `de125195200abca3974240a55260f2011824bc1e`, marker
-  `{ "version": 36, "ref": "9e53884" }`; runtime deployment not verified.
+  `ffe0b53e1056357d502707568843762f8d074451`, marker
+  `{ "version": 37, "ref": "cb679d7" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v36 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v37 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.11.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.12.2, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -29,7 +29,7 @@ Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v36 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v37 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,16 +246,16 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v36
+## Cloud Apps At v30 → v37
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v36 SDK. Bring these over together:
+this section; install only the v37 SDK. Bring these over together:
 
-- SDK (v35): set `@tier0/sdk-v2` to the target's exact npm version (`0.11.0`)
-  and reconcile the lockfile so its entry resolves from the npm registry.
-  Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the v32–v34
-  `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses it.
-  Check the lockfile entry against
+- SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
+  (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
+  registry. Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the
+  v32–v34 `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses
+  it. Check the lockfile entry against
   [latest-template-source.md](latest-template-source.md).
 - Employee-only visitors (v32): delete `src/lib/webhooks.ts` and take the
   target's locked `src/start.ts`, `src/lib/auth.ts`, `src/lib/visitor.test.ts`
@@ -276,6 +276,12 @@ this section; install only the v36 SDK. Bring these over together:
   If `tests/record-changes.test.ts` still has the "lets every change through
   until the App defines its rules" case and the App has its own rule, delete
   that case or make it test the App's rule.
+- API failures (v37): take the target's `src/lib/hooks-contracts.test.mjs`
+  and `docs/ui-rules.md`. In `src/lib/utils.ts`, remove the `sendPreviewError`
+  import and the 5xx `sendPreviewError(..., "network")` branch of
+  `requestJson()` and keep the App's other edits to that file. Pages whose
+  data loads relied on that blocking preview card must show the failure in the
+  affected `AsyncView` or form.
 - Refresh root `AGENTS.md`, `docs/platform-integration.md` and
-  `docs/role-registration.md` as the entrypoint describes, then write the v36
+  `docs/role-registration.md` as the entrypoint describes, then write the v37
   marker only after full verification.

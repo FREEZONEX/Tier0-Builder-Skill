@@ -2,7 +2,7 @@
 
 用于需求整理、工业企业应用构建、平台迁移、响应式设计和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
 
-本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v36，App 数据存于 Tier0 UNS collections），平台 SDK 使用脚手架精确锁定的 npm 版本 `@tier0/sdk-v2` 0.11.0。具体 commit 和锁文件校验值见 align 的 latest-template-source。SDK 的使用技能随 SDK 包安装（入口 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`，下设领域子 Skill），不在本仓库维护。
+本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v37，App 数据存于 Tier0 UNS collections），平台 SDK 使用脚手架精确锁定的 npm 版本 `@tier0/sdk-v2` 0.12.2。具体 commit 和锁文件校验值见 align 的 latest-template-source。SDK 的使用技能随 SDK 包安装（入口 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`，下设领域子 Skill），不在本仓库维护。
 
 ## 快速安装到 Codex
 
@@ -123,10 +123,11 @@ Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，
 scripts/console-upload.sh skill align-platform-app app-builder   # 每个 skill 打一个 zip 导入，再逐文件比对 sha256
 scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin 云分支
 scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、登录、调 GET，不写入
+scripts/console-upload.sh categories                             # 只把启用中、仍指向上一版脚手架模板的 App 分类切到当前默认模板
 ```
 
 - Skill：导入后打印线上 seq 和每个文件的 MATCH / MISMATCH。内容没变时不会产生新版本。线上被钉版本或已停用的 skill 只报告，不会自动处理。
-- 脚手架：线上已有相同 `tier0Scaffold` version 和 ref 的模板时不再上传。上传后核对版本无误，才设为默认模板。最后列出没有指向新默认模板的 App 分类，只报告，不修改。
+- 脚手架：线上已有相同 `tier0Scaffold` version 和 ref 的模板时不再上传。上传后核对版本无误，才设为默认模板。然后把启用中、仍指向原默认模板的 App 分类切到新模板，并读回核对；停用的分类和指向其他模板的分类只报告，不修改。
 - 任何一步失败都会以非零状态退出，并打印失败的步骤；写接口不会自动重试。
 
 前置条件：
