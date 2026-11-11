@@ -114,3 +114,30 @@ Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，
 - **避免重复**：如果已经通过安装器安装过技能，使用安装器报告的路径更新，不要再向另一个技能目录安装同名副本。
 - **卸载**：从实际安装目录移走对应的技能文件夹即可，不需要删除项目源码。
 - **未发现技能**：检查是否存在 `<技能目录>/<技能名>/SKILL.md`、配套目录是否完整，然后重启 Codex 再检查。
+
+## 上传到 test Agent-Console（维护者）
+
+`scripts/console-upload.sh` 用 Agent-Console 的管理接口上传，代替在页面上手动拖 zip。内容只取 `origin/feature/cloud-new-architecture-migration`，不会打包本地未提交的改动，上传前会打印 commit。
+
+```bash
+scripts/console-upload.sh skill align-platform-app app-builder   # 每个 skill 打一个 zip 导入，再逐文件比对 sha256
+scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin 云分支
+scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、登录、调 GET，不写入
+```
+
+- Skill：导入后打印线上 seq 和每个文件的 MATCH / MISMATCH。内容没变时不会产生新版本。线上被钉版本或已停用的 skill 只报告，不会自动处理。
+- 脚手架：线上已有相同 `tier0Scaffold` version 和 ref 的模板时不再上传。上传后核对版本无误，才设为默认模板。最后列出没有指向新默认模板的 App 分类，只报告，不修改。
+- 任何一步失败都会以非零状态退出，并打印失败的步骤；写接口不会自动重试。
+
+前置条件：
+
+- 本机装有 `kubectl`、`jq`、`curl`、`python3`。脚本会临时起一个 `kubectl port-forward svc/agent-console`，结束时自动关掉。
+- kubeconfig 放在 `~/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf`（context `tier0-dev-ack-liangyuqing`，namespace `default`）。
+- 凭据文件 `~/.claude/secrets/console.env`，权限 600，不要放进任何仓库。账号需要是 test 上 owner 或 admin 的员工账号，且没有开 MFA：
+
+  ```bash
+  CONSOLE_ACCOUNT=<员工账号>
+  CONSOLE_PASSWORD=<明文密码，脚本发送前会做 SHA-256>
+  ```
+
+脚手架默认从 `~/Documents/Projects/Tier0-App-Scaffold` 读取，可以用环境变量 `SCAFFOLD_REPO` 指定其他路径。
