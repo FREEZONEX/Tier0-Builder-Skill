@@ -4,18 +4,22 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-10 at `ee6f30682954e737fa55b38ba2f20a50953b3c9a` (SDK 0.10.1 companion
-branch `codex/sdk-0101-harness`, pending merge into the canonical cloud branch).
-Its `package.json.tier0Scaffold` is `{ "version": 30, "ref": "5d1fc93" }`.
-For a latest-scaffold request, inspect the canonical branch; do not assume this
-companion commit is merged or deployed. An explicit v30 target can select this
-commit. v30 supersedes v29's mandatory external-collection confirmation with
-SDK 0.10.1's scoped Builder management workflow.
+Inspected on 2026-11-11 at `28c8e5c2b85b22ace4b29e1d462e8cd23a2cdfe2`
+(scaffold PR #135). Its `package.json.tier0Scaffold` is
+`{ "version": 34, "ref": "b5a0e75" }`. Since v30 (`5d1fc93`), v32 accepts
+only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
+non-empty `name` for every `roles.json` role, and v34 adds `server-url.mjs`
+for the forwarded request origin. v31 was an intermediate stamp inside the
+v32 change and never landed separately.
 
-The dependency is `file:vendor/tier0-sdk-v2-0.10.1.tgz`, the unchanged npm
-release archive. Copy the archive, dependency spec and reconciled lockfile
-together. SHA-256: `667e700c16f679b8284627a53fddc01a4092a277bca3652d91788c10ab5ab945`.
-SDK 0.10.1 records Backend contract `07ef8cd30a5465a98c8e6ee0892d02360aee8761`.
+The dependency is `file:vendor/tier0-sdk-v2-0.10.1-aenv.13.tgz`, the local
+employee-only build from Tier0-sdk-v2 PR #82. It is not published to npm:
+copy the archive from the target scaffold's `vendor/` with the dependency spec
+and reconcile the lockfile; never `npm install` it by version. SHA-256:
+`8015b3f0affef3f1942bbfb2c6000a2a1dcf00af428042ce87e628ceea4dd6b4`; lockfile
+integrity `sha512-NwsepKS9mn30yQaz6Zf8+ddPrSoUhqVb3CKZejKjDZ4LECi14GvzHuz+y6gmZ0AKtr+zyMQF96QSRO7sRqbiCg==`.
+It keeps SDK 0.10.1's Backend contract
+`07ef8cd30a5465a98c8e6ee0892d02360aee8761`.
 Source compatibility is not evidence of deployment or live authorization.
 
 The repository commit is the inspected tree; the marker's `ref` is the content
@@ -76,8 +80,8 @@ Read the relevant current files and their changes since the app's known base:
 | --- | --- |
 | Generation/design | `AGENTS.md`, `DESIGN.md`, `src/styles/globals.css`, affected components |
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
-| Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
-| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{visitor,auth,server-fn-policy,webhooks,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
+| Runtime/routing | `server.mjs`, `server-url.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests, `tests/server-url.test.mjs` |
+| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{visitor,auth,server-fn-policy,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
 | Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (abort signal), `src/lib/change-visibility.ts`, `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, `vendor/README.md`, referenced SDK archive, `tests/app-streams.test.ts`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 

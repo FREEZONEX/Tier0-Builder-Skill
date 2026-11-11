@@ -257,14 +257,15 @@ For the whole app, verify:
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
   `^[a-z]+(_[a-z]+)*$`; every matrix role, including a business-defined
-  `admin`, appears in `roles.json`. Role-count guidance is advisory; no source
-  role is silently lost, broadened, collapsed, or left with zero permissions.
+  `admin`, appears in `roles.json` with a non-empty `name`. Role-count
+  guidance is advisory; no source role is silently lost, broadened,
+  collapsed, or left with zero permissions.
 - Role tests cover preview view-as with one and several selected roles
   (permission union); deployed permission union across
   `app_roles` from `X-Tier0-Visitor`; `active_role` display ordering; known plus
   trusted unknown roles; explicit deployed empty roles; preview without a
   selected role (zero permissions); malformed/missing/wrong-App visitor headers
-  and machine callers outside declared webhook paths. Authorization never uses
+  and machine identities, rejected on every path. Authorization never uses
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or
   refresh; the App never writes role state optimistically.

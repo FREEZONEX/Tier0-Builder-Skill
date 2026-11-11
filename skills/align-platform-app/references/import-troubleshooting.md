@@ -65,7 +65,11 @@ Check:
 
 - `server.mjs` still points to the built server entry.
 - `artifact.toml` still runs `node server.mjs` in production and checks
-  `/api/health`.
+  `/api/health`, and its `include` lists every file `server.mjs` imports
+  (`server-url.mjs` at v34).
+- Same-origin POSTs rejected as cross-origin after deployment mean
+  `server.mjs` still builds the request URL from `Host`; use the target's
+  `requestBaseUrl(...)` from `server-url.mjs`.
 - Build output exists where the runtime expects it.
 - Browser-only libraries are not executed during SSR.
 - Client and mixed modules do not statically pull Node-only dependencies into the
@@ -239,8 +243,12 @@ changes. Then verify:
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
 every business role is synchronized across `PERMISSION_MATRIX`,
-`ROLE_METADATA`, and `roles.json`, and every `role_key` matches
-`^[a-z]+(_[a-z]+)*$`.
+`ROLE_METADATA`, and `roles.json`, every `role_key` matches
+`^[a-z]+(_[a-z]+)*$`, and every entry has a non-empty `name`. An import warning
+`roles_invalid` / `roles_failed` or `roles[i].name is required` means no role
+was linked; fix the file as in
+[Platform Role Registration](platform-contract.md#platform-role-registration)
+and sync again.
 
 The current template recommends three roles for a first version; it does not
 cap migrated business roles. Preserve distinct scopes, with no reserved role or

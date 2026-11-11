@@ -145,13 +145,15 @@ data contract. Preview shares deployed collections: validation does not
 implicitly authorize resetting data or recreating collections.
 
 Derive business roles from the SRS and register each across the target
-scaffold's required surfaces in one pass. Do not assume a reserved admin role
-or preview fallback. Verify each defined role's intended permissions and the
-current empty-role behavior; preserve roleless scope when appropriate. No
-`root` or Full Access role is generated for development. The current first
-release recommendation is at most three materially distinct business roles;
-it is not a hard limit. Preserve additional roles when business scope requires
-them; never silently discard roles or widen access to satisfy an advisory.
+scaffold's required surfaces in one pass; every `roles.json` entry needs
+`role_key` and a non-empty `name`, not `display_name`. Do not assume a
+reserved admin role or preview fallback. Verify each defined role's intended
+permissions and the current empty-role behavior; preserve roleless scope when
+appropriate. No `root` or Full Access role is generated for development. The
+current first release recommendation is at most three materially distinct
+business roles; it is not a hard limit. Preserve additional roles when
+business scope requires them; never silently discard roles or widen access to
+satisfy an advisory.
 `sync_business_roles` writes nothing when it returns
 `status: "confirmation_required"`: tell the user to confirm or cancel the role
 plan card in the chat and end the turn. Do not retry, change a `role_key` to
@@ -176,8 +178,9 @@ claim that publishing will repair a preview integration failure.
 
 Read `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md` and the
 relevant nested domain Skill; use the selected scaffold's installed SDK.
-v30 pins the bundled
-`@tier0/sdk-v2@0.10.1`; ordinary feature work does not upgrade it.
+The current pin is recorded once in align-platform-app's
+[latest-template-source.md](../align-platform-app/references/latest-template-source.md);
+ordinary feature work does not upgrade it.
 An older App needing new contracts first uses the authorized alignment scope;
 do not install the new SDK alone or mark a partial repair fully aligned.
 
