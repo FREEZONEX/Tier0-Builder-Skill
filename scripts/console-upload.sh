@@ -3,10 +3,14 @@
 #
 #   console-upload.sh skill <name>... [--dry-run]
 #   console-upload.sh scaffold [<ref>] [--dry-run]
+#   console-upload.sh categories [--dry-run]
 #
 # Content comes only from origin/feature/cloud-new-architecture-migration
-# (or the given scaffold ref), never from the working tree. --dry-run packs,
-# checks limits, logs in and calls only GET endpoints.
+# (or the given scaffold ref), never from the working tree. After setting a
+# new default template, scaffold moves enabled App categories from the old
+# default to it; categories does only that step, from the newest older
+# scaffold template to the current default. --dry-run packs, checks limits,
+# logs in and calls only GET endpoints.
 set -euo pipefail
 
 BRANCH=feature/cloud-new-architecture-migration
@@ -19,7 +23,7 @@ SKILL_REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 MIB=$((1024 * 1024))
 
 usage() {
-  sed -n '4,5s/^# *//p' "$0" >&2
+  sed -n '4,6s/^# *//p' "$0" >&2
   exit 2
 }
 
@@ -49,6 +53,7 @@ ARGS=("${ARGS[@]:1}")
 case $MODE in
   skill) [ ${#ARGS[@]} -ge 1 ] || usage ;;
   scaffold) [ ${#ARGS[@]} -le 1 ] || usage ;;
+  categories) [ ${#ARGS[@]} -eq 0 ] || usage ;;
   *) usage ;;
 esac
 
@@ -241,17 +246,39 @@ run_skills() {
 }
 
 # ----------------------------------------------------------------- scaffold
-print_categories() { # template id the categories should use
-  api GET /app-categories | jq -r --argjson t "$1" '
-    .[] | select(.template_id != $t)
-    | "  category \(.id) \(.display_name | if type == "object" then ([.[]] | first) else . end)"
-      + " enabled \(.enabled) template_id \(.template_id)"' >"$WORK/categories.txt"
-  if [ -s "$WORK/categories.txt" ]; then
-    echo "App categories not on template $1 (not changed):"
-    cat "$WORK/categories.txt"
-  else
-    echo "all App categories use template $1"
+TEMPLATE='"template \(.id) \"\(.name)\" (v\(.scaffold_version) / \(.scaffold_ref))"'
+CATEGORY='"category \(.id) \(.display_name | if type == "object" then ([.[]] | first) else . end) enabled \(.enabled) template_id \(.template_id)"'
+
+# switch_categories OLD NEW: moves enabled App categories on template OLD to
+# NEW (a dry run only lists them) and reports the rest unchanged. OLD is null
+# when nothing should move; NEW is null in a dry run before upload.
+switch_categories() {
+  local old=$1 new=$2 ids id
+  step "app categories"
+  api GET /app-categories >"$WORK/categories.json"
+  ids=$(jq -r --argjson o "$old" '.[] | select(.enabled and .template_id == $o) | .id' \
+    "$WORK/categories.json")
+  [ -n "$ids" ] || [ "$old" = null ] || echo "no enabled category on template $old"
+  for id in $ids; do
+    if [ "$DRY_RUN" = 1 ]; then
+      echo "would switch $(jq -r --arg id "$id" ".[] | select(.id == \$id) | $CATEGORY" \
+        "$WORK/categories.json") to ${new/#null/the new template}"
+    else
+      api PUT "/app-categories/$id" -H 'Content-Type: application/json' \
+        --data "{\"template_id\": $new}" >/dev/null
+      echo "switched category $id from template $old to $new"
+    fi
+  done
+  if [ "$DRY_RUN" = 0 ] && [ -n "$ids" ]; then
+    api GET /app-categories >"$WORK/categories.json"
+    for id in $ids; do
+      jq -e --arg id "$id" --argjson n "$new" '.[] | select(.id == $id and .template_id == $n)' \
+        "$WORK/categories.json" >/dev/null || die "category $id is not on template $new"
+    done
   fi
+  jq -r --argjson o "$old" --argjson n "$new" --argjson dry "$DRY_RUN" "
+    .[] | select(.template_id != \$n and (\$dry == 1 and .enabled and .template_id == \$o | not))
+    | \"not changed: \" + $CATEGORY" "$WORK/categories.json"
 }
 
 run_scaffold() {
@@ -274,19 +301,21 @@ run_scaffold() {
   step "list templates"
   api GET /templates >"$WORK/templates.json"
   local default existing
-  default=$(jq -c '.[] | select(.is_default)' "$WORK/templates.json")
-  echo "online default: $(jq -r '"template \(.id) \"\(.name)\" (v\(.scaffold_version) / \(.scaffold_ref))"' <<<"$default")"
+  default=$(jq -r '.[] | select(.is_default) | .id' "$WORK/templates.json")
+  default=${default:-null}
+  echo "online default: $(jq -r --argjson d "$default" ".[] | select(.id == \$d) | $TEMPLATE" \
+    "$WORK/templates.json")"
   existing=$(jq -r --argjson v "$version" --arg r "$sref" \
     '[.[] | select(.scaffold_version == $v and .scaffold_ref == $r)] | map(.id) | join(" ")' \
     "$WORK/templates.json")
   if [ -n "$existing" ]; then
     echo "v$version / $sref is already online as template $existing; not uploading"
-    print_categories "$(jq -r .id <<<"$default")"
+    switch_categories null "$default"
     return
   fi
   if [ "$DRY_RUN" = 1 ]; then
     echo "would upload v$version / $sref as template \"v$version\", then set it default"
-    print_categories "$(jq -r .id <<<"$default")"
+    switch_categories "$default" null
     return
   fi
 
@@ -307,8 +336,27 @@ run_scaffold() {
   api GET /templates | jq -e --argjson id "$id" '.[] | select(.id == $id and .is_default)' \
     >/dev/null || die "template $id is not default after set-default"
   echo "template $id (v$version / $sref) is default"
-  print_categories "$id"
+  switch_categories "$default" "$id"
 }
 
-if [ "$MODE" = skill ]; then run_skills; else run_scaffold; fi
+run_categories() {
+  connect
+  step "list templates"
+  api GET /templates >"$WORK/templates.json"
+  local current previous
+  current=$(jq -c '.[] | select(.is_default)' "$WORK/templates.json")
+  [ -n "$current" ] || die "no default template"
+  previous=$(jq -c --argjson v "$(jq .scaffold_version <<<"$current")" \
+    '[.[] | select(.scaffold_version != null and .scaffold_version < $v)]
+     | max_by([.scaffold_version, .created_at]) // empty' "$WORK/templates.json")
+  echo "default: $(jq -r "$TEMPLATE" <<<"$current")"
+  echo "previous scaffold: $([ -n "$previous" ] && jq -r "$TEMPLATE" <<<"$previous" || echo none)"
+  switch_categories "$(jq -r '.id // "null"' <<<"${previous:-null}")" "$(jq -r .id <<<"$current")"
+}
+
+case $MODE in
+  skill) run_skills ;;
+  scaffold) run_scaffold ;;
+  categories) run_categories ;;
+esac
 [ "$DRY_RUN" = 0 ] || echo "dry run: no write calls made"
