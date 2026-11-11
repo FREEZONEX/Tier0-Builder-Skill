@@ -57,9 +57,9 @@ Required target invariants:
 
 ## SDK Upgrades
 
-From v35 the scaffold pins `@tier0/sdk-v2` to the exact npm release `0.11.0`.
-Copy that dependency spec and reconcile the authoritative lockfile while
-preserving business dependencies, so the SDK entry resolves from
+From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.12.2`
+at v37). Copy that dependency spec and reconcile the authoritative lockfile
+while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
 Delete an old local SDK archive (`vendor/tier0-sdk-v2-*.tgz`) with its `file:`
