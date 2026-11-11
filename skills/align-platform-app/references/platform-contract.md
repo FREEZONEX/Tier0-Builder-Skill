@@ -57,20 +57,19 @@ Required target invariants:
 
 ## SDK Upgrades
 
-v34 pins `@tier0/sdk-v2` to
-`file:vendor/tier0-sdk-v2-0.10.1-aenv.13.tgz`, a local employee-only build that
-is not published to npm; never `npm install` it by version.
-Use the selected source's archive byte-for-byte and reconcile the dependency
-and authoritative lockfile while preserving business dependencies. Copy a
-template lockfile only for an otherwise matching graph. Verify archive hash,
-lockfile integrity and installed package version separately; source ZIPs must
-include the referenced archive. Honor a user-pinned target.
+v35 pins `@tier0/sdk-v2` to the exact npm release `0.11.0`. Copy that
+dependency spec and reconcile the authoritative lockfile while preserving
+business dependencies, so the SDK entry resolves from registry.npmjs.org. Copy
+a template lockfile only for an otherwise matching graph. Verify lockfile
+integrity and installed package version separately. Delete an old local SDK
+archive (`vendor/tier0-sdk-v2-*.tgz`) with its `file:` spec, and `vendor/`
+itself when nothing else uses it. Honor a user-pinned target.
 
 Pre-v27 Apps need the coordinated visitor, data, change-relay and credential
 migration in [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#cloud-apps-before-v27).
 Updating only the SDK leaves removed imports and can broaden data visibility.
 Managed preview owns installation/restart; exact lockfile installs belong in
-an unmanaged checkout. Read API Skills/types from the actual installed archive.
+an unmanaged checkout. Read API Skills/types from the actual installed package.
 
 Keep server SDK loading through `@/lib/tier0`: `loadTier0Sdk()` for
 `createClient()`, plus `loadTier0OpenApi()`, `loadTier0Files()` and

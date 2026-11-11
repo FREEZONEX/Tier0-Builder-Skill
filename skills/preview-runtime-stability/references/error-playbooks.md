@@ -61,9 +61,9 @@ Fix sequence:
    package; do not hide the conflict with force or legacy-peer flags.
 4. For an unavailable or missing package, verify the intended package name and
    published version before editing the manifest. Copy the exact
-   `@tier0/sdk-v2` dependency spec the scaffold pins, with any `vendor/`
-   archive it references; do not change it to a GitHub reference or another
-   version.
+   `@tier0/sdk-v2` version the scaffold pins; replace an old `file:vendor/...`
+   spec whose archive is missing with it instead of restoring the archive. Do
+   not change it to a GitHub reference or another version.
 5. Regenerate the authoritative lockfile only in a controlled, unmanaged install
    step, then verify an exact install from it.
 6. Restart preview once after the dependency graph resolves so Vite can rebuild

@@ -66,7 +66,7 @@ Check:
 - `server.mjs` still points to the built server entry.
 - `artifact.toml` still runs `node server.mjs` in production and checks
   `/api/health`, and its `include` lists every file `server.mjs` imports
-  (`server-url.mjs` at v34).
+  (`server-url.mjs` from v34).
 - Same-origin POSTs rejected as cross-origin after deployment mean
   `server.mjs` still builds the request URL from `Host`; use the target's
   `requestBaseUrl(...)` from `server-url.mjs`.
@@ -151,8 +151,9 @@ Check:
 
 Browser `client.streams` is retired: move calls behind authenticated App server
 routes following [SDK Upgrades](platform-contract.md#unified-sdk-and-stream-migration).
-Never import Node-only loaders into pages. A missing local tarball means the
-selected scaffold's referenced vendor archive must also be copied.
+Never import Node-only loaders into pages. A missing local tarball means the App
+still has an old `file:vendor/...` SDK spec; set the selected scaffold's exact
+npm version and reconcile the lockfile instead of restoring the archive.
 
 Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
 matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error

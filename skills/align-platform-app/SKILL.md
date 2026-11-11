@@ -58,7 +58,7 @@ writing the marker. An explicit import/migration request still proceeds.
   persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
   SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
   service-authorization and change-relay migration before the v28 SDK can run.
-  Already aligned v28–v29 Apps follow the v30 and v30 → v34 sections for the
+  Already aligned v28–v29 Apps follow the v30 and v30 → v35 sections for the
   SDK and guidance refresh, without another persistence rewrite.
   Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
@@ -202,9 +202,9 @@ acceptance pending/passed" separately.
   while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
-- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
-  scaffold (`file:vendor/tier0-sdk-v2-0.10.1-aenv.13.tgz` at v34, not on
-  npm), then reconcile the authoritative lockfile. `client.streams` and
+- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec from the
+  selected scaffold (npm `0.11.0` at v35), reconcile the authoritative
+  lockfile and delete any old local SDK archive. `client.streams` and
   `Tier0MQClient` run only on the App server; browser pages call
   authenticated App routes. MQTT topics
   must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
@@ -296,11 +296,11 @@ otherwise inspect available logs/tools and report unavailable verification.
 ## Preview Member Repair
 
 For a scoped member-picker repair, preserve business code and data while
-updating the selected SDK vendor archive, dependency and lockfile together.
-Use the SDK bundled with the selected scaffold (0.10.1-aenv.13 at v34).
+updating the selected SDK dependency and lockfile together.
+Use the SDK version the selected scaffold pins (0.11.0 at v35).
 For pre-v27 Apps this also requires the coordinated auth/data/stream migration
 in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
-Do not install this archive alone into code that still uses removed SDK APIs.
+Do not install this SDK alone into code that still uses removed SDK APIs.
 If a narrow repair does not authorize that migration, keep a compatible SDK
 and report the concrete upgrade dependency instead of expanding the scope.
 Remove only publish-state guards that block draft member selection; retain
