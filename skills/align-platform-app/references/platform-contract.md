@@ -57,13 +57,14 @@ Required target invariants:
 
 ## SDK Upgrades
 
-v35 pins `@tier0/sdk-v2` to the exact npm release `0.11.0`. Copy that
-dependency spec and reconcile the authoritative lockfile while preserving
-business dependencies, so the SDK entry resolves from registry.npmjs.org. Copy
-a template lockfile only for an otherwise matching graph. Verify lockfile
-integrity and installed package version separately. Delete an old local SDK
-archive (`vendor/tier0-sdk-v2-*.tgz`) with its `file:` spec, and `vendor/`
-itself when nothing else uses it. Honor a user-pinned target.
+From v35 the scaffold pins `@tier0/sdk-v2` to the exact npm release `0.11.0`.
+Copy that dependency spec and reconcile the authoritative lockfile while
+preserving business dependencies, so the SDK entry resolves from
+registry.npmjs.org. Copy a template lockfile only for an otherwise matching
+graph. Verify lockfile integrity and installed package version separately.
+Delete an old local SDK archive (`vendor/tier0-sdk-v2-*.tgz`) with its `file:`
+spec, and `vendor/` itself when nothing else uses it. Honor a user-pinned
+target.
 
 Pre-v27 Apps need the coordinated visitor, data, change-relay and credential
 migration in [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#cloud-apps-before-v27).

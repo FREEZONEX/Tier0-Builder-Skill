@@ -131,7 +131,8 @@ change; do not move existing data or expand grants to organize directories.
 For App record views, use `useRecordChanges` with collection aliases and reload
 through authorized App APIs on changes and resets. Keep the process-wide
 `createChangeRelay`; adapt `canSeeChange(user, change)` in
-`src/lib/change-visibility.ts` to the same visibility rules as the services.
+`src/lib/change-visibility.ts` to the same visibility rules as the services,
+and add or change its tests with the rule; the scaffold ships none.
 The template allows all events until adapted, and record IDs can disclose
 existence. The filter is synchronous and cannot fetch records: where the
 event metadata cannot establish visibility, withhold the event. Do not use

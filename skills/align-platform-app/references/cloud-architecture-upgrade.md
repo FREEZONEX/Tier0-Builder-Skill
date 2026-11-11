@@ -13,10 +13,10 @@ Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `b5c0950b511147ce44351c4aa075b8d454d27985`, marker
-  `{ "version": 35, "ref": "f1b0d85" }`; runtime deployment not verified.
+  `de125195200abca3974240a55260f2011824bc1e`, marker
+  `{ "version": 36, "ref": "9e53884" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v35 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v36 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v35 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v36 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v35
+## Cloud Apps At v30 → v36
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v35 SDK. Bring these over together:
+this section; install only the v36 SDK. Bring these over together:
 
 - SDK (v35): set `@tier0/sdk-v2` to the target's exact npm version (`0.11.0`)
   and reconcile the lockfile so its entry resolves from the npm registry.
@@ -272,6 +272,10 @@ this section; install only the v35 SDK. Bring these over together:
   the `test:server` script to `postbuild` and `test`.
 - Shell (v35): `src/components/Shell.tsx` hides the sidebar role line when no
   role is assigned; merge it into a customized shell.
+- Change-visibility test (v36): the scaffold no longer tests `canSeeChange`.
+  If `tests/record-changes.test.ts` still has the "lets every change through
+  until the App defines its rules" case and the App has its own rule, delete
+  that case or make it test the App's rule.
 - Refresh root `AGENTS.md`, `docs/platform-integration.md` and
-  `docs/role-registration.md` as the entrypoint describes, then write the v35
+  `docs/role-registration.md` as the entrypoint describes, then write the v36
   marker only after full verification.
