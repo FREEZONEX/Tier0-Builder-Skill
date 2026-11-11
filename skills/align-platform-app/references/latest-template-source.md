@@ -4,19 +4,19 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-10 at `b52dbf47a846dbdafed496f5d0e1ad32b4cf890b`.
-Its `package.json.tier0Scaffold` is
-`{ "version": 29, "ref": "7f2a3f6" }`.
-v29 records the external-collection confirmation workflow; its SDK is unchanged
-from v28.
+Inspected on 2026-11-10 at `ee6f30682954e737fa55b38ba2f20a50953b3c9a` (SDK 0.10.1 companion
+branch `codex/sdk-0101-harness`, pending merge into the canonical cloud branch).
+Its `package.json.tier0Scaffold` is `{ "version": 30, "ref": "5d1fc93" }`.
+For a latest-scaffold request, inspect the canonical branch; do not assume this
+companion commit is merged or deployed. An explicit v30 target can select this
+commit. v30 supersedes v29's mandatory external-collection confirmation with
+SDK 0.10.1's scoped Builder management workflow.
 
-The SDK dependency is `file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz`.
-Copy that archive, dependency spec and reconciled lockfile together. Its SHA-256
-is `2cd25e8df1a78d3aac394cdeda9b2efb07de4278d3b4e48848fce24817713189`;
-the archive was built from SDK commit `171b29f`, not published to npm.
-The v28 change targets Backend `1e6b2d7b6`, `app-key-model/1`; directory
-contracts and rollout dependencies remain in `docs/collection-directory-release.md`.
-These are source dependencies, not evidence of deployment or live authorization.
+The dependency is `file:vendor/tier0-sdk-v2-0.10.1.tgz`, the unchanged npm
+release archive. Copy the archive, dependency spec and reconciled lockfile
+together. SHA-256: `667e700c16f679b8284627a53fddc01a4092a277bca3652d91788c10ab5ab945`.
+SDK 0.10.1 records Backend contract `07ef8cd30a5465a98c8e6ee0892d02360aee8761`.
+Source compatibility is not evidence of deployment or live authorization.
 
 The repository commit is the inspected tree; the marker's `ref` is the content
 commit stamped by the maintainer. After full App alignment passes, copy the
@@ -39,11 +39,12 @@ only production ingress.
 Stream requests/messages and MQTT are server-only. MQTT topics use `appTopic()`
 under the App's own preview/deployed namespace. Platform capabilities are fixed;
 linking external collections or expanding access follows
-[external collection confirmation](platform-contract.md#fixed-app-capabilities-and-external-collections).
+[external collection grant management](platform-contract.md#fixed-app-capabilities-and-external-collections).
 
 Read root `AGENTS.md` with `docs/app-data.md`, `docs/ui-rules.md`,
 `docs/component-kit.md` and `docs/platform-integration.md`. Read API Skills from
-the installed archive's `node_modules/@tier0/sdk-v2/skills/`; do not substitute
+the installed archive's `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`
+and its nested domain Skills; do not substitute
 an older globally installed SDK Skill. MetaListPage remains the default list
 foundation for in-scope UI work; generation heuristics remain advisories.
 

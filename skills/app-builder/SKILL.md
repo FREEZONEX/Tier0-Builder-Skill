@@ -174,8 +174,10 @@ claim that publishing will repair a preview integration failure.
 
 ## Platform Calls
 
-Follow the selected scaffold's dependency and SDK Skills. v28 pins the bundled
-`@tier0/sdk-v2@0.10.0-aenv.11`; ordinary feature work does not upgrade it.
+Read `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md` and the
+relevant nested domain Skill; use the selected scaffold's installed SDK.
+v30 pins the bundled
+`@tier0/sdk-v2@0.10.1`; ordinary feature work does not upgrade it.
 An older App needing new contracts first uses the authorized alignment scope;
 do not install the new SDK alone or mark a partial repair fully aligned.
 
@@ -186,10 +188,19 @@ identity header or App-local session supplies authority.
 
 Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no
-per-App platform policy to configure or approve. Before linking an external
-collection or expanding access, confirm the target collection, purpose and
-required access (read, write, delete) with the user. Use available platform
-tools within the current session's permissions and verify the resulting grant.
+per-App platform policy to configure or approve.
+
+For task-required access to existing collections, built-in Builder uses its
+injected management identity and the installed SDK grant workflow. Verify the
+real target App and collection in the same workspace; use only required access.
+Read the current policy, apply incremental `changes` with `expectedRevision`,
+preserve other grants and disabled status, then verify the committed receipt,
+policy readback and effective access with the App identity. A revision conflict
+requires rereading; an unknown write outcome requires reconciliation before retry.
+Do not request an Owner/Admin role or repeat confirmation solely because this is
+Builder; clarify ambiguous targets or access outside the requested task.
+Backend authorization still applies. Never use an App runtime key to manage
+grants or bypass a 403 by changing credentials or copying collections.
 Grant changes take effect on the next request without republishing.
 
 `client.streams` and `Tier0MQClient` run on the server through lazy SDK loaders.

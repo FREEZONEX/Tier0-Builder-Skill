@@ -58,6 +58,8 @@ writing the marker. An explicit import/migration request still proceeds.
   persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
   SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
   service-authorization and change-relay migration before the v28 SDK can run.
+  Already aligned v28–v29 Apps follow the v30 section for the SDK and guidance
+  refresh, without another persistence rewrite.
   Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
   per-surface inventory, not a version-number shortcut.
@@ -200,14 +202,14 @@ acceptance pending/passed" separately.
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
 - The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec and any referenced archive from the selected
-  scaffold (`file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz` at v28), then reconcile
+  scaffold (`file:vendor/tier0-sdk-v2-0.10.1.tgz` at v30), then reconcile
   the authoritative lockfile. `client.streams` and `Tier0MQClient` run only on
   the App server; browser pages call authenticated App routes. MQTT topics
   must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
   Fixed platform capabilities remain constrained by the key and workspace
   plan. Stream requests need request grants; Stream messages use published
   manifests. Before linking an external collection or expanding access, follow
-  the [external collection confirmation workflow](references/platform-contract.md#fixed-app-capabilities-and-external-collections).
+  the [external collection grant management workflow](references/platform-contract.md#fixed-app-capabilities-and-external-collections).
   Grant changes apply from the next request without republishing. An app
   on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
   the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
@@ -293,7 +295,7 @@ otherwise inspect available logs/tools and report unavailable verification.
 
 For a scoped member-picker repair, preserve business code and data while
 updating the selected SDK vendor archive, dependency and lockfile together.
-Use the SDK bundled with the selected scaffold (0.10.0-aenv.11 at v28).
+Use the SDK bundled with the selected scaffold (0.10.1 at v30).
 For pre-v27 Apps this also requires the coordinated auth/data/stream migration
 in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
 Do not install this archive alone into code that still uses removed SDK APIs.

@@ -57,8 +57,8 @@ Required target invariants:
 
 ## SDK Upgrades
 
-v28 pins `@tier0/sdk-v2` to
-`file:vendor/tier0-sdk-v2-0.10.0-aenv.11.tgz`, not an npm registry release.
+v30 pins `@tier0/sdk-v2` to
+`file:vendor/tier0-sdk-v2-0.10.1.tgz`, the unchanged npm release archive.
 Use the selected source's archive byte-for-byte and reconcile the dependency
 and authoritative lockfile while preserving business dependencies. Copy a
 template lockfile only for an otherwise matching graph. Verify archive hash,
@@ -95,10 +95,18 @@ and `system.info`. `assets/upload`, `system.whoami`, `notifications.get`,
 is refused too. SDK method existence does not establish hosted App access.
 
 The App accesses its own collections and external collections granted to it.
-Before linking an external collection or expanding access, confirm the target
-collection, purpose and required access (read, write, delete) with the user.
-Use available platform tools within the current session's permissions and
-verify the resulting grant. App code uses `data.collection({ collectionId })`
+For task-required access to existing collections, built-in Builder uses its
+injected management identity and the installed SDK grant workflow. Verify the
+real target App and collection in the same workspace; use only required access.
+Read the current policy, apply incremental `changes` with `expectedRevision`,
+preserve other grants and disabled status, then verify the committed receipt,
+policy readback and effective access with the App identity. A revision conflict
+requires rereading; an unknown write outcome requires reconciliation before retry.
+Do not request an Owner/Admin role or repeat confirmation solely because this is
+Builder; clarify ambiguous targets or access outside the requested task.
+Backend authorization still applies. Never use an App runtime key to manage
+grants or bypass a 403 by changing credentials or copying collections.
+App code uses `data.collection({ collectionId })`
 for a granted external collection. A grant or removal applies on the next
 request, without republishing. App-level grants are separate from service-level
 permissions for the current visitor.
