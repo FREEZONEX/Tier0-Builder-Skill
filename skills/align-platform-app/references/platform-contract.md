@@ -58,7 +58,7 @@ Required target invariants:
 ## SDK Upgrades
 
 From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.12.2`
-at v37). Copy that dependency spec and reconcile the authoritative lockfile
+at v38). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
@@ -269,7 +269,9 @@ A resource with list and detail pages uses one of two explicit shapes:
 Do not put a nested detail behind a parent that renders no outlet. The locked
 `route-nesting-contracts` gate fails `npm run build` for invalid shapes, including
 arbitrary dynamic parameter names; fix route structure rather than editing the
-gate.
+gate. An API-only subtree, whose parent and every dynamic child declare `server`
+handlers and no `component`, renders no page and needs no index route; a
+component that renders no outlet still fails.
 
 Declare workspace navigation through `defineNavigationModules`. Each clickable
 leaf must have a unique `href` that resolves to an existing non-API workspace
