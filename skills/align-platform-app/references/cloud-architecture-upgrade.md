@@ -8,15 +8,15 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-12 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `ffe0b53e1056357d502707568843762f8d074451`, marker
-  `{ "version": 37, "ref": "cb679d7" }`; runtime deployment not verified.
+  `8873df769577cfaee95df85582c3b306cecf5581`, marker
+  `{ "version": 38, "ref": "d44f44f" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v37 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v38 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-11 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v37 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v38 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v37
+## Cloud Apps At v30 → v38
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v37 SDK. Bring these over together:
+this section; install only the v38 SDK. Bring these over together:
 
 - SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
@@ -282,6 +282,13 @@ this section; install only the v37 SDK. Bring these over together:
   `requestJson()` and keep the App's other edits to that file. Pages whose
   data loads relied on that blocking preview card must show the failure in the
   affected `AsyncView` or form.
+- Gates (v38): take the target's `scripts/post-build-verify.mjs`,
+  `scripts/gate-integrity.mjs`, `scripts/route-nesting.mjs`,
+  `src/lib/route-nesting-contracts.test.mjs` and `scripts/gate-integrity.json`
+  together with the other locked files that manifest pins. The App build no
+  longer runs `src/lib/template-state.test.mjs`; replace an adapted copy with
+  the target's file and do not add the scaffold-CI `test:template` script to
+  the App.
 - Refresh root `AGENTS.md`, `docs/platform-integration.md` and
-  `docs/role-registration.md` as the entrypoint describes, then write the v37
+  `docs/role-registration.md` as the entrypoint describes, then write the v38
   marker only after full verification.

@@ -4,16 +4,18 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-11 at `ffe0b53e1056357d502707568843762f8d074451`
-(scaffold PR #142). Its `package.json.tier0Scaffold` is
-`{ "version": 37, "ref": "cb679d7" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-12 at `8873df769577cfaee95df85582c3b306cecf5581`
+(scaffold PR #143). Its `package.json.tier0Scaffold` is
+`{ "version": 38, "ref": "d44f44f" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
 `vendor/`, v36 drops the scaffold test of the default `canSeeChange` rule,
-whose tests belong to the App, and v37 moves to SDK 0.12.2 and keeps handled
+whose tests belong to the App, v37 moves to SDK 0.12.2 and keeps handled
 API failures inside the App: `requestJson()` no longer sends a 5xx to the
-Builder preview as a blocking error (scaffold PR #141). v31 was an
+Builder preview as a blocking error (scaffold PR #141), and v38 runs
+`src/lib/template-state.test.mjs` only in scaffold CI, not in the App build,
+and exempts API-only route subtrees from the index-route rule. v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.12.2"`, an exact npm release. Like

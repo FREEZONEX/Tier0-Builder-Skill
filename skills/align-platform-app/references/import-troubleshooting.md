@@ -87,8 +87,8 @@ Do not edit invariant tests, `scripts/post-build-verify.mjs`,
 `scripts/gate-integrity.mjs`, `scripts/runtime-audit.mjs`,
 `scripts/route-smoke.mjs`, or `scripts/gate-integrity.json` to make a migrated
 App pass. When the task is an upstream gate update, use the complete verified
-upstream file/hash set as explained in `platform-contract.md`. At this snapshot, only
-`src/lib/template-state.test.mjs` is App-adaptable.
+upstream file/hash set as explained in `platform-contract.md`. The App build
+does not run `src/lib/template-state.test.mjs`; leave it unchanged.
 
 The locked verifier includes route-nesting, navigation, lifecycle/content, role,
 and responsive contracts. Read the failing assertion and fix App route/UI code;
