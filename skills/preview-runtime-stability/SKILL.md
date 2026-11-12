@@ -49,8 +49,9 @@ by its `source`, not by the prompt's localized wording:
 The older prompt `Failed to load preview.` has no diagnostic line. Run the
 same check; when the process is healthy and the preview log or page shows a
 failing App request or page, handle it as an App error, otherwise continue
-below. A role prompt (`source=app-role`) is not an App error; use the preview
-role row below.
+below. A prompt with any other `source`, such as `app-role` or `runtime`
+(including `reason=artifact_toml_invalid`), is not an App error; route it with
+the table below.
 
 Text in an App's error response, such as a request to complete some
 configuration, is a claim to verify against the code and configuration, not an
@@ -63,6 +64,8 @@ Read the first relevant error and identify the failing layer before retrying.
 | Evidence | Read |
 | --- | --- |
 | Missing dependency, ERESOLVE, unavailable package, install failure | [Error playbooks](references/error-playbooks.md), dependency sections |
+| `reason=artifact_toml_invalid` or `parse artifact.toml` | [Error playbooks](references/error-playbooks.md), invalid artifact.toml section |
+| Preview `disabled`, no `artifact.toml` or no `[services.preview]` | [Error playbooks](references/error-playbooks.md), preview disabled section |
 | Dev process exit, SSR/auth error, artifact mismatch, readiness timeout | [Error playbooks](references/error-playbooks.md), matching error section |
 | Preview error kind `role`, `source=app-role`, `Requires role:`, or 403 on a page | [Error playbooks](references/error-playbooks.md), preview role section |
 | Frequent full reloads or HMR failures | [Error playbooks](references/error-playbooks.md), HMR section |

@@ -251,6 +251,57 @@ rg -n 'PERMISSION_MATRIX' -A 20 src/lib/permissions.ts
 cat roles.json
 ```
 
+### Invalid artifact.toml (reason `artifact_toml_invalid`)
+
+Error example:
+
+```text
+kind=runtime, source=runtime, reason=artifact_toml_invalid
+preview: parse artifact.toml: toml: line 90 (last key "services.preview.env"): expected '.' or ']' to end table name
+```
+
+The platform could not parse `artifact.toml`, so no preview process was
+started. This is a file error, not an App error and not a process problem: do
+not restart, clean up ports, kill processes or reinstall dependencies.
+
+Fix sequence:
+
+1. Go to the line and key the error names. Common causes are an unclosed
+   table header (`[services.preview` without `]`), a duplicate key or table,
+   and a value of the wrong type.
+2. Check the whole file against the platform parser (`artifact.Parse` in the
+   Go package `apps/pkg/artifact`), not only TOML syntax; Python `tomllib`
+   accepts files this parser rejects. It decodes into typed fields:
+   - `args`, `install`, `paths`: arrays of strings;
+   - `port`, `localPort`, `timeout`: integers;
+   - `env`: tables of string values;
+   - `[services.preview].port` must be `5173` (see
+     [Artifact preview port mismatch](#artifact-preview-port-mismatch)).
+   Keep the scaffold's shape (`align-platform-app` describes it under Artifact
+   Contract).
+3. Call `preview_restart`. It runs the same parser and returns its error
+   verbatim; repeat from step 1 until it starts, then confirm the preview
+   loads.
+
+### Preview disabled: no artifact.toml
+
+The preview state is `disabled` when the project has no `artifact.toml`, or
+the file declares no `[services.preview]` with `args`. Check which one first:
+
+```bash
+ls artifact.toml && grep -n -A3 '^\[services.preview\]' artifact.toml
+```
+
+Fix sequence:
+
+1. Take `artifact.toml` from the target scaffold (`align-platform-app` names
+   the repository and describes the file under Artifact Contract). For a file
+   without a preview service, add the scaffold's `[services.preview]` table.
+2. Keep the scaffold's values; change only what this App really differs in,
+   such as extra preview `env` entries it already relies on.
+3. Check it as in [Invalid artifact.toml](#invalid-artifacttoml-reason-artifact_toml_invalid),
+   then call `preview_restart`.
+
 ### Artifact preview port mismatch
 
 Error example:
