@@ -212,9 +212,10 @@ Requires role: <role> or <role>
 HTTP 403 /api/<path>: <detail>
 ```
 
-The Builder preview receives `tier0.preview.error` with kind `role` when a
-route `errorComponent` (`RouteErrorBoundary`) catches a 403 from `requestJson`
-or a server-function error whose message contains `Requires role:`
+The Builder preview receives `tier0.preview.error` with kind `role` when
+`RouteErrorBoundary` (a route's `errorComponent`, or from v39 the router's
+`defaultErrorComponent`) catches a 403 from `requestJson` or a server-function
+error whose message contains `Requires role:`
 (`isPreviewRoleError` in `src/lib/preview-bridge.ts`). The App code ran; the
 roles the preview is viewing as do not grant this page. Do not rewrite the
 page or add a fallback role to clear the error.

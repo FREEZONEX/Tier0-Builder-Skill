@@ -13,10 +13,10 @@ Compared on 2026-11-12 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `8873df769577cfaee95df85582c3b306cecf5581`, marker
-  `{ "version": 38, "ref": "d44f44f" }`; runtime deployment not verified.
+  `90101910ce846b7ee57c2556e7712ec29b50d7d2`, marker
+  `{ "version": 39, "ref": "cd4c70a" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v38 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v39 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-12 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v38 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v39 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v38
+## Cloud Apps At v30 → v39
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v38 SDK. Bring these over together:
+this section; install only the v39 SDK. Bring these over together:
 
 - SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
@@ -289,6 +289,12 @@ this section; install only the v38 SDK. Bring these over together:
   longer runs `src/lib/template-state.test.mjs`; replace an adapted copy with
   the target's file and do not add the scaffold-CI `test:template` script to
   the App.
+- Default error component (v39): in `src/router.tsx`, import
+  `RouteErrorBoundary` from `@/components/ui` and pass it as
+  `defaultErrorComponent` to `createTanStackRouter`, keeping the App's other
+  router options. Copy `tests/route-error-default.test.ts`, add it to the
+  `test:components` script, and take the target's `docs/ui-rules.md`. Existing
+  route `errorComponent`s stay; new pages need none.
 - Refresh root `AGENTS.md`, `docs/platform-integration.md` and
-  `docs/role-registration.md` as the entrypoint describes, then write the v38
+  `docs/role-registration.md` as the entrypoint describes, then write the v39
   marker only after full verification.
