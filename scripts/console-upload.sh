@@ -9,12 +9,11 @@
 # (or the given scaffold ref), never from the working tree. After setting a
 # new default template, scaffold moves enabled App categories from the old
 # default to it; categories does only that step, from the newest older
-# scaffold template to the current default. --dry-run packs, checks limits,
-# logs in and calls only GET endpoints.
+# scaffold template to the current default. --dry-run packs, checks limits
+# and calls only GET endpoints.
 set -euo pipefail
 
 BRANCH=feature/cloud-new-architecture-migration
-SECRETS=$HOME/.claude/secrets/console.env
 KUBECONFIG_FILE=$HOME/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf
 KUBE_CONTEXT=tier0-dev-ack-liangyuqing
 SCAFFOLD_REPO=${SCAFFOLD_REPO:-$HOME/Documents/Projects/Tier0-App-Scaffold}
@@ -59,22 +58,10 @@ esac
 
 WORK=$(mktemp -d)
 PF_PID=
-LOGGED_IN=0
 BASE=
 
 cleanup() {
   local status=$?
-  if [ "$LOGGED_IN" = 1 ]; then
-    local code
-    code=$(curl -sS -o "$WORK/logout.json" -w '%{http_code}' -X POST \
-      -b "$WORK/jar" -c "$WORK/jar" -H "Origin: $BASE" \
-      "$BASE/api/console/auth/logout" || true)
-    if [ "$code" = 200 ]; then
-      echo "logout: ok"
-    else
-      echo "logout: HTTP $code $(jq -r '.message // empty' "$WORK/logout.json" 2>/dev/null)" >&2
-    fi
-  fi
   if [ -n "$PF_PID" ]; then
     kill "$PF_PID" 2>/dev/null || true
     wait "$PF_PID" 2>/dev/null || true
@@ -89,8 +76,7 @@ trap cleanup EXIT
 api() {
   local method=$1 path=$2 code
   shift 2
-  local args=(-sS -o "$WORK/body.json" -w '%{http_code}' -X "$method"
-    -b "$WORK/jar" -c "$WORK/jar")
+  local args=(-sS -o "$WORK/body.json" -w '%{http_code}' -X "$method")
   [ "$method" = GET ] || args+=(-H "Origin: $BASE")
   code=$(curl "${args[@]}" "$@" "$BASE/api$path") || die "$method $path: curl failed"
   if [ "${code#2}" = "$code" ] || [ "$(jq -r '.code // empty' "$WORK/body.json")" != 0 ]; then
@@ -107,12 +93,6 @@ origin_sha() { # repo ref
 
 connect() {
   step connect
-  [ -r "$SECRETS" ] || die "missing $SECRETS"
-  # shellcheck source=/dev/null
-  . "$SECRETS"
-  [ -n "${CONSOLE_ACCOUNT:-}" ] && [ -n "${CONSOLE_PASSWORD:-}" ] ||
-    die "$SECRETS must set CONSOLE_ACCOUNT and CONSOLE_PASSWORD"
-
   local port
   port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
   kubectl --kubeconfig "$KUBECONFIG_FILE" --context "$KUBE_CONTEXT" -n default \
@@ -126,16 +106,6 @@ connect() {
   done
   grep -q 'Forwarding from' "$WORK/pf.log" || die "port-forward not ready"
   echo "port-forward svc/agent-console -> 127.0.0.1:$port"
-
-  step login
-  local pw
-  pw=$(printf %s "$CONSOLE_PASSWORD" | shasum -a 256 | cut -d' ' -f1)
-  CONSOLE_ACCOUNT=$CONSOLE_ACCOUNT PW=$pw jq -n '{account: env.CONSOLE_ACCOUNT, password: env.PW}' |
-    api POST /console/auth/login -H 'Content-Type: application/json' \
-      --data-binary @- >/dev/null
-  LOGGED_IN=1
-  unset pw CONSOLE_PASSWORD
-  echo "login: ok"
 }
 
 # ------------------------------------------------------------------- skills

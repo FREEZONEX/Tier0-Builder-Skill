@@ -122,7 +122,7 @@ Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，
 ```bash
 scripts/console-upload.sh skill align-platform-app app-builder   # 每个 skill 打一个 zip 导入，再逐文件比对 sha256
 scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin 云分支
-scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、登录、调 GET，不写入
+scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、调 GET，不写入
 scripts/console-upload.sh categories                             # 只把启用中、仍指向上一版脚手架模板的 App 分类切到当前默认模板
 ```
 
@@ -133,12 +133,6 @@ scripts/console-upload.sh categories                             # 只把启用�
 前置条件：
 
 - 本机装有 `kubectl`、`jq`、`curl`、`python3`。脚本会临时起一个 `kubectl port-forward svc/agent-console`，结束时自动关掉。
-- kubeconfig 放在 `~/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf`（context `tier0-dev-ack-liangyuqing`，namespace `default`）。
-- 凭据文件 `~/.claude/secrets/console.env`，权限 600，不要放进任何仓库。账号需要是 test 上 owner 或 admin 的员工账号，且没有开 MFA：
-
-  ```bash
-  CONSOLE_ACCOUNT=<员工账号>
-  CONSOLE_PASSWORD=<明文密码，脚本发送前会做 SHA-256>
-  ```
+- kubeconfig 放在 `~/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf`（context `tier0-dev-ack-liangyuqing`，namespace `default`）。Console 不需要登录，能 port-forward 就能调用管理接口。
 
 脚手架默认从 `~/Documents/Projects/Tier0-App-Scaffold` 读取，可以用环境变量 `SCAFFOLD_REPO` 指定其他路径。
