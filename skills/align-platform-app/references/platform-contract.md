@@ -673,8 +673,9 @@ script names. Before declaring migration complete:
 - Preserve invariant tests and scripts named by `scripts/gate-integrity.json`.
   For an authorized upstream scaffold update, replace changed locked files
   together with their matching verified upstream manifest; never locally weaken
-  assertions or recompute hashes to conceal failing App code. At this snapshot, only
-  `src/lib/template-state.test.mjs` is App-adaptable. If a locked gate reports an
+  assertions or recompute hashes to conceal failing App code. Leave
+  `src/lib/template-state.test.mjs` unchanged: it asserts the blank template and
+  runs only in scaffold CI, not in the App build. If a locked gate reports an
   intentional external caller or read-only surface, use its documented marker
   or restructure the App; editing the gate is not the fix.
 - Every mutation API route must have a reachable UI caller through `apiUrl()`,

@@ -250,12 +250,14 @@ acceptance pending/passed" separately.
 
 ## Verify The Changed Behavior
 
-Use the scaffold's full `npm run build`, including automatic postbuild checks;
-`vite build` alone is insufficient. Keep locked tests and verification scripts
-intact. For a requested upstream gate update, take the verified matching upstream
-files/hash set together; do not edit their assertions or hash values merely to
-accept failing app code. Only `template-state.test.mjs` is App-adaptable under
-the current baseline. Nonblocking UI advisories are not build failures.
+Use the scaffold's full `npm run build`; its automatic postbuild checks are the
+App's gate, and `vite build` alone is insufficient. Keep locked tests and
+verification scripts intact. For a requested upstream gate update, take the
+verified matching upstream files/hash set together; do not edit their assertions
+or hash values merely to accept failing app code. Leave
+`src/lib/template-state.test.mjs` as the template ships it: it asserts the blank
+template and runs only in scaffold CI, not in the App build. Nonblocking UI
+advisories are not build failures.
 
 Managed preview owns dependency installation and process startup. Use
 `preview_restart` and the selected scaffold's state/log files; do not race it with manual

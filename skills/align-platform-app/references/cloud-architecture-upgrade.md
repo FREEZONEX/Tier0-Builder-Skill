@@ -282,6 +282,11 @@ this section; install only the v37 SDK. Bring these over together:
   `requestJson()` and keep the App's other edits to that file. Pages whose
   data loads relied on that blocking preview card must show the failure in the
   affected `AsyncView` or form.
+- Blank-template test (v38): take the target's `scripts/post-build-verify.mjs`,
+  `scripts/gate-integrity.mjs` and `scripts/gate-integrity.json` together with
+  the locked files that manifest pins. The App build no longer runs
+  `src/lib/template-state.test.mjs`; replace an adapted copy with the target's
+  file and do not add the scaffold-CI `test:template` script to the App.
 - Refresh root `AGENTS.md`, `docs/platform-integration.md` and
   `docs/role-registration.md` as the entrypoint describes, then write the v37
   marker only after full verification.

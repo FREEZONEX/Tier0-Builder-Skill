@@ -230,10 +230,9 @@ For the whole app, verify:
   Migration-introduced and runtime-risk failures block completion; genuine
   historical non-blocking findings require baseline evidence and a concrete
   follow-up.
-- Locked tests and verification scripts remain unchanged. App-specific template
-  assertions are confined to the current adaptable template-state test. Locked
-  route-nesting and responsive-contract gates pass with App code fixes, not gate
-  edits.
+- Locked tests, verification scripts and `src/lib/template-state.test.mjs`
+  remain unchanged. Locked route-nesting and responsive-contract gates pass with
+  App code fixes, not gate edits.
 - `/api/health` and `/api/manifest` still work.
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
