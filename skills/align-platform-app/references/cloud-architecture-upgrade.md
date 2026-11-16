@@ -8,15 +8,15 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-11-12 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-16 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `90101910ce846b7ee57c2556e7712ec29b50d7d2`, marker
-  `{ "version": 39, "ref": "cd4c70a" }`; runtime deployment not verified.
+  `f6dae579d26d7a03803bb6b944f6dc8e8cd520ba`, marker
+  `{ "version": 40, "ref": "1e81484" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v39 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v40 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-12 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v39 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v40 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v39
+## Cloud Apps At v30 → v40
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v39 SDK. Bring these over together:
+this section; install only the v40 SDK. Bring these over together:
 
 - SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
@@ -295,6 +295,34 @@ this section; install only the v39 SDK. Bring these over together:
   router options. Copy `tests/route-error-default.test.ts`, add it to the
   `test:components` script, and take the target's `docs/ui-rules.md`. Existing
   route `errorComponent`s stay; new pages need none.
-- Refresh root `AGENTS.md`, `docs/platform-integration.md` and
-  `docs/role-registration.md` as the entrypoint describes, then write the v39
-  marker only after full verification.
+- Workspace LLM (v40): add the target's `ai`, `@ai-sdk/react` and
+  `@ai-sdk/openai-compatible` specs, reconcile the lockfile, add `"@ai-sdk/react"`
+  and `"ai"` to `optimizeDeps.include` in `vite.config.ts`, and copy
+  `src/services/ai/provider.ts` and `tests/credential-guidance.test.mjs`
+  (`test:guidance` runs it in postbuild; it reads the provider and the AI
+  guidance in `AGENTS.md` and `docs/platform-integration.md`). An App that needs
+  AI also copies `src/services/ai/chat.ts`, `src/routes/api/ai/chat.ts`,
+  `src/components/ai/` and `tests/ai-chat.test.ts` with the `test:ai` script,
+  then replaces the example tools with its own. An App that does not need AI
+  skips those files and the script but keeps the dependencies and the provider.
+  Do not add `TIER0_LLM_*` to `.env.example`. If the App calls an LLM with its
+  own key, base URL or provider package, move those calls to `tier0Model()`,
+  remove the key and tell the user in the report; the new test fails on them.
+- Shell and component kit (v40, scaffold PR #146): take the target's locked
+  `src/lib/navigation-contracts.test.mjs`, `src/lib/app-chrome.test.mjs` and
+  `scripts/gate-integrity.json`. The navigation test now checks the App's
+  `src/components/Shell.tsx`, so take the target's `Shell.tsx`,
+  `shell-modules.ts`, the new `nav-icons.ts` and the `src/lib/app-chrome.ts` UI
+  copy, then merge the App's own edits back. `defineNavigationModules` now
+  requires an `icon` on every group and leaf: import one from `lucide-react` or
+  name one from `NAV_ICON_LIBRARY`. Take the shipped primitives the v39 → v40
+  diff changes (`src/components/**`, `src/lib/component-kit/`,
+  `src/lib/interaction.ts`, `src/styles/globals.css`), merging where the App
+  edited them, and add `tests/{sort-display,scope-tabs,nav-icons,popover-aria}.test.tsx`
+  to `test:components`. Take the `.tanstack` and preview-output ignore entries
+  in `.gitignore`, `tsconfig.json` and `eslint.config.mjs`.
+- Refresh root `AGENTS.md` (v40 adds "AI Features"),
+  `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
+  `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
+  `DESIGN.md` as the entrypoint describes, then write the v40 marker only after
+  full verification.

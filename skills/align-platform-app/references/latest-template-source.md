@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-12 at `90101910ce846b7ee57c2556e7712ec29b50d7d2`
-(scaffold PR #144). Its `package.json.tier0Scaffold` is
-`{ "version": 39, "ref": "cd4c70a" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-16 at `f6dae579d26d7a03803bb6b944f6dc8e8cd520ba`
+(scaffold PR #148). Its `package.json.tier0Scaffold` is
+`{ "version": 40, "ref": "1e81484" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -15,15 +15,21 @@ whose tests belong to the App, v37 moves to SDK 0.12.2 and keeps handled
 API failures inside the App: `requestJson()` no longer sends a 5xx to the
 Builder preview as a blocking error (scaffold PR #141), v38 runs
 `src/lib/template-state.test.mjs` only in scaffold CI, not in the App build,
-and exempts API-only route subtrees from the index-route rule, and v39 sets
+and exempts API-only route subtrees from the index-route rule, v39 sets
 `RouteErrorBoundary` as the router's `defaultErrorComponent`, so new pages need
-no `errorComponent` of their own. v31 was an
+no `errorComponent` of their own, and v40 adds the workspace LLM: the `ai`,
+`@ai-sdk/react` and `@ai-sdk/openai-compatible` dependencies, `tier0Model()` in
+`src/services/ai/provider.ts`, an example chat that nothing mounts
+(`src/services/ai/chat.ts`, `POST /api/ai/chat`, `ChatPanel`) and a guidance
+test that keeps LLM keys out of App code (scaffold PR #148). v40 also carries
+the Shell navigation icons and component-kit polish of scaffold PR #146, which
+merged after v39 without its own stamp. v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.12.2"`, an exact npm release. Like
-0.11.0 and the local `0.10.1-aenv.13` archive of v32–v34, it accepts only
-employee visitors. Install it with npm from that spec and reconcile the
-lockfile: `resolved`
+The dependency is `"@tier0/sdk-v2": "0.12.2"` (unchanged since v37), an
+exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
+v32–v34, it accepts only employee visitors. Install it with npm from that spec
+and reconcile the lockfile: `resolved`
 `https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.12.2.tgz`, integrity
 `sha512-PY3UmSF5wwQbGYtKoEfBVHHgjXZVSJ3XOOaAg2yb5wWjHvJvOUaNiGoXbnHkjf8BNsZfqZlGsiwdJ4Jnr1Zq2g==`.
 It keeps SDK 0.10.1's Backend contract
@@ -31,6 +37,10 @@ It keeps SDK 0.10.1's Backend contract
 public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
 request contracts may omit both `sideEffect` and `idempotency`.
 Source compatibility is not evidence of deployment or live authorization.
+
+The v40 AI dependencies are caret ranges: `"ai": "^7.0.173"`,
+`"@ai-sdk/react": "^4.0.177"` and `"@ai-sdk/openai-compatible": "^3.0.92"`.
+Copy those specs and reconcile the lockfile like any other dependency.
 
 The repository commit is the inspected tree; the marker's `ref` is the content
 commit stamped by the maintainer. After full App alignment passes, copy the
@@ -56,7 +66,8 @@ linking external collections or expanding access follows
 [external collection grant management](platform-contract.md#fixed-app-capabilities-and-external-collections).
 
 Read root `AGENTS.md` with `docs/app-data.md`, `docs/ui-rules.md`,
-`docs/component-kit.md` and `docs/platform-integration.md`. Read API Skills from
+`docs/component-kit.md`, `docs/operator-ux.md` and `docs/platform-integration.md`
+(its "Calling the workspace LLM" section before AI work). Read API Skills from
 the installed package's
 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md` and its nested domain
 Skills; do not substitute
@@ -89,11 +100,12 @@ Read the relevant current files and their changes since the app's known base:
 
 | Area | Source surfaces |
 | --- | --- |
-| Generation/design | `AGENTS.md`, `DESIGN.md`, `src/styles/globals.css`, affected components |
+| Generation/design | `AGENTS.md`, `DESIGN.md`, `docs/operator-ux.md`, `src/styles/globals.css`, `src/components/{Shell.tsx,shell-modules.ts,nav-icons.ts}`, affected components |
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
 | Runtime/routing | `server.mjs`, `server-url.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests, `tests/server-url.test.mjs` |
 | Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{visitor,auth,server-fn-policy,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
 | Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (abort signal), `src/lib/change-visibility.ts`, `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
+| AI | `src/services/ai/{provider,chat}.ts`, `src/routes/api/ai/chat.ts`, `src/components/ai/`, `vite.config.ts` `optimizeDeps`, `tests/{ai-chat.test.ts,credential-guidance.test.mjs}` |
 | SDK/assets | `src/lib/tier0.ts`, `package.json`, `package-lock.json` SDK entry, `tests/app-streams.test.ts`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
 For the old-main/new-cloud comparison, implementation fingerprints, and

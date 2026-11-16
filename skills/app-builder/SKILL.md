@@ -194,6 +194,14 @@ Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no
 per-App platform policy to configure or approve.
 
+The workspace LLM is a fixed capability too. When the workflow needs AI, use
+the target scaffold's AI module (`AGENTS.md`, "AI Features"): call the LLM only
+on the App server through `tier0Model()` from `@/services/ai/provider` (model
+alias `default`, never a string model id), adapt the shipped `/api/ai/chat`
+route and `ChatPanel` instead of adding another AI stack, and build tools per
+request from the visitor's permissions. The platform supplies the key: do not
+add a third-party provider or LLM key, and do not ask the user for one.
+
 For task-required access to existing collections, built-in Builder uses its
 injected management identity and the installed SDK grant workflow. Verify the
 real target App and collection in the same workspace; use only required access.
