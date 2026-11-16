@@ -88,7 +88,8 @@ sending, files, Stream requests and Stream messages. Effective access is still
 bounded by the key's permissions/mode and workspace plan. No per-App platform
 policy, message-topic settings or publish-time capability confirmation exists.
 
-From v40 every App can also call the workspace LLM from its server through
+From v40 an App can also call the workspace LLM from its server (where the
+environment enables it, i.e. the App env has `TIER0_LLM_BASE_URL`) through
 `tier0Model()` in `@/services/ai/provider` (model alias `default`). That path
 does not use the App's key: the platform injects `TIER0_LLM_BASE_URL` and a
 placeholder `TIER0_LLM_API_KEY`, and its egress adds the workspace key. App code

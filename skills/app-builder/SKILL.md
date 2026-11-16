@@ -194,7 +194,10 @@ Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no
 per-App platform policy to configure or approve.
 
-The workspace LLM is a fixed capability too. When the workflow needs AI, use
+The workspace LLM is available where the platform enables it: the session's
+system prompt then has an "App AI (LLM)" section and the App env carries
+`TIER0_LLM_BASE_URL`. Without both, say AI is not enabled in this environment
+instead of building it. When it is enabled and the workflow needs AI, use
 the target scaffold's AI module (`AGENTS.md`, "AI Features"): call the LLM only
 on the App server through `tier0Model()` from `@/services/ai/provider` (model
 alias `default`, never a string model id), adapt the shipped `/api/ai/chat`
