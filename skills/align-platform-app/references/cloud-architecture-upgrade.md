@@ -13,10 +13,10 @@ Compared on 2026-11-16 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `f6dae579d26d7a03803bb6b944f6dc8e8cd520ba`, marker
-  `{ "version": 40, "ref": "1e81484" }`; runtime deployment not verified.
+  `e663dade7372f6c9b9884fb2b9d18b04ff431172`, marker
+  `{ "version": 41, "ref": "6355b27" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v40 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v41 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-16 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v40 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v41 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v40
+## Cloud Apps At v30 → v41
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v40 SDK. Bring these over together:
+this section; install only the v41 SDK. Bring these over together:
 
 - SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
@@ -321,8 +321,13 @@ this section; install only the v40 SDK. Bring these over together:
   edited them, and add `tests/{sort-display,scope-tabs,nav-icons,popover-aria}.test.tsx`
   to `test:components`. Take the `.tanstack` and preview-output ignore entries
   in `.gitignore`, `tsconfig.json` and `eslint.config.mjs`.
-- Refresh root `AGENTS.md` (v40 adds "AI Features"),
+- Model aliases (v41): take the target's `src/services/ai/provider.ts`,
+  `tests/credential-guidance.test.mjs` and `tests/ai-chat.test.ts` (when the App
+  has it). Only `tier0Model()` (`default`) and `tier0Model("fast")` exist; move
+  any other alias the App passes to one of them (`fast` only for high-volume
+  simple calls such as classify, extract, summarize) and say so in the report.
+- Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases),
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v40 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v41 marker only after
   full verification.

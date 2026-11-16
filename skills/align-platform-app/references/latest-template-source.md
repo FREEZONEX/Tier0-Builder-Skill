@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-16 at `f6dae579d26d7a03803bb6b944f6dc8e8cd520ba`
-(scaffold PR #148). Its `package.json.tier0Scaffold` is
-`{ "version": 40, "ref": "1e81484" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-16 at `e663dade7372f6c9b9884fb2b9d18b04ff431172`
+(scaffold PR #150). Its `package.json.tier0Scaffold` is
+`{ "version": 41, "ref": "6355b27" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -23,7 +23,10 @@ no `errorComponent` of their own, and v40 adds the workspace LLM: the `ai`,
 (`src/services/ai/chat.ts`, `POST /api/ai/chat`, `ChatPanel`) and a guidance
 test that keeps LLM keys out of App code (scaffold PR #148). v40 also carries
 the Shell navigation icons and component-kit polish of scaffold PR #146, which
-merged after v39 without its own stamp. v31 was an
+merged after v39 without its own stamp. v41 adds the model alias `fast` next
+to `default`: `tier0Model(alias: Tier0ModelAlias = "default")` accepts only
+those two and throws on any other name, and the guidance test rejects other
+literal aliases (scaffold PR #150). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.12.2"` (unchanged since v37), an
