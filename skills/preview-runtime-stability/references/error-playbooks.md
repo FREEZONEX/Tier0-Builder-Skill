@@ -104,7 +104,7 @@ Fix sequence:
 Useful checks:
 
 ```bash
-PREVIEW_PORT=5173 HEALTH_PATH=/api/health ./.agents/skills/preview-runtime-stability/scripts/preview_preflight.sh --cleanup
+PREVIEW_PORT=5173 HEALTH_PATH=/api/health bash <skill-dir>/scripts/preview_preflight.sh --cleanup
 rg -n '@/components/(ui|legacy)' src --glob '!routeTree.gen.ts'
 rg -n '@tanstack/react-start/server|from "motion/react"' src --glob '!routeTree.gen.ts'
 rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
