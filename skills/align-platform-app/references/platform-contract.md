@@ -120,7 +120,14 @@ maps injected `TIER0_RUNTIME=preview` to draft roles and `deployed` to published
 roles. Never pass `scope`, set runtime variables in App config, hard-code
 members or block on `published` with a 409/error/"publish first" message.
 Render actual members and a normal empty state for an unassigned role.
-Hosted member responses have no email; use `userName` for labels.
+Hosted member responses carry only `userId`, `nickName`, `status` and
+`avatarUrl`; there is no `email` or `userName`, so label people with
+`nickName`. `avatarUrl` is always present (`""` without an avatar). It is a
+temporary image URL valid for 24h that works directly as an `img` src without
+platform login. Query members again when you need it; store only `userId` in
+business records or session, never the URL. Render it with the scaffold's kit
+`Avatar` (`src`, `name`), falling back to the initial when `avatarUrl` is empty
+or the image fails to load.
 The local `local-app` placeholder cannot perform App-scoped calls.
 
 An App on v1 (`@tier0/sdk`) migrates its remaining callers before removing the
