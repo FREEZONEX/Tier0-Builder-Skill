@@ -58,7 +58,7 @@ Required target invariants:
 ## SDK Upgrades
 
 From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.12.2`
-at v39). Copy that dependency spec and reconcile the authoritative lockfile
+at v40). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
@@ -87,6 +87,14 @@ All Apps have the same platform capabilities: member queries, notification
 sending, files, Stream requests and Stream messages. Effective access is still
 bounded by the key's permissions/mode and workspace plan. No per-App platform
 policy, message-topic settings or publish-time capability confirmation exists.
+
+From v40 an App can also call the workspace LLM from its server (where the
+environment enables it, i.e. the App env has `TIER0_LLM_BASE_URL`) through
+`tier0Model()` in `@/services/ai/provider` (model alias `default`). That path
+does not use the App's key: the platform injects `TIER0_LLM_BASE_URL` and a
+placeholder `TIER0_LLM_API_KEY`, and its egress adds the workspace key. App code
+never holds, configures or asks the user for an LLM key, another base URL or
+provider, and pages call App routes, never the gateway.
 
 The hosted App allowlist includes data operations, `members.listWorkspace`,
 `members.listApp`, `notifications.send`, `client.files` (`assets/files/**`),
