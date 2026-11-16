@@ -31,10 +31,12 @@ by its `source`, not by the prompt's localized wording:
 - `app-route`: an App page failed to render as a whole.
 - `app-document`: the front door wrapped a 5xx from the App document.
 
-1. Check the preview process without cleanup:
+1. Check the preview process without cleanup. `<skill-dir>` is the directory
+   that holds this SKILL.md; run bundled scripts with `bash`, since installed
+   Skill files may not be executable:
 
    ```bash
-   PREVIEW_PORT=5173 HEALTH_PATH=/api/health ./.agents/skills/preview-runtime-stability/scripts/preview_preflight.sh
+   PREVIEW_PORT=5173 HEALTH_PATH=/api/health bash <skill-dir>/scripts/preview_preflight.sh
    ```
 
 2. Exit 0 (a listener on 5173 answers `/api/health` with 2xx): it is an App

@@ -6,7 +6,7 @@ PORT="${PREVIEW_PORT:-5173}"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
-  PREVIEW_PORT="${PORT}" "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null 2>&1 || true
+  PREVIEW_PORT="${PORT}" bash "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null 2>&1 || true
   rm -rf "${TMP_DIR}"
 }
 trap cleanup EXIT
@@ -50,7 +50,7 @@ wait_for_port() {
   return 1
 }
 
-PREVIEW_PORT="${PORT}" "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null 2>&1 || true
+PREVIEW_PORT="${PORT}" bash "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null 2>&1 || true
 
 env PREVIEW_PORT="${PORT}" node "${TMP_DIR}/healthy.mjs" >/tmp/preview-healthy-test.log 2>&1 &
 healthy_pid=$!
@@ -58,7 +58,7 @@ disown "${healthy_pid}" 2>/dev/null || true
 wait_for_port
 
 set +e
-PREVIEW_PORT="${PORT}" "${SCRIPT_DIR}/preview_preflight.sh" >/tmp/preview-preflight-healthy.log 2>&1
+PREVIEW_PORT="${PORT}" bash "${SCRIPT_DIR}/preview_preflight.sh" >/tmp/preview-preflight-healthy.log 2>&1
 healthy_status=$?
 set -e
 if [[ "${healthy_status}" -ne 0 ]]; then
@@ -71,7 +71,7 @@ if ! kill -0 "${healthy_pid}" 2>/dev/null; then
   exit 1
 fi
 
-PREVIEW_PORT="${PORT}" "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null
+PREVIEW_PORT="${PORT}" bash "${SCRIPT_DIR}/preview_stop_process_group.sh" >/dev/null
 wait "${healthy_pid}" 2>/dev/null || true
 
 env PREVIEW_PORT="${PORT}" node "${TMP_DIR}/unhealthy.mjs" >/tmp/preview-unhealthy-test.log 2>&1 &
@@ -80,7 +80,7 @@ disown "${unhealthy_pid}" 2>/dev/null || true
 wait_for_port
 
 set +e
-PREVIEW_PORT="${PORT}" "${SCRIPT_DIR}/preview_preflight.sh" --cleanup >/tmp/preview-preflight-unhealthy.log 2>&1
+PREVIEW_PORT="${PORT}" bash "${SCRIPT_DIR}/preview_preflight.sh" --cleanup >/tmp/preview-preflight-unhealthy.log 2>&1
 cleanup_status=$?
 set -e
 if [[ "${cleanup_status}" -ne 10 ]]; then

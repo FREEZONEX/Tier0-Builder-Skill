@@ -34,7 +34,7 @@ For each session:
 
 ## Bundled Scripts
 
-Use these scripts as reference implementations or direct smoke tests in the sandbox:
+Use these scripts as reference implementations or direct smoke tests in the sandbox. Run them with `bash` from `<skill-dir>`, the directory that holds the Skill's SKILL.md; installed Skill files may not be executable:
 
 - `scripts/preview_preflight.sh` checks the port, probes health, and optionally cleans unhealthy listeners.
 - `scripts/preview_stop_process_group.sh` stops a preview by PID/PGID or by the listener on the preview port.
@@ -45,19 +45,19 @@ Use these scripts as reference implementations or direct smoke tests in the sand
 Run preflight before starting preview:
 
 ```bash
-PREVIEW_PORT=5173 HEALTH_PATH=/api/health ./.agents/skills/preview-runtime-stability/scripts/preview_preflight.sh --cleanup
+PREVIEW_PORT=5173 HEALTH_PATH=/api/health bash <skill-dir>/scripts/preview_preflight.sh --cleanup
 ```
 
 Stop preview robustly:
 
 ```bash
-PREVIEW_PORT=5173 ./.agents/skills/preview-runtime-stability/scripts/preview_stop_process_group.sh
+PREVIEW_PORT=5173 bash <skill-dir>/scripts/preview_stop_process_group.sh
 ```
 
 Run the lifecycle test:
 
 ```bash
-./.agents/skills/preview-runtime-stability/scripts/test_preview_port_lifecycle.sh
+bash <skill-dir>/scripts/test_preview_port_lifecycle.sh
 ```
 
 ## Implementation Notes

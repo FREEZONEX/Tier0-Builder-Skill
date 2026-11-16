@@ -19,7 +19,7 @@ listener_pids() {
     return
   fi
   if command -v fuser >/dev/null 2>&1; then
-    fuser "${PORT}/tcp" 2>/dev/null | tr ' ' '\n' | sed '/^$/d' || true
+    fuser "${PORT}/tcp" 2>/dev/null | awk '{for (i = 1; i <= NF; i++) print $i}' || true
     return
   fi
   if command -v ss >/dev/null 2>&1; then
