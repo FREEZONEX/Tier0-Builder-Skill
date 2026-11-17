@@ -1,0 +1,4 @@
+interface:
+  display_name: "Replace Design System"
+  short_description: "Apply an uploaded design spec to DESIGN.md and restyle the app"
+  default_prompt: "Use $replace-design-system to apply the attached design specification to this app."
