@@ -13,15 +13,15 @@ Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `764a846aebd9d40997f391c06ead0345fa8c908f`, marker
-  `{ "version": 42, "ref": "c8b2e47" }`; runtime deployment not verified.
+  `eb722f62f5ff916470e86814e50fcb9a14e76e8c`, marker
+  `{ "version": 43, "ref": "a8f0eb1" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v42 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v43 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.12.2, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.15.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -29,7 +29,7 @@ Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v42 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v43 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,13 +246,13 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v42
+## Cloud Apps At v30 → v43
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v42 SDK. Bring these over together:
+this section; install only the v43 SDK. Bring these over together:
 
-- SDK (v35, v37): set `@tier0/sdk-v2` to the target's exact npm version
-  (`0.12.2`) and reconcile the lockfile so its entry resolves from the npm
+- SDK (v35, v37, v43): set `@tier0/sdk-v2` to the target's exact npm version
+  (`0.15.0`) and reconcile the lockfile so its entry resolves from the npm
   registry. Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the
   v32–v34 `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses
   it. Check the lockfile entry against
@@ -332,8 +332,15 @@ this section; install only the v42 SDK. Bring these over together:
   `retry` copy in `src/lib/app-chrome.ts`, the `AsyncView` failure cases of
   `tests/component-kit.test.ts` and `docs/ui-rules.md`, merging where the App
   edited them.
-- Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases),
+- Platform avatar (v43): take the target's `src/components/kit/ui/avatar.tsx`,
+  `avatarUrl` in `src/lib/users.ts`, `src/services/user-display.ts`, the user
+  block in `src/components/Shell.tsx`, `tests/user-display.test.ts` and the
+  `Avatar` case of `tests/component-kit.test.ts`, merging where the App edited
+  them. `Avatar` no longer takes `color` or a numeric `size` (only `xs`–`lg`)
+  and shows no initial; update App callers that passed them.
+- Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
+  `avatarUrl`),
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v42 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v43 marker only after
   full verification.
