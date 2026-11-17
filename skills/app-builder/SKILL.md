@@ -176,6 +176,10 @@ the current draft roles, so never ask the user to publish first. App code picks
 people with `members.listApp` at runtime: never hard-code members, pass
 `scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
 `published` flag with a 409 or a "publish first" message.
+Show a member's `avatarUrl` (a 24h image URL, `""` without one) with the kit
+`Avatar`, which has its own User-icon fallback; store only `userId` and query
+again when needed, per align-platform-app's
+[platform contract](../align-platform-app/references/platform-contract.md#members-and-older-sdk-callers).
 If an App member picker is unexpectedly empty, use the draft-members tool to
 compare assignments when available, then inspect the installed SDK, App ID,
 filters and preview runtime. An Agent shell does not necessarily receive the

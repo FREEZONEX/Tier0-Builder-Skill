@@ -57,8 +57,8 @@ Required target invariants:
 
 ## SDK Upgrades
 
-From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.12.2`
-at v42). Copy that dependency spec and reconcile the authoritative lockfile
+From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.15.0`
+at v43). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
@@ -129,7 +129,15 @@ maps injected `TIER0_RUNTIME=preview` to draft roles and `deployed` to published
 roles. Never pass `scope`, set runtime variables in App config, hard-code
 members or block on `published` with a 409/error/"publish first" message.
 Render actual members and a normal empty state for an unassigned role.
-Hosted member responses have no email; use `userName` for labels.
+Hosted member responses have no email (`email` is `""`); label
+`listWorkspace` members with `nickName`, else `userName`, and `listApp` members
+(no `nickName`) with `userName`. From SDK 0.15.0 (v43) both lists carry
+`avatarUrl`, always present (`""` without an avatar): a temporary image URL
+valid for 24h after issue that works directly as an `img` src without platform
+login. Every query signs a new URL, so query members again when you need it;
+store only `userId`, never the URL in a record, session or browser storage.
+Render it with the scaffold's kit `Avatar` (`src`, `name`), which shows a white
+User icon on a dark circle when `avatarUrl` is empty or the image fails to load.
 The local `local-app` placeholder cannot perform App-scoped calls.
 
 An App on v1 (`@tier0/sdk`) migrates its remaining callers before removing the

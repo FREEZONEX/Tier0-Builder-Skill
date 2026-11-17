@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-17 at `764a846aebd9d40997f391c06ead0345fa8c908f`
-(scaffold PR #152). Its `package.json.tier0Scaffold` is
-`{ "version": 42, "ref": "c8b2e47" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-17 at `eb722f62f5ff916470e86814e50fcb9a14e76e8c`
+(scaffold PR #153). Its `package.json.tier0Scaffold` is
+`{ "version": 43, "ref": "a8f0eb1" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -29,19 +29,27 @@ those two and throws on any other name, and the guidance test rejects other
 literal aliases (scaffold PR #150). v42 quiets `AsyncView` load failures:
 one compact line with Retry inside the failed area, the technical message
 behind "Details", and the transient copy chosen by platform error code through
-`isTransientFailure()` in `src/lib/utils.ts` (scaffold PR #152). v31 was an
+`isTransientFailure()` in `src/lib/utils.ts` (scaffold PR #152). v43 moves to
+SDK 0.15.0 and shows the member `avatarUrl` in the Shell user block through the
+kit `Avatar`, a 32px circle that also shows when the sidebar is collapsed;
+`Avatar` falls back to a white User icon on a dark circle when the URL is empty
+or the image fails to load, never an initial (scaffold PR #153). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.12.2"` (unchanged since v37), an
+The dependency is `"@tier0/sdk-v2": "0.15.0"` (since v43), an
 exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
 v32–v34, it accepts only employee visitors. Install it with npm from that spec
 and reconcile the lockfile: `resolved`
-`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.12.2.tgz`, integrity
-`sha512-PY3UmSF5wwQbGYtKoEfBVHHgjXZVSJ3XOOaAg2yb5wWjHvJvOUaNiGoXbnHkjf8BNsZfqZlGsiwdJ4Jnr1Zq2g==`.
+`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.15.0.tgz`, integrity
+`sha512-HzRun6NFFS+Dv2iRsHDxB9pL6CmUx70esvl7JEL1bTHnQZlI5A2iAcFwduPWABT5mZfFY2vZEhuDDKoLDOF13Q==`.
 It keeps SDK 0.10.1's Backend contract
 `07ef8cd30a5465a98c8e6ee0892d02360aee8761` and updates the Source/Stream
 public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
-request contracts may omit both `sideEffect` and `idempotency`.
+request contracts may omit both `sideEffect` and `idempotency`. 0.13.0–0.15.0
+add overlays synchronized from committed Backend `baee1fa`, `8bab074`,
+`1db8a2471` (128 declared collections) and `4cfe83c11` (member `avatarUrl`);
+features that need a newer Backend are refused by older servers without a
+fallback.
 Source compatibility is not evidence of deployment or live authorization.
 
 The v40 AI dependencies are caret ranges: `"ai": "^7.0.173"`,
