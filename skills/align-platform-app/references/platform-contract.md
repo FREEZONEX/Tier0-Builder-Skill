@@ -31,7 +31,9 @@ Required target invariants:
 - Keep `server.mjs` as the production Node entry.
 - Keep `vite.config.ts` as the Vite/TanStack Start configuration source.
 - Keep `src/router.tsx`, `src/start.ts`, and `src/routes/__root.tsx` unless a
-  user explicitly asks for platform-level changes.
+  user explicitly asks for platform-level changes. A kept App `__root.tsx` must
+  still call `useVisitorSync()` from v44; without it role changes silently stop
+  reaching the page.
 - Keep `/api/health` and `/api/manifest` route behavior intact.
 - Do not edit generated `src/routeTree.gen.ts` directly.
 - Do not add Next.js framework patterns.
@@ -58,7 +60,7 @@ Required target invariants:
 ## SDK Upgrades
 
 From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.15.0`
-at v43). Copy that dependency spec and reconcile the authoritative lockfile
+at v44). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.

@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-17 at `eb722f62f5ff916470e86814e50fcb9a14e76e8c`
-(scaffold PR #153). Its `package.json.tier0Scaffold` is
-`{ "version": 43, "ref": "a8f0eb1" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-17 at `c6d922ba8281a1b1fe7cc62303ac4e9e81b514e6`
+(scaffold PR #155). Its `package.json.tier0Scaffold` is
+`{ "version": 44, "ref": "31ab5c5" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -33,7 +33,14 @@ behind "Details", and the transient copy chosen by platform error code through
 SDK 0.15.0 and shows the member `avatarUrl` in the Shell user block through the
 kit `Avatar`, a 32px circle that also shows when the sidebar is collapsed;
 `Avatar` falls back to a white User icon on a dark circle when the URL is empty
-or the image fails to load, never an initial (scaffold PR #153). v31 was an
+or the image fails to load, never an initial (scaffold PR #153). v44 makes
+`useVisitor()` read the `user` in route context, the object the Shell shows,
+and return only `{ visitor }`; `useVisitorSync()` in `src/routes/__root.tsx`
+reloads it (`reloadVisitor()`) when `requestJson` gets a 401/403 on a write,
+when the `useRecordChanges` stream reconnects and on the runtime's `resumed`,
+so the role line and every gate follow the server's current roles (scaffold
+PR #155). v44 also carries scaffold PR #154, merged after v43 without its own
+stamp: the Shell hides the role line when no role names are present. v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.15.0"` (since v43), an
