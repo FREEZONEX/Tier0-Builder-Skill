@@ -199,7 +199,10 @@ do not install the new SDK alone or mark a partial repair fully aligned.
 The platform injects the App's key into its server process; SDK helpers use it.
 App code does not read/log/return it or expose it to the browser. Identity is
 the front door's `X-Tier0-Visitor`, with `app_roles` permission union; no other
-identity header or App-local session supplies authority.
+identity header or App-local session supplies authority. Pages gate UI on
+`useVisitor().visitor` (no `isLoading` / `error`) and send writes through
+`requestJson`, so a refused write reloads the roles; do not fetch
+`/api/auth/me` for roles or poll them.
 
 Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no

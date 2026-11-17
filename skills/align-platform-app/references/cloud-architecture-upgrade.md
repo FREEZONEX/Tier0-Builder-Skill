@@ -13,10 +13,10 @@ Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `feature/cloud-new-architecture-migration`:
-  `eb722f62f5ff916470e86814e50fcb9a14e76e8c`, marker
-  `{ "version": 43, "ref": "a8f0eb1" }`; runtime deployment not verified.
+  `c6d922ba8281a1b1fe7cc62303ac4e9e81b514e6`, marker
+  `{ "version": 44, "ref": "31ab5c5" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v43 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v44 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v43 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v44 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v43
+## Cloud Apps At v30 → v44
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v43 SDK. Bring these over together:
+this section; install only the v44 SDK. Bring these over together:
 
 - SDK (v35, v37, v43): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.15.0`) and reconcile the lockfile so its entry resolves from the npm
@@ -338,9 +338,19 @@ this section; install only the v43 SDK. Bring these over together:
   `Avatar` case of `tests/component-kit.test.ts`, merging where the App edited
   them. `Avatar` no longer takes `color` or a numeric `size` (only `xs`–`lg`)
   and shows no initial; update App callers that passed them.
+- Visitor sync (v44): take the target's `src/lib/use-visitor.ts`, `requestJson`
+  in `src/lib/utils.ts` and `src/lib/record-changes.ts` together, and
+  `tests/visitor-sync.test.tsx` with its `test:components` entry.
+  `useVisitor()` returns `{ visitor }`: `isLoading` and `error` are gone and
+  `visitor` is `null` (not `undefined`) outside the layouts; delete App code
+  that waited on `isLoading` or showed `error`. `src/routes/__root.tsx` must
+  call `useVisitorSync()` in its component, including a customized root;
+  without it `reloadVisitor()` does nothing and the page keeps the roles it
+  loaded with. Take the role-line change in `src/components/Shell.tsx`
+  (scaffold PR #154) the same way.
 - Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
-  `avatarUrl`),
+  `avatarUrl`, v44 the visitor reload),
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v43 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v44 marker only after
   full verification.
