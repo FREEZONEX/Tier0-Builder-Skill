@@ -100,7 +100,9 @@ current App Data contract:
   Verify request grants/manifest directions and `appTopic()` namespaces for
   affected integrations. Do not send real messages solely for a source check.
 - Supported writes survive reload and, where controllable, server restart.
-  Data failures are visible with no browser/mock persistence fallback.
+  Data failures are visible with no browser/mock persistence fallback; load
+  failures render through `AsyncView`, never as a hand-rolled error block, raw
+  `error.message` or an empty state.
 - List adapters preserve capped-count semantics with `toQueryResult` where
   applicable; a capped total is not presented as an exact count.
 - State transitions check expected state and edits use `expectedRevision`.

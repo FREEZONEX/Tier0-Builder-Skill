@@ -113,6 +113,13 @@ using the App's role rules. Keep `runWithAbortSignal` in `src/start.ts`;
 mechanism. Do not reintroduce employee delegation or legacy identity headers.
 Baseline records belong in declaration `seed`, written on collection creation, never service startup or empty reads.
 
+Load client data with `useRequest` / `usePolling` and render it through
+`AsyncView`, which owns load failures: one compact line with Retry, and the
+technical message behind "Details" (target scaffold `docs/ui-rules.md`,
+"Loading, live data and failures"). Do not hand-roll red error panels, large
+warning icons or `error.message` text, do not show a failed load as "No data",
+and do not pick wording by HTTP status or English error text.
+
 Before declaring data, inspect and reuse existing business directories through
 the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
 from the workspace root (1–16 real business-name segments, each ≤63 characters).
@@ -196,6 +203,19 @@ identity header or App-local session supplies authority.
 Members, notification sending, files, Stream requests and messages are fixed
 App capabilities, still bounded by the key and workspace plan. There is no
 per-App platform policy to configure or approve.
+
+The workspace LLM is available where the platform enables it: the session's
+system prompt then has an "App AI (LLM)" section and the App env carries
+`TIER0_LLM_BASE_URL`. Without both, say AI is not enabled in this environment
+instead of building it. When it is enabled and the workflow needs AI, use
+the target scaffold's AI module (`AGENTS.md`, "AI Features"): call the LLM only
+on the App server through `tier0Model()` from `@/services/ai/provider` (alias
+`default`; `tier0Model("fast")` only for clearly high-volume simple calls such
+as classify, extract or summarize; never another name or a string model id),
+adapt the shipped `/api/ai/chat`
+route and `ChatPanel` instead of adding another AI stack, and build tools per
+request from the visitor's permissions. The platform supplies the key: do not
+add a third-party provider or LLM key, and do not ask the user for one.
 
 For task-required access to existing collections, built-in Builder uses its
 injected management identity and the installed SDK grant workflow. Verify the
