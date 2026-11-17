@@ -113,6 +113,13 @@ using the App's role rules. Keep `runWithAbortSignal` in `src/start.ts`;
 mechanism. Do not reintroduce employee delegation or legacy identity headers.
 Baseline records belong in declaration `seed`, written on collection creation, never service startup or empty reads.
 
+Load client data with `useRequest` / `usePolling` and render it through
+`AsyncView`, which owns load failures: one compact line with Retry, and the
+technical message behind "Details" (target scaffold `docs/ui-rules.md`,
+"Loading, live data and failures"). Do not hand-roll red error panels, large
+warning icons or `error.message` text, do not show a failed load as "No data",
+and do not pick wording by HTTP status or English error text.
+
 Before declaring data, inspect and reuse existing business directories through
 the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
 from the workspace root (1–16 real business-name segments, each ≤63 characters).

@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
 `feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-16 at `e663dade7372f6c9b9884fb2b9d18b04ff431172`
-(scaffold PR #150). Its `package.json.tier0Scaffold` is
-`{ "version": 41, "ref": "6355b27" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-17 at `764a846aebd9d40997f391c06ead0345fa8c908f`
+(scaffold PR #152). Its `package.json.tier0Scaffold` is
+`{ "version": 42, "ref": "c8b2e47" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -26,7 +26,10 @@ the Shell navigation icons and component-kit polish of scaffold PR #146, which
 merged after v39 without its own stamp. v41 adds the model alias `fast` next
 to `default`: `tier0Model(alias: Tier0ModelAlias = "default")` accepts only
 those two and throws on any other name, and the guidance test rejects other
-literal aliases (scaffold PR #150). v31 was an
+literal aliases (scaffold PR #150). v42 quiets `AsyncView` load failures:
+one compact line with Retry inside the failed area, the technical message
+behind "Details", and the transient copy chosen by platform error code through
+`isTransientFailure()` in `src/lib/utils.ts` (scaffold PR #152). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.12.2"` (unchanged since v37), an
