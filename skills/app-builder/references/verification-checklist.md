@@ -9,7 +9,8 @@ Use this before reporting a generated app or substantial change as complete.
 - Identify required data models, state transitions, validation, seed behavior,
   service/API paths, and applicable impact confirmation.
 - Register roles across the target scaffold surfaces together. Use installed
-  SDK/helpers and the current bootstrap contract; do not invent platform clients.
+  SDK/helpers and the scaffold data layer (`src/data/collections.ts`,
+  `@/lib/data` in services); do not invent platform clients.
 
 ## Product
 
@@ -68,19 +69,66 @@ Use this before reporting a generated app or substantial change as complete.
 - Preview or route smoke confirms the entry route loads without "Page failed
   to load" or equivalent route-level runtime errors when a preview URL exists.
 - Visible links/actions resolve to implemented routes or in-page behavior.
-- Raw SQL results are normalized before array operations.
 - No unsafe HTML, hardcoded secrets, user-facing platform credential pages, or
   unbounded client trust are introduced.
-- Polling/timers/subscriptions use shared patterns or clean up correctly.
+- App record views use `useRecordChanges` with aliases, not declarations or
+  polling. Changes and `batch.reset` invalidate reads through authorized App
+  APIs; events are not record payloads. `canSeeChange` filters event visibility
+  consistently with service permissions, including record-ID disclosure.
+  No removed `batch.collections` or `restricted` event logic remains. Poll only
+  data subscriptions cannot cover, with cleanup.
+
+## App Data
+
+Apply these checks to the affected data paths using the selected scaffold's
+current App Data contract:
+
+- Collections are declared and listed in `src/data/collections.ts` with
+  per-collection `directoryPath` values grounded in existing directories
+  and the real ISA-95/business scope. Shared data uses a suitable common ancestor;
+  an App/module such as MES may sit below the known factory/line scope, while
+  no default root-level App container or invented equipment replaces that scope.
+  `npm run data:schema` preserves paths and ensure dry-run verifies placement.
+  Existing aliases keep their identity, location and access; path edits do not
+  migrate data. Services use `@/lib/data`. Baseline seeds run only on collection creation, never because
+  a list is empty. Existing collections are not reseeded by changing `seed`.
+- Every platform data call acts as the App. Verify service read/write/field
+  restrictions for each relevant visitor role, separately from UI action gates;
+  use negative cases, not only successful reads. `runWithAbortSignal` preserves
+  request cancellation; detached work preserves its business authorization.
+- Stream and MQTT stay server-side; App routes authorize browser callers.
+  Verify request grants/manifest directions and `appTopic()` namespaces for
+  affected integrations. Do not send real messages solely for a source check.
+- Supported writes survive reload and, where controllable, server restart.
+  Data failures are visible with no browser/mock persistence fallback; load
+  failures render through `AsyncView`, never as a hand-rolled error block, raw
+  `error.message` or an empty state.
+- List adapters preserve capped-count semantics with `toQueryResult` where
+  applicable; a capped total is not presented as an exact count.
+- State transitions check expected state and edits use `expectedRevision`.
+  Exercise a conflict path. Cross-record invariants use one supported atomic
+  operation; independent chunks and `updateMany` are not a global transaction.
+- Unknown write outcomes are reconciled by reading back, not blind resubmission.
+  Keep the SDK's retry/error handling instead of adding App retry loops.
+- Preview writes affect deployed collections too. Use authorized test records,
+  clean up only those records where permitted, and never reset/recreate a
+  collection to make verification pass. Report unavailable runtime checks as
+  pending rather than treating a static build as persistence proof.
 
 ## Roles
 
 - Real business roles from the SRS are registered across every role surface
   the scaffold contract lists (permission matrix, role metadata, platform
   role mirror) in one pass.
-- Template/demo/test roles are replaced, not shipped.
+- No development-only `root` / Full Access or invented role is shipped.
+  Roleless scope remains roleless. Three roles is a first-release recommendation,
+  not a build limit; preserve materially distinct business permissions.
+  Pending role-plan confirmation is reported separately from source completion;
+  preserve role keys and the user's choice about renaming reused roles.
 - No reserved admin role or preview fallback is assumed. Verify current
-  empty-role behavior and each defined role's intended access.
+  empty-role behavior and each defined role's intended access. Cover Preview
+  and deployed multi-role permission union, and verify a missing/unknown role
+  never creates an implicit privilege.
 - Walk the Delivery Map once per defined role: each business role reaches the
   workflows the SRS assigns to it; no role lands on an empty workspace unless
   the SRS says so.

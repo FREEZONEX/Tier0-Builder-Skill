@@ -102,13 +102,146 @@ Cosmetic deviations alone must not block delivery or trigger whole-page
 regeneration; preserve usable work and keep any correction scoped.
 
 Keep controls legible, field groups stable, and dense content within intentional
-scroll regions. Follow the target scaffold's server/client and persistence
-boundaries; normalize raw SQL results with its current helper where required.
+scroll regions. Follow the target scaffold's server/client and data boundaries:
+declare collections in `src/data/collections.ts` and access records only from
+services through `data` from `@/lib/data`. Read the target scaffold's App Data
+contract before implementing persistence. In v28 every data call acts as the
+App; the platform does not filter records by employee. Services receive the
+authenticated visitor and apply read filters, write guards and field visibility
+using the App's role rules. Keep `runWithAbortSignal` in `src/start.ts`;
+`runDetached` is for work that must outlive a request, not an authorization
+mechanism. Do not reintroduce employee delegation or legacy identity headers.
+Baseline records belong in declaration `seed`, written on collection creation, never service startup or empty reads.
+
+Load client data with `useRequest` / `usePolling` and render it through
+`AsyncView`, which owns load failures: one compact line with Retry, and the
+technical message behind "Details" (target scaffold `docs/ui-rules.md`,
+"Loading, live data and failures"). Do not hand-roll red error panels, large
+warning icons or `error.message` text, do not show a failed load as "No data",
+and do not pick wording by HTTP status or English error text.
+
+Before declaring data, inspect and reuse existing business directories through
+the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
+from the workspace root (1–16 real business-name segments, each ≤63 characters).
+Industrial data follows the known ISA-95 equipment hierarchy: Enterprise → Site
+→ Area → Work Center → Work Unit. Use only meaningful known levels; do not
+force five levels, invent facilities, or substitute control activity Levels 0–4.
+Shared data belongs at its suitable common ancestor; other domains use their
+business hierarchy. An App or business-module directory is valid within a known
+scope: for example, Factory → Line → MES → Work orders uses MES as the App
+directory. Do not default to one root-level App container for unrelated data.
+Resolve missing business scope before first creation. Generate the ensure
+payload with `npm run data:schema` and verify placement in its dry-run. A new
+alias without a path fails. Existing aliases stay in place when declarations
+change; do not move existing data or expand grants to organize directories.
+
+For App record views, use `useRecordChanges` with collection aliases and reload
+through authorized App APIs on changes and resets. Keep the process-wide
+`createChangeRelay`; adapt `canSeeChange(user, change)` in
+`src/lib/change-visibility.ts` to the same visibility rules as the services,
+and add or change its tests with the rule; the scaffold ships none.
+The template allows all events until adapted, and record IDs can disclose
+existence. The filter is synchronous and cannot fetch records: where the
+event metadata cannot establish visibility, withhold the event. Do not use
+removed `restricted` flags or collection-level events.
+Use `openEventStream` for other App SSE routes, preserving hidden-page close,
+resume and App-wake handling. Do not poll App records with `refetchInterval`
+or `usePolling`; those are only
+for data subscriptions cannot cover. Preserve capped counts, revision conflicts,
+atomic business operations and unknown-write-outcome handling from the current
+data contract. Preview shares deployed collections: validation does not
+implicitly authorize resetting data or recreating collections.
 
 Derive business roles from the SRS and register each across the target
-scaffold's required surfaces in one pass. Do not assume a reserved admin role
-or preview fallback. Verify each defined role's intended permissions and the
-current empty-role behavior; preserve roleless scope when appropriate.
+scaffold's required surfaces in one pass; every `roles.json` entry needs
+`role_key` and a non-empty `name`, not `display_name`. Do not assume a
+reserved admin role or preview fallback. Verify each defined role's intended
+permissions and the current empty-role behavior; preserve roleless scope when
+appropriate. No `root` or Full Access role is generated for development. The
+current first release recommendation is at most three materially distinct
+business roles; it is not a hard limit. Preserve additional roles when
+business scope requires them; never silently discard roles or widen access to
+satisfy an advisory.
+`sync_business_roles` writes nothing when it returns
+`status: "confirmation_required"`: tell the user to confirm or cancel the role
+plan card in the chat and end the turn. Do not retry, change a `role_key` to
+get around it, or suggest publishing while it waits. The user's next message
+reports the result; after a cancellation, adjust the roles as the user says and
+sync again. You may propose a new name for a reused role but never change its
+`role_key`; the user chooses on the card whether to use the new name. Its
+description is merged with yours.
+
+When you need to know who holds a role, call `list_app_role_members`; it reads
+the current draft roles, so never ask the user to publish first. App code picks
+people with `members.listApp` at runtime: never hard-code members, pass
+`scope`, set `TIER0_RUNTIME` in `artifact.toml` or `.env`, or block on the
+`published` flag with a 409 or a "publish first" message.
+Show a member's `avatarUrl` (a 24h image URL, `""` without one) with the kit
+`Avatar`, which has its own User-icon fallback; store only `userId` and query
+again when needed, per align-platform-app's
+[platform contract](../align-platform-app/references/platform-contract.md#members-and-older-sdk-callers).
+If an App member picker is unexpectedly empty, use the draft-members tool to
+compare assignments when available, then inspect the installed SDK, App ID,
+filters and preview runtime. An Agent shell does not necessarily receive the
+preview process's `TIER0_RUNTIME`. Do not turn API errors into an empty list or
+claim that publishing will repair a preview integration failure.
+
+## Platform Calls
+
+Read `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md` and the
+relevant nested domain Skill; use the selected scaffold's installed SDK.
+The current pin is recorded once in align-platform-app's
+[latest-template-source.md](../align-platform-app/references/latest-template-source.md);
+ordinary feature work does not upgrade it.
+An older App needing new contracts first uses the authorized alignment scope;
+do not install the new SDK alone or mark a partial repair fully aligned.
+
+The platform injects the App's key into its server process; SDK helpers use it.
+App code does not read/log/return it or expose it to the browser. Identity is
+the front door's `X-Tier0-Visitor`, with `app_roles` permission union; no other
+identity header or App-local session supplies authority. Pages gate UI on
+`useVisitor().visitor` (no `isLoading` / `error`) and send writes through
+`requestJson`, so a refused write reloads the roles; do not fetch
+`/api/auth/me` for roles or poll them.
+
+Members, notification sending, files, Stream requests and messages are fixed
+App capabilities, still bounded by the key and workspace plan. There is no
+per-App platform policy to configure or approve.
+
+The workspace LLM is available where the platform enables it: the session's
+system prompt then has an "App AI (LLM)" section and the App env carries
+`TIER0_LLM_BASE_URL`. Without both, say AI is not enabled in this environment
+instead of building it. When it is enabled and the workflow needs AI, use
+the target scaffold's AI module (`AGENTS.md`, "AI Features"): call the LLM only
+on the App server through `tier0Model()` from `@/services/ai/provider` (alias
+`default`; `tier0Model("fast")` only for clearly high-volume simple calls such
+as classify, extract or summarize; never another name or a string model id),
+adapt the shipped `/api/ai/chat`
+route and `ChatPanel` instead of adding another AI stack, and build tools per
+request from the visitor's permissions. The platform supplies the key: do not
+add a third-party provider or LLM key, and do not ask the user for one.
+
+For task-required access to existing collections, built-in Builder uses its
+injected management identity and the installed SDK grant workflow. Verify the
+real target App and collection in the same workspace; use only required access.
+Read the current policy, apply incremental `changes` with `expectedRevision`,
+preserve other grants and disabled status, then verify the committed receipt,
+policy readback and effective access with the App identity. A revision conflict
+requires rereading; an unknown write outcome requires reconciliation before retry.
+Do not request an Owner/Admin role or repeat confirmation solely because this is
+Builder; clarify ambiguous targets or access outside the requested task.
+Backend authorization still applies. Never use an App runtime key to manage
+grants or bypass a 403 by changing credentials or copying collections.
+Grant changes take effect on the next request without republishing.
+
+`client.streams` and `Tier0MQClient` run on the server through lazy SDK loaders.
+Browser pages call App routes that enforce their business permissions. Stream
+requests require request grants; messages use published Stream manifests and
+have no per-App topic list. MQTT uses `appTopic(suffix)` under
+`apps/<TIER0_APP_ID>/<preview|deployed>/`; preview/live messages are isolated,
+even though App records are shared. Do not hard-code IDs, runtime segments,
+broker credentials, or use browser MQTT tokens. `appTopic()` throws outside
+Preview/deployed runtimes; do not spoof `TIER0_RUNTIME` locally.
 
 ## Specialist Routing
 
@@ -116,9 +249,9 @@ current empty-role behavior; preserve roleless scope when appropriate.
   reading, or clipboard access, read
   [browser-platform-capabilities](../browser-platform-capabilities/SKILL.md)
   before choosing the browser API.
-- For an existing UI defect, use `$ui-repair` when available. Use
-  `$responsive-craft` only for complex breakpoint, sticky/scroll, or dedicated
-  multi-viewport work.
+- Fix ordinary UI defects directly using the target scaffold's `DESIGN.md`
+  and existing primitives, keeping the repair scoped. Use `$responsive-craft`
+  only for complex breakpoint, sticky/scroll, or dedicated multi-viewport work.
 - For preview install, process, readiness, or HMR failures, use
   `$preview-runtime-stability` when available.
 

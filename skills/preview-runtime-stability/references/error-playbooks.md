@@ -15,7 +15,7 @@ sh: vite: command not found
 Failed to resolve import "..." — the package is not installed
 ```
 
-This happens when an uploaded or imported project ships **without** `node_modules` (common when a user uploads a zip that excludes dependencies). The Core Diagnosis assumes dependency restore already succeeded; if it did not, no port/health work will help — install first. `node_modules` can also be *partial* after an interrupted install, so treat a missing `node_modules/.bin/vite` or any startup `Cannot find module` as "restore dependencies".
+This happens when an uploaded or imported project ships **without** `node_modules` (common when a user uploads a zip that excludes dependencies). The port and health checks in [Process lifecycle](process-lifecycle.md) assume dependency restore already succeeded; if it did not, no port/health work will help — install first. `node_modules` can also be *partial* after an interrupted install, so treat a missing `node_modules/.bin/vite` or any startup `Cannot find module` as "restore dependencies".
 
 Detect:
 
@@ -60,7 +60,10 @@ Fix sequence:
    target scaffold versions. Resolve, replace, or isolate the incompatible
    package; do not hide the conflict with force or legacy-peer flags.
 4. For an unavailable or missing package, verify the intended package name and
-   published version before editing the manifest.
+   published version before editing the manifest. Copy the exact
+   `@tier0/sdk-v2` version the scaffold pins; replace an old `file:vendor/...`
+   spec whose archive is missing with it instead of restoring the archive. Do
+   not change it to a GitHub reference or another version.
 5. Regenerate the authoritative lockfile only in a controlled, unmanaged install
    step, then verify an exact install from it.
 6. Restart preview once after the dependency graph resolves so Vite can rebuild
@@ -101,13 +104,13 @@ Fix sequence:
 Useful checks:
 
 ```bash
-PREVIEW_PORT=5173 HEALTH_PATH=/api/health ./.agents/skills/preview-runtime-stability/scripts/preview_preflight.sh --cleanup
+PREVIEW_PORT=5173 HEALTH_PATH=/api/health bash <skill-dir>/scripts/preview_preflight.sh --cleanup
 rg -n '@/components/(ui|legacy)' src --glob '!routeTree.gen.ts'
 rg -n '@tanstack/react-start/server|from "motion/react"' src --glob '!routeTree.gen.ts'
 rg -n '@import "shadcn|@import "@/components|@import "@tier0' src/styles
 ```
 
-The second command intentionally over-reports. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
+The `@/components` and `@tanstack/react-start/server` searches intentionally over-report. The scaffold ships its own `src/components/ui`, so only imports of files missing from it are stale. `@tanstack/react-start/server` is allowed in server-route handlers, middleware, `src/lib/auth.ts`, and inside `createServerFn().handler(...)` bodies. `motion/react` is allowed only in the shared `src/lib/motion.ts` wrapper.
 
 ### Tier0 SDK SSR external mismatch
 
@@ -120,44 +123,49 @@ require is not defined in ES module scope
 ReferenceError: exports is not defined in ES module scope
 ```
 
-When the stack points at `@tier0/sdk`, `@tier0/sdk/mq`, or `mqtt` during SSR,
-separate SDK package/export failures from app-code eager loading failures. Read
-the freshly inspected scaffold and installed package metadata instead of
-assuming a historical SDK version. Preserve the current scaffold's SSR external
-and server-side lazy-loading contract so optional platform I/O does not run
-during page initialization.
+When the stack points at `@tier0/sdk-v2` (any subpath, including
+`@tier0/sdk-v2/data`) or `mqtt` during SSR, separate SDK package/export failures
+from app-code eager loading failures. Read the freshly inspected scaffold and
+installed package metadata instead of assuming a historical SDK version.
+Preserve the current scaffold's SSR external and server-side loading contract
+so optional platform I/O does not run during page initialization.
 
 Fix sequence:
 
 1. Open `vite.config.ts`.
-2. Keep `pg` external because it is a Node/Postgres runtime dependency.
-3. Ensure SDK packages are externalized for Vite SSR:
+2. Ensure the SDK and `mqtt` are externalized for Vite SSR; the package name
+   also externalizes its subpaths (`/data`, `/mq`, `/openapi`, ...):
 
 ```ts
 ssr: {
-  external: ["pg", "@tier0/sdk", "mqtt"],
+  external: ["@tier0/sdk-v2", "mqtt"],
 }
 ```
 
-4. Do not add `@tier0/sdk` or `mqtt` to `ssr.noExternal`. Let package exports
+3. Do not add `@tier0/sdk-v2` or `mqtt` to `ssr.noExternal`. Let package exports
    choose the correct runtime condition instead of forcing Vite to rebundle
    SDK internals.
-5. Search for top-level SDK imports in app services, route loaders, pages, or
-   generated wrappers:
+4. Search for SDK imports outside their server-side homes:
 
 ```bash
-rg -n '@/lib/tier0|@tier0/sdk/openapi|@tier0/sdk/mq' src/services src/routes src/components src/lib
+rg -n '@tier0/sdk-v2' src --glob '!routeTree.gen.ts'
 ```
 
-6. If an optional operation such as UNS dispatch, Flow publish, or MQTT command
-   send imports the SDK at module top level, move the SDK call behind
-   `@/lib/tier0` lazy loaders and invoke it only inside the action that needs
-   platform I/O. Top-level imports of lazy helper functions from `@/lib/tier0`
-   are fine; top-level calls to those helpers are not. Do not import SDK values
-   while rendering a page or loading preview.
-7. Do not replace the SDK with fallback MQTT clients or hand-written UNS/Flow
-   fetch wrappers.
-8. Run `npm run build:check` when available.
+   Expected homes: `src/lib/tier0.ts` (lazy loaders), `src/lib/data/**` and
+   `src/services/**` (`@tier0/sdk-v2/data`), `src/start.ts`
+   (`runWithAbortSignal`), and declarations in `src/data/**` or anywhere
+   from `@tier0/sdk-v2/data/define` (browser-safe). A value import of
+   `@tier0/sdk-v2/data` from a route component, component or client hook pulls
+   Node-only code into the browser bundle; `npm run build` flags it.
+5. If an optional platform operation (notification, file upload, MQTT command
+   send) imports the SDK root, `/files` or `/mq` at module top level, move the
+   call behind the `@/lib/tier0` lazy loaders and invoke it only inside the
+   action that needs platform I/O. Top-level imports of lazy helper functions
+   from `@/lib/tier0` are fine; top-level calls to those helpers are not. Do not
+   import SDK values while rendering a page or loading preview.
+6. Do not replace the SDK with fallback MQTT clients or hand-written UNS fetch
+   wrappers; App records go through `data` from `@/lib/data` in services.
+7. Run `npm run build:check` when available.
 
 ### TanStack Start HTTPError 500
 
@@ -173,8 +181,8 @@ Common causes:
 
 1. An API route calls `requireAuth()` or a service that throws `HttpError`, but the handler is not wrapped in `withErrors(...)`.
 2. A service or loader throws `new HttpError(...)` from a route `beforeLoad`, loader, or `createServerFn` where no route error mapper converts it to a Response.
-3. Preview auth headers/session are missing or invalid, so authenticated routes hit an auth error before the UI can render.
-4. `PREVIEW_USER_ROLE` does not exist in `PERMISSION_MATRIX`, so the middleware redirects to `/login` or auth checks fail unexpectedly.
+3. No valid `X-Tier0-Visitor` reached the App, so `requireAuth()` throws 401 on a public path such as `/_serverFn`; other paths already get a 401 JSON from `src/start.ts`. Under local `vite dev` this means `PREVIEW_USER_ID` is unset; in a platform session, a browser request reached the dev server without passing the front door.
+4. The preview role set lacks a role the page requires; that failure reaches the Builder as kind `role`, see [Preview role error](#preview-role-error-kind-role).
 5. A public endpoint needed by preview, especially `/api/health`, was changed to require auth or throw.
 
 Fix sequence:
@@ -182,24 +190,117 @@ Fix sequence:
 1. Identify the request path that returned the JSON error. Do not assume it is `/api/health`.
 2. For `src/routes/api/**`, wrap every handler in `withErrors(...)` and keep the route body thin: auth, parse, service call, `Response.json`.
 3. Keep `HttpError` throwing in services and route handlers only when a `withErrors` boundary will catch it. In page loaders or `createServerFn` calls, return `null`, throw `redirect(...)`, or map the error locally.
-4. Inspect the effective managed preview environment and the latest scaffold.
-   Verify the required session secret and any preview-user fields expected by
-   the current gateway-header plugin; do not assume they must all be committed
-   in `artifact.toml`.
-5. If an effective preview role is supplied, verify that it exactly matches the
-   migrated permission matrix.
-6. Verify `vite.config.ts` keeps the current preview gateway header plugin before
-   `tanstackStart(...)`, so preview requests receive the scaffold's identity
-   headers and signed session cookie.
-7. Keep `/api/health`, `/api/manifest`, and `/api/auth/**` public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
+4. Identity and roles come only from the front door's `X-Tier0-Visitor`; the
+   App has no session cookie or session secret. Keep `src/start.ts`,
+   `src/lib/auth.ts`, `src/lib/visitor.ts`, and the `devFrontDoor()` plugin in
+   `vite.config.ts` as the scaffold ships them.
+5. Keep `/login`, `/api/health`, `/api/manifest`, and the TanStack runtime/build paths public in `src/start.ts`; preview readiness depends on `/api/health` staying unauthenticated.
 
 Useful checks:
 
 ```bash
 rg -n 'requireAuth|HttpError|withErrors' src/routes src/services src/lib
-rg -n 'PREVIEW_USER_ROLE|SESSION_SECRET|PREVIEW_USER_ID' artifact.toml
-rg -n 'PERMISSION_MATRIX|ADMIN_ROLE' src/lib/permissions.ts
+rg -n 'PUBLIC_PATHS' -A 10 src/start.ts
 ```
+
+### Preview role error (kind `role`)
+
+Error examples:
+
+```text
+Requires role: <role> or <role>
+HTTP 403 /api/<path>: <detail>
+```
+
+The Builder preview receives `tier0.preview.error` with kind `role` when
+`RouteErrorBoundary` (a route's `errorComponent`, or from v39 the router's
+`defaultErrorComponent`) catches a 403 from `requestJson` or a server-function
+error whose message contains `Requires role:`
+(`isPreviewRoleError` in `src/lib/preview-bridge.ts`). The App code ran; the
+roles the preview is viewing as do not grant this page. Do not rewrite the
+page or add a fallback role to clear the error.
+
+Preview roles arrive in the `app_roles` of `X-Tier0-Visitor`
+(`runtime: preview`): the set chosen in the preview role picker, one or
+several roles or empty when none is selected. The agent's loopback route smoke
+instead gets the roles in `PREVIEW_USER_ROLE` from `devFrontDoor()`.
+Permissions are the union across that set: `requireAuth("a", "b")` passes when
+any selected role matches, and `can(user.roles, action)` is true when any
+selected role grants the action. A role missing from `PERMISSION_MATRIX`
+contributes zero permissions; with no role selected, the request enters with
+zero roles and every role check fails.
+
+Fix sequence:
+
+1. Read the failing page's role requirements: `requireAuth(...)` arguments in
+   its server functions and API routes, and the `can(...)` actions they check.
+2. Compare them with the selected preview roles. If no selected role is listed
+   there, ask the user to select a role that should have access in the preview
+   role picker, then retry.
+3. If a selected role should have access, grant it in `PERMISSION_MATRIX` or
+   add it to the `requireAuth(...)` list, following the business rules.
+4. If a needed role is absent from the picker, it is not registered. Register
+   it in `src/lib/permissions.ts`, `src/lib/role-metadata.ts`, and `roles.json`
+   together (see the scaffold's `docs/role-registration.md`).
+
+Useful checks:
+
+```bash
+rg -n 'requireAuth\(|can\(' src/routes src/services src/lib --glob '!*.test.*'
+rg -n 'PERMISSION_MATRIX' -A 20 src/lib/permissions.ts
+cat roles.json
+```
+
+### Invalid artifact.toml (reason `artifact_toml_invalid`)
+
+Error example:
+
+```text
+kind=runtime, source=runtime, reason=artifact_toml_invalid
+preview: parse artifact.toml: toml: line 90 (last key "services.preview.env"): expected '.' or ']' to end table name
+```
+
+The platform could not parse `artifact.toml`, so no preview process was
+started. This is a file error, not an App error and not a process problem: do
+not restart, clean up ports, kill processes or reinstall dependencies.
+
+Fix sequence:
+
+1. Go to the line and key the error names. Common causes are an unclosed
+   table header (`[services.preview` without `]`), a duplicate key or table,
+   and a value of the wrong type.
+2. Check the whole file against the platform parser (`artifact.Parse` in the
+   Go package `apps/pkg/artifact`), not only TOML syntax; Python `tomllib`
+   accepts files this parser rejects. It decodes into typed fields:
+   - `args`, `install`, `paths`: arrays of strings;
+   - `port`, `localPort`, `timeout`: integers;
+   - `env`: tables of string values;
+   - `[services.preview].port` must be `5173` (see
+     [Artifact preview port mismatch](#artifact-preview-port-mismatch)).
+   Keep the scaffold's shape (`align-platform-app` describes it under Artifact
+   Contract).
+3. Call `preview_restart`. It runs the same parser and returns its error
+   verbatim; repeat from step 1 until it starts, then confirm the preview
+   loads.
+
+### Preview disabled: no artifact.toml
+
+The preview state is `disabled` when the project has no `artifact.toml`, or
+the file declares no `[services.preview]` with `args`. Check which one first:
+
+```bash
+ls artifact.toml && grep -n -A3 '^\[services.preview\]' artifact.toml
+```
+
+Fix sequence:
+
+1. Take `artifact.toml` from the target scaffold (`align-platform-app` names
+   the repository and describes the file under Artifact Contract). For a file
+   without a preview service, add the scaffold's `[services.preview]` table.
+2. Keep the scaffold's values; change only what this App really differs in,
+   such as extra preview `env` entries it already relies on.
+3. Check it as in [Invalid artifact.toml](#invalid-artifacttoml-reason-artifact_toml_invalid),
+   then call `preview_restart`.
 
 ### Artifact preview port mismatch
 

@@ -2,50 +2,116 @@
 
 ## Canonical Repository
 
-`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`.
-The upstream `main` baseline verified on 2026-10-16 is
-`822dfabf2469bc4d64f6d46f44e79b650fe3ab03` (merged scaffold PR #88).
-Its `package.json.tier0Scaffold` is `{ "version": 7, "ref": "3a96b2b" }`;
-the SDK range remains `^0.5.4`, locked to 0.5.4. The repository commit identifies
-the inspected source; the marker's `ref` identifies the content commit stamped
-by the scaffold maintainer. They need not be equal. After successful app
-alignment, copy the selected scaffold's marker object verbatim, not the merge
-SHA or the Skill package version.
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
+`feature/cloud-new-architecture-migration` (Tier0 cloud).
+Inspected on 2026-11-17 at `c6d922ba8281a1b1fe7cc62303ac4e9e81b514e6`
+(scaffold PR #155). Its `package.json.tier0Scaffold` is
+`{ "version": 44, "ref": "31ab5c5" }`. Since v30 (`5d1fc93`), v32 accepts
+only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
+non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
+the forwarded request origin, v35 installs the SDK from npm and deletes
+`vendor/`, v36 drops the scaffold test of the default `canSeeChange` rule,
+whose tests belong to the App, v37 moves to SDK 0.12.2 and keeps handled
+API failures inside the App: `requestJson()` no longer sends a 5xx to the
+Builder preview as a blocking error (scaffold PR #141), v38 runs
+`src/lib/template-state.test.mjs` only in scaffold CI, not in the App build,
+and exempts API-only route subtrees from the index-route rule, v39 sets
+`RouteErrorBoundary` as the router's `defaultErrorComponent`, so new pages need
+no `errorComponent` of their own, and v40 adds the workspace LLM: the `ai`,
+`@ai-sdk/react` and `@ai-sdk/openai-compatible` dependencies, `tier0Model()` in
+`src/services/ai/provider.ts`, an example chat that nothing mounts
+(`src/services/ai/chat.ts`, `POST /api/ai/chat`, `ChatPanel`) and a guidance
+test that keeps LLM keys out of App code (scaffold PR #148). v40 also carries
+the Shell navigation icons and component-kit polish of scaffold PR #146, which
+merged after v39 without its own stamp. v41 adds the model alias `fast` next
+to `default`: `tier0Model(alias: Tier0ModelAlias = "default")` accepts only
+those two and throws on any other name, and the guidance test rejects other
+literal aliases (scaffold PR #150). v42 quiets `AsyncView` load failures:
+one compact line with Retry inside the failed area, the technical message
+behind "Details", and the transient copy chosen by platform error code through
+`isTransientFailure()` in `src/lib/utils.ts` (scaffold PR #152). v43 moves to
+SDK 0.15.0 and shows the member `avatarUrl` in the Shell user block through the
+kit `Avatar`, a 32px circle that also shows when the sidebar is collapsed;
+`Avatar` falls back to a white User icon on a dark circle when the URL is empty
+or the image fails to load, never an initial (scaffold PR #153). v44 makes
+`useVisitor()` read the `user` in route context, the object the Shell shows,
+and return only `{ visitor }`; `useVisitorSync()` in `src/routes/__root.tsx`
+reloads it (`reloadVisitor()`) when `requestJson` gets a 401/403 on a write,
+when the `useRecordChanges` stream reconnects and on the runtime's `resumed`,
+so the role line and every gate follow the server's current roles (scaffold
+PR #155). v44 also carries scaffold PR #154, merged after v43 without its own
+stamp: the Shell hides the role line when no role names are present. v31 was an
+intermediate stamp inside the v32 change and never landed separately.
 
-This is a verified source snapshot, not a permanent version pin or deployment
-proof. Recheck the selected commit's manifest and authoritative lockfile for
-each alignment; honor a user-selected ref and do not downgrade a newer SDK.
-Since the prior 2026-09-20 v3 snapshot, the relevant additions are the generic
-component kit/provider and its dependencies, component build checks, right-side
-single required markers, and MetaListPage as the default list-page foundation.
-For in-scope UI work, inspect `docs/component-kit.md`, affected components and
-the current `AGENTS.md`; retain application-specific services and permissions.
-The new list default does not require rewriting untouched pages during an
-unrelated platform upgrade.
+The dependency is `"@tier0/sdk-v2": "0.15.0"` (since v43), an
+exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
+v32–v34, it accepts only employee visitors. Install it with npm from that spec
+and reconcile the lockfile: `resolved`
+`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.15.0.tgz`, integrity
+`sha512-HzRun6NFFS+Dv2iRsHDxB9pL6CmUx70esvl7JEL1bTHnQZlI5A2iAcFwduPWABT5mZfFY2vZEhuDDKoLDOF13Q==`.
+It keeps SDK 0.10.1's Backend contract
+`07ef8cd30a5465a98c8e6ee0892d02360aee8761` and updates the Source/Stream
+public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
+request contracts may omit both `sideEffect` and `idempotency`. 0.13.0–0.15.0
+add overlays synchronized from committed Backend `baee1fa`, `8bab074`,
+`1db8a2471` (128 declared collections) and `4cfe83c11` (member `avatarUrl`);
+features that need a newer Backend are refused by older servers without a
+fallback.
+Source compatibility is not evidence of deployment or live authorization.
 
-This Skill covers the existing role/schema/runtime/File Storage contracts and
-adds the SDK 0.5.3 MQTT upgrade path. Preserve the SDK 0.5.1 notification rules,
-including explicit silent-send migration and test/live message mode.
+The v40 AI dependencies are caret ranges: `"ai": "^7.0.173"`,
+`"@ai-sdk/react": "^4.0.177"` and `"@ai-sdk/openai-compatible": "^3.0.92"`.
+Copy those specs and reconcile the lockfile like any other dependency.
 
-SDK PR #33 merged at `d795a4c263ec1a14c7cbd47f0744a29e6ecdeee0`; npm latest was
-verified as 0.5.3 on 2026-09-14. Its published runtime includes the MQTT fixes,
-but the package lacks `check-api-key-compat.mjs` and carries configuration
-reference version 0.2.1 rather than the PR's final 0.2.2. Check actual Skill
-resources before executing a documented diagnostic. Skill reference versions
-are independent of npm package versions; matching version numbers are not a
-publication or compatibility check. These source/package facts do not prove
-Builder has loaded matching guidance or an existing App has upgraded. Recheck
-when freshness matters.
+The repository commit is the inspected tree; the marker's `ref` is the content
+commit stamped by the maintainer. After full App alignment passes, copy the
+marker verbatim, not the merge SHA or a Skill version. This snapshot is not a
+permanent pin: recheck the remote for a latest-scaffold request; a user-selected
+ref or supplied replacement package takes precedence within its chosen scope.
+
+v28 uses SDK data with collections declared in `src/data/collections.ts` and
+the App instance in `src/lib/data/index.ts`. All platform data calls act as the
+App; services enforce the visitor's read/write/field rules. `src/start.ts` passes
+only the request abort signal with `runWithAbortSignal`. Identity comes from
+the front door's plain base64url JSON `X-Tier0-Visitor`, parsed by
+`src/lib/visitor.ts`; no legacy identity-header fallback or JWT/JWKS verifier
+remains. The front door strips client-supplied Tier0 headers and must be the
+only production ingress.
+
+`src/lib/data/changes.ts` uses `createChangeRelay` for one upstream per process;
+`src/lib/change-visibility.ts` filters what each user may learn through
+`/api/uns/subscribe`. `useRecordChanges` reloads through authorized App APIs.
+Stream requests/messages and MQTT are server-only. MQTT topics use `appTopic()`
+under the App's own preview/deployed namespace. Platform capabilities are fixed;
+linking external collections or expanding access follows
+[external collection grant management](platform-contract.md#fixed-app-capabilities-and-external-collections).
+
+Read root `AGENTS.md` with `docs/app-data.md`, `docs/ui-rules.md`,
+`docs/component-kit.md`, `docs/operator-ux.md` and `docs/platform-integration.md`
+(its "Calling the workspace LLM" section before AI work). Read API Skills from
+the installed package's
+`node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md` and its nested domain
+Skills; do not substitute
+an older globally installed SDK Skill. MetaListPage remains the default list
+foundation for in-scope UI work; generation heuristics remain advisories.
+
+Known source inconsistencies: at this SHA, the trust-model paragraph in
+`docs/role-registration.md` still mentions signed tokens, and a paragraph in
+`docs/platform-integration.md` still says Preview/deployed use the same key.
+Use `src/lib/visitor.ts`, `src/start.ts`, the v27/v28 migration sections and
+`docs/app-data.md`: identity is an unsigned trusted-ingress header, and the
+runtime injects separate preview/deployed keys while records remain shared.
+Do not propagate the stale paragraphs or infer production readiness from them.
 
 ## Verify A Target Commit
 
 Prefer a clean reference checkout and preserve the app's working changes.
 Inspect the remote with `git ls-remote` or fetch into a suitable repository,
-then record the exact `origin/main` SHA. Read files using that commit, not a
+then record the exact `origin/feature/cloud-new-architecture-migration` SHA. Read files using that commit, not a
 moving branch across multiple requests. If a temporary clone is needed, use a
 unique directory rather than overwriting a fixed `/tmp` checkout.
 
-A pinned user-selected ref takes precedence over latest `main`. If remote access
+A pinned user-selected ref takes precedence over the latest branch head. If remote access
 is unavailable, identify the cached/package commit and limit freshness claims.
 A version string or previously delivered ZIP filename is not commit evidence.
 
@@ -55,24 +121,23 @@ Read the relevant current files and their changes since the app's known base:
 
 | Area | Source surfaces |
 | --- | --- |
-| Generation/design | `AGENTS.md`, `DESIGN.md`, `src/styles/globals.css`, affected components |
+| Generation/design | `AGENTS.md`, `DESIGN.md`, `docs/operator-ux.md`, `src/styles/globals.css`, `src/components/{Shell.tsx,shell-modules.ts,nav-icons.ts}`, affected components |
 | Dependencies/build | `package.json`, `package-lock.json`, `artifact.toml`, `scripts/post-build-verify.mjs`, `scripts/gate-integrity.json` and its listed files |
-| Runtime/routing | `server.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests |
-| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{auth,gateway,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
-| Persistence | `src/db/{index,schema}.ts`, `src/services/bootstrap.ts`, `src/services/seed-utils.ts`, `scripts/db-sync-guard.mjs`, `drizzle.config.ts` |
-| SDK/assets | `src/lib/tier0.ts`, `package.json`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
+| Runtime/routing | `server.mjs`, `server-url.mjs`, `vite.config.ts`, `src/start.ts`, `src/router.tsx`, root/layout routes, health/manifest, route-nesting tests, `tests/server-url.test.mjs` |
+| Identity/roles | `docs/platform-integration.md`, `docs/role-registration.md`, `src/lib/{visitor,auth,server-fn-policy,permissions,role-metadata,app-id,app-chrome}.ts`, `roles.json`, auth/role tests |
+| Persistence | `src/lib/data/{index,query,changes}.ts`, `src/routes/api/uns/subscribe.ts`, `src/lib/record-changes.ts`, `src/lib/route-handlers.ts`, `src/data/collections.ts`, `src/data/seed-utils.ts`, `src/start.ts` (abort signal), `src/lib/change-visibility.ts`, `scripts/data-schema.mjs`, `src/lib/data-contracts.test.mjs`, `tests/*.test.ts` |
+| AI | `src/services/ai/{provider,chat}.ts`, `src/routes/api/ai/chat.ts`, `src/components/ai/`, `vite.config.ts` `optimizeDeps`, `tests/{ai-chat.test.ts,credential-guidance.test.mjs}` |
+| SDK/assets | `src/lib/tier0.ts`, `package.json`, `package-lock.json` SDK entry, `tests/app-streams.test.ts`, root `icon.png`/`cover.png`, `public/app-icon.png`, `.env.example` |
 
-Compare and patch `src/services/bootstrap.ts` first when it still runs a
-runtime `create schema if not exists` block: remove the block outright, with no
-try/catch or fallback. The platform pre-creates the schema and the app role has
-no database-level `CREATE`, so PostgreSQL rejects it with `42501`. Repair steps
-are in
-[import-troubleshooting.md](import-troubleshooting.md#database-startup-or-schema-fails).
+For the old-main/new-cloud comparison, implementation fingerprints, and
+version-specific upgrade paths, read
+[cloud-architecture-upgrade.md](cloud-architecture-upgrade.md). It distinguishes
+replacing SQL persistence from upgrading a client on existing collections.
 
 For a full migration, cover every relevant platform area. For a targeted scaffold
 update, review changed surfaces and transitive dependencies; do not turn this
-inventory into a mandatory whole-app rewrite. Never overwrite app-specific schema,
-permissions, navigation, branding, or routes with the blank template.
+inventory into a mandatory whole-app rewrite. Never overwrite app-specific
+collections, permissions, navigation, branding, or routes with the blank template.
 
 ## Reconciliation And Refresh
 
@@ -86,7 +151,7 @@ When updating this Skill against a new commit:
 2. Inspect changed implementation, guidance, and locked tests. A known-good
    upstream baseline can contain defects; do not assume every failure is app drift.
 3. Reconcile the entrypoint and all affected references. Search the entire Skill
-   for retired role semantics, env names, SDK versions, bootstrap behavior, asset
+   for retired role semantics, env names, SDK versions, data-layer behavior, asset
    paths, commands, and packaging assumptions.
 4. Preserve product intent and record conflicts instead of silently increasing
    permissions or weakening verification.

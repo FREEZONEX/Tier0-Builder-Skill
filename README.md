@@ -1,28 +1,29 @@
 # Tier0 Builder Skills
 
-用于需求整理、工业企业应用构建、平台迁移、界面修复和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
+用于需求整理、工业企业应用构建、平台迁移、响应式设计和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
+
+本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v44，App 数据存于 Tier0 UNS collections），平台 SDK 使用脚手架精确锁定的 npm 版本 `@tier0/sdk-v2` 0.15.0。具体 commit 和锁文件校验值见 align 的 latest-template-source。SDK 的使用技能随 SDK 包安装（入口 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`，下设领域子 Skill），不在本仓库维护。
 
 ## 快速安装到 Codex
 
 在 Codex 对话中复制发送以下内容即可，无需自行寻找安装目录：
 
 ```text
-请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 main 分支安装以下技能到本地用户技能目录：
+请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 feature/cloud-new-architecture-migration 分支安装以下技能到本地用户技能目录：
 skills/app-srs
 skills/app-builder
 skills/align-platform-app
-skills/migrate-node-red-app
-skills/ui-repair
+skills/replace-design-system
 skills/responsive-craft
 skills/browser-platform-capabilities
 skills/preview-runtime-stability
-请保留每个技能的完整目录及配套文件，跳过没有 SKILL.md 的 tier0-sdk 目录；如果本地存在同名技能，先说明差异，不要直接覆盖。完成后列出安装位置和已安装技能。
+请保留每个技能的完整目录及配套文件；如果本地存在同名技能，先说明差异，不要直接覆盖。完成后列出安装位置和已安装技能。
 ```
 
 只需要一个技能时，也可以发送具体目录链接。例如：
 
 ```text
-请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/main/skills/ui-repair 到本地。
+请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/feature/cloud-new-architecture-migration/skills/responsive-craft 到本地。
 ```
 
 安装完成后，在下一轮对话中使用技能；若技能列表未更新，重启 Codex。技能安装只添加本地工作指引，不会自动安装项目依赖、配置平台账号或部署应用。
@@ -34,13 +35,10 @@ skills/preview-runtime-stability
 | [app-srs](skills/app-srs/SKILL.md) | 将需求整理为应用规格说明，或更新已有规格 |
 | [app-builder](skills/app-builder/SKILL.md) | 按需求和规格构建应用或扩展业务模块，建议与 app-srs 一起安装 |
 | [align-platform-app](skills/align-platform-app/SKILL.md) | 将应用迁移或对齐到 Tier0 脚手架 |
-| [migrate-node-red-app](skills/migrate-node-red-app/SKILL.md) | 迁移 Node-RED 后端、流程和数据逻辑，需配合 align-platform-app |
-| [ui-repair](skills/ui-repair/SKILL.md) | 修复表单、弹窗、表格、布局和文案一致性等界面问题 |
+| [replace-design-system](skills/replace-design-system/SKILL.md) | 将用户提供的设计规范写入 DESIGN.md，并同步调整应用样式 |
 | [responsive-craft](skills/responsive-craft/SKILL.md) | 设计和检查多视口布局、滚动及 sticky 行为 |
 | [browser-platform-capabilities](skills/browser-platform-capabilities/SKILL.md) | 实现扫码、拍照、定位、录音、文件读取和剪贴板能力 |
 | [preview-runtime-stability](skills/preview-runtime-stability/SKILL.md) | 排查依赖安装、预览启动、端口和 HMR 问题 |
-
-`skills/tier0-sdk` 仅保留[迁移说明](skills/tier0-sdk/README.md)，没有 `SKILL.md`，不在本仓库的安装范围内。
 
 ## 手动安装
 
@@ -49,11 +47,11 @@ skills/preview-runtime-stability
 安装了 Git 的用户可以在终端执行：
 
 ```sh
-git clone https://github.com/FREEZONEX/Tier0-Builder-Skill.git
+git clone -b feature/cloud-new-architecture-migration https://github.com/FREEZONEX/Tier0-Builder-Skill.git
 cd Tier0-Builder-Skill
 ```
 
-也可以点击仓库页面的 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
+也可以在仓库页面切换到 `feature/cloud-new-architecture-migration` 分支后点击 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
 
 ### 2. 复制技能到工具识别的目录
 
@@ -62,7 +60,7 @@ Codex 支持以下本地技能目录：
 - 用户级：`~/.agents/skills/`，供当前用户的多个项目使用。
 - 项目级：目标项目根目录中的 `.agents/skills/`，仅供该项目使用。
 
-在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 8 个技能到用户目录。已有同名目录或符号链接会被跳过：
+在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 7 个技能到用户目录。已有同名目录或符号链接会被跳过：
 
 ```sh
 (
@@ -86,7 +84,7 @@ Codex 支持以下本地技能目录：
 
 ```text
 .agents/skills/
-└── ui-repair/
+└── responsive-craft/
     ├── SKILL.md
     ├── agents/
     └── references/
@@ -105,10 +103,10 @@ Codex 支持以下本地技能目录：
 ```
 
 ```text
-请使用 ui-repair，检查并修复当前页面在手机宽度下的表单和弹窗溢出问题。
+请使用 responsive-craft，检查当前应用在手机、平板和桌面下的布局与滚动行为。
 ```
 
-Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，例如 `$ui-repair`。
+Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，例如 `$responsive-craft`。
 
 部分技能需要目标项目源码、Tier0 脚手架、SDK、浏览器工具或平台运行环境。安装技能不会授予这些资源的访问权限；缺少依赖时，按技能给出的检查结果补齐。预览排障脚本应只用于有权操作的目标应用环境。
 
@@ -118,3 +116,25 @@ Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，
 - **避免重复**：如果已经通过安装器安装过技能，使用安装器报告的路径更新，不要再向另一个技能目录安装同名副本。
 - **卸载**：从实际安装目录移走对应的技能文件夹即可，不需要删除项目源码。
 - **未发现技能**：检查是否存在 `<技能目录>/<技能名>/SKILL.md`、配套目录是否完整，然后重启 Codex 再检查。
+
+## 上传到 test Agent-Console（维护者）
+
+`scripts/console-upload.sh` 用 Agent-Console 的管理接口上传，代替在页面上手动拖 zip。内容只取 `origin/feature/cloud-new-architecture-migration`，不会打包本地未提交的改动，上传前会打印 commit。
+
+```bash
+scripts/console-upload.sh skill align-platform-app app-builder   # 每个 skill 打一个 zip 导入，再逐文件比对 sha256
+scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin 云分支
+scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、调 GET，不写入
+scripts/console-upload.sh categories                             # 只把启用中、仍指向上一版脚手架模板的 App 分类切到当前默认模板
+```
+
+- Skill：导入后打印线上 seq 和每个文件的 MATCH / MISMATCH。内容没变时不会产生新版本。线上被钉版本或已停用的 skill 只报告，不会自动处理。
+- 脚手架：线上已有相同 `tier0Scaffold` version 和 ref 的模板时不再上传。上传后核对版本无误，才设为默认模板。然后把启用中、仍指向原默认模板的 App 分类切到新模板，并读回核对；停用的分类和指向其他模板的分类只报告，不修改。
+- 任何一步失败都会以非零状态退出，并打印失败的步骤；写接口不会自动重试。
+
+前置条件：
+
+- 本机装有 `kubectl`、`jq`、`curl`、`python3`。脚本会临时起一个 `kubectl port-forward svc/agent-console`，结束时自动关掉。
+- kubeconfig 放在 `~/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf`（context `tier0-dev-ack-liangyuqing`，namespace `default`）。Console 不需要登录，能 port-forward 就能调用管理接口。
+
+脚手架默认从 `~/Documents/Projects/Tier0-App-Scaffold` 读取，可以用环境变量 `SCAFFOLD_REPO` 指定其他路径。

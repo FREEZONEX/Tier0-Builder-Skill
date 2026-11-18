@@ -35,7 +35,9 @@ Inspect these source areas before editing target code:
 - State: Zustand/Redux/Context stores, `persist` middleware,
   localStorage/sessionStorage calls, IndexedDB wrappers, caches, and reset paths.
 - Data access: fetch wrappers, GraphQL clients, REST clients, in-memory
-  repositories, mock handlers, JSON fixtures, and SDK clients.
+  repositories, mock handlers, JSON fixtures, SDK clients, SQL clients,
+  connection pools, ORMs and query builders, database settings (`DATABASE_URL`,
+  `PG*`, `DB_*`), and SQL bootstrap and `db:*` scripts.
 - Server/runtime: API routes, server entry, workers, adapters, cron-like jobs,
   custom middleware, and framework-specific server handlers.
 - Data layer: schema files, migrations, seed data, local JSON stores, browser
@@ -54,8 +56,8 @@ Inspect these source areas before editing target code:
 For every local or mock state source, record its keys/store names, data shape,
 identifier generation, readers, writers, initialization, reset behavior, and
 whether it is durable business data, session/UI preference, cache/derived state,
-or seed/test data. Load `local-state-to-drizzle.md` when any production CRUD is
-local or mocked.
+or seed/test data. Load `local-state-to-collections.md` when any production CRUD
+is local or mocked.
 
 Write a short migration map when the source is non-trivial:
 
@@ -67,10 +69,10 @@ Write a short migration map when the source is non-trivial:
 - source API/server helper -> target service/API/external dependency
 - compatibility API -> method, request, response, errors, auth, side effects,
   implementation status, external dependencies, and verification evidence
-- source data model -> target schema/runtime-bootstrap-or-`db:push`/service/API/
-  client path or external system
-- source local/mock data -> PostgreSQL cutover, optional legacy import, or an
-  explicitly retained ephemeral state category
+- source data model -> target collection declaration/service/API/client path or
+  external system
+- source local/mock data -> collection cutover or an explicitly retained
+  ephemeral state category
 - source asset path -> target asset path
 - source App name/locale/icon -> `app-chrome` identity and platform metadata
 - source env var -> platform/runtime source or removed setting
@@ -92,14 +94,14 @@ Use a compatibility boundary when:
 - The user requires preserving full business behavior first.
 - Build/runtime contract work is urgent and native refactoring can follow.
 
-A compatibility boundary may temporarily read legacy durable state for explicit
-import, but it must not legitimize new durable local writes or database-failure
-fallback.
+A compatibility boundary must not create a live dependency on the original
+storage; allow no new durable local writes or data-failure fallback.
 
-A JSON or JSONB compatibility container may complete authoritative-storage
-cutover without completing domain normalization. Record which invariants,
-relationships, constraints, indexes, transactions, and query fields remain to be
-modeled. Do not report storage cutover as full domain migration.
+A coarse document shape (for example one collection holding a source entity's
+payload largely as-is) may complete authoritative-storage cutover without
+completing domain modeling. Record which invariants, relationships, unique
+indexes, transactions, and query fields remain to be modeled. Do not report
+storage cutover as full domain migration.
 
 ## 3. Migration Order
 
@@ -116,23 +118,26 @@ Prefer this sequence:
    non-nested detail. Define real workspace modules through
    `defineNavigationModules`; every clickable leaf has a unique `href` resolving
    to an existing non-API route.
-4. Classify local/mock state and define PostgreSQL as the source of truth for
+4. Classify local/mock state and define collections as the source of truth for
    durable entities.
-5. Replace durable local/mock CRUD in vertical slices using
-   `appSchema` declarations in `src/db/schema.ts` -> current scaffold
-   `bootstrapModule()` with declared table objects / guarded `db:push` -> service
-   -> thin API -> client.
-6. Import legacy data through an explicit validated, idempotent process when
-   retention is required; otherwise document reset/cutover.
-7. Keep idempotent runtime DDL bootstrap for tables and indexes in the existing
-   platform-injected `DB_SCHEMA`. Remove App-side `CREATE SCHEMA`, including
-   `IF NOT EXISTS`, without expanding database-account privileges. Also
-   remove startup- or first-request seed callbacks that auto-insert demo, sample,
-   or baseline rows for migrated durable business entities. Retain legacy data
-   through the explicit import from step 6; run development/test fixtures only
-   through an explicit development or test action. For valid retained runtime
-   baseline data, use `seedDate()` / `seedTimestamp()` and typed transactional
-   Drizzle writes, not raw SQL data writes or mutating `Date` setters.
+5. Replace durable local/mock CRUD and App-owned server-side SQL services in
+   vertical slices using `defineCollection` declarations in
+   `src/data/collections.ts` (listed in `collections`) -> service with `data`
+   from `@/lib/data` -> thin API -> client. Map SQL behavior with the table in
+   [cloud-architecture-upgrade.md](cloud-architecture-upgrade.md#drizzle--v7-and-earlier).
+6. For App-owned SQL persistence, open by telling the user the three points in
+   SKILL.md: the original database is neither connected to nor changed;
+   historical data does not migrate, and if needed the user imports it on the
+   UNS side, outside Builder; reconstruction does not wait for any data. Do not
+   request connection configuration or guide an export. Follow
+   `first-ensure-and-runtime-blockers.md` for blocked runtime checks.
+7. Put valid baseline records in the declaration's `seed` (fixed `_id`s,
+   `seedDate()` / `seedTimestamp()` / `requireSeedRef()`); they are written once
+   when the collection is created. Remove startup- or first-request code that
+   inserts demo, sample, or baseline rows for migrated durable business
+   entities, and never insert rows because a list is empty. Run
+   development/test fixtures only through an explicit development or test
+   action.
 8. Normalize auth, permissions, and menu visibility. Remove legacy custom login
    and all user-visible logout/sign-out buttons, personal-menu entries, pages,
    routes, and custom logout helpers, together with role-switch, role-picker, and
@@ -144,11 +149,9 @@ Prefer this sequence:
    authorization rule, and registration entry across `PERMISSION_MATRIX`,
    `ROLE_METADATA`, and `roles.json`. Validate role keys against
    `^[a-z]+(_[a-z]+)*$`; authorize with `user.roles` permission union, never the
-   primary display role. The first version allows at most three materially
-   distinct business roles total, with no reserved or fallback role. If the source
-   exceeds that cap, stop
-   for an explicit user/platform-approved consolidation or phased migration;
-   never silently drop, broaden, collapse, or zero-permission a source role.
+   primary display role. Three roles is first-version guidance, not a migration
+   cap. Preserve every materially distinct source role, with no reserved or
+   fallback role; never silently drop, broaden, collapse, or zero-permission one.
 10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
     removed, and—when generated or rebranded—the same platform-ready
     root `icon.png` copied byte-for-byte to `public/app-icon.png`, then
@@ -200,12 +203,12 @@ For each migrated route, verify:
 - Data reads and writes hit intended APIs, services, or external systems.
 - Local App APIs are called through base-path-aware `apiUrl()`.
 - Durable data survives reload, another client session, and server restart.
-- Database/network failures are visible and never trigger local/mock fallback.
+- Data-layer/network failures are visible and never trigger local/mock fallback.
 - Empty, loading, error, and success states are real. Scaffold request-hook
   results render through `AsyncView` so a failed first request shows error/retry
   instead of endless loading.
-- When historical data is intentionally not imported, reads from a clean schema
-  return a genuine empty state with real creation/onboarding actions; they do not
+- Reads from fresh collections return a genuine empty (or seed-only) state
+  with real creation/onboarding actions; they do not
   fall back to browser data, fixtures, mocks, or the retired backend.
 - User-facing copy has no placeholder migration language.
 - Page content does not repeat the title or explain navigation in an
@@ -227,27 +230,19 @@ For the whole app, verify:
   Migration-introduced and runtime-risk failures block completion; genuine
   historical non-blocking findings require baseline evidence and a concrete
   follow-up.
-- Locked tests and verification scripts remain unchanged. App-specific template
-  assertions are confined to the current adaptable template-state test. Locked
-  route-nesting and responsive-contract gates pass with App code fixes, not gate
-  edits.
+- Locked tests, verification scripts and `src/lib/template-state.test.mjs`
+  remain unchanged. Locked route-nesting and responsive-contract gates pass with
+  App code fixes, not gate edits.
 - `/api/health` and `/api/manifest` still work.
 - Production start path is still valid.
 - Production host/port binding is verified from the runtime/startup-probe network
   namespace, not inferred from Vite dev readiness.
-- Current scaffold runtime bootstrap / `db:push` succeeds against a clean schema.
-- Normal startup and first-request paths do not auto-insert demo, sample, or
-  baseline rows for migrated durable business entities; retained legacy data and
-  development/test fixtures use explicit flows.
-- Valid retained runtime baseline dates use current seed helpers and typed
-  transactional Drizzle data writes.
+- The build's data contract checks pass for every declaration and seed.
+- Normal startup and first-request paths insert no rows from services; baseline
+  records come only from `seed`, and development/test fixtures use explicit
+  flows.
 - Repository search shows no production durable CRUD backed by browser storage,
   persisted Zustand slices, IndexedDB, in-memory mocks, or fixtures.
-- Required legacy imports are validated, idempotent, and reconciled by result
-  counts and conflicts.
-- If historical data is intentionally reset, the reset decision, rollback source
-  or explicit lack of one, clean-schema result, and expected empty-state behavior
-  are recorded in project-local migration documentation.
 - Compatibility endpoints have current behavior/status/evidence rows; `partial`
   and `queued-only` behavior is not reported as complete.
 - Legacy runtime/deployment scan findings are classified, and no obsolete active
@@ -261,14 +256,15 @@ For the whole app, verify:
   rule, `PERMISSION_MATRIX`, `ROLE_METADATA`, and `roles.json` entry has a
   verified target equivalent. `role_key` values satisfy
   `^[a-z]+(_[a-z]+)*$`; every matrix role, including a business-defined
-  `admin`, appears in `roles.json`. The result fits at most three business roles, or
-  has a traceable user/platform-approved consolidation or phased migration with
-  no silently lost, broadened, collapsed, or zero-permission source role.
-- Role tests cover preview single-role view-as; deployed permission union across
-  all `X-Tier0-Business-Roles`; active-role display ordering; known plus trusted
-  unknown roles; explicit deployed empty roles; preview without a selected role (zero
-  roles and permissions); legacy
-  recognized and untrusted unknown roles. Authorization never uses
+  `admin`, appears in `roles.json` with a non-empty `name`. Role-count
+  guidance is advisory; no source role is silently lost, broadened,
+  collapsed, or left with zero permissions.
+- Role tests cover preview view-as with one and several selected roles
+  (permission union); deployed permission union across
+  `app_roles` from `X-Tier0-Visitor`; `active_role` display ordering; known plus
+  trusted unknown roles; explicit deployed empty roles; preview without a
+  selected role (zero permissions); malformed/missing/wrong-App visitor headers
+  and machine identities, rejected on every path. Authorization never uses
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or
   refresh; the App never writes role state optimistically.
@@ -285,6 +281,12 @@ For the whole app, verify:
 - `artifact.toml` uses canonical literal argv; shell behavior is explicit.
 - With a preview local URL, `smoke:routes` covers `/` and changed key routes.
 - No platform-managed Skill content is vendored under `.agents/skills/`.
+- Root `AGENTS.md` is the target scaffold's file plus `## App-Specific Rules`
+  holding every App-owned section of the old file, edited sentence by sentence
+  as SKILL.md describes. When the old file had App-owned sections, that heading
+  exists and is not empty; no retired data, runtime or auth guidance remains.
+- The report lists each App-Specific Rules sentence deleted or rewritten, with
+  why.
 - Last, and only when every item above passes: `package.json` top-level
   `tier0Scaffold` equals the object in the inspected scaffold commit's
   `package.json` (`version` integer and `ref` hex copied as-is). If the scaffold
@@ -301,7 +303,7 @@ not direct service calls or an in-memory test substitute:
    unauthorized access, duplicate conflict, or missing identifier, and assert its
    status and error contract.
 5. When the environment is controllable, restart the app/server, then read the
-   record again to prove PostgreSQL persistence rather than process memory.
+   record again to prove collection persistence rather than process memory.
 6. Exercise the entity's supported terminal lifecycle action—delete, archive,
    cancel, or close—and verify the expected final state.
 7. Use `try/finally` or equivalent teardown when the domain contract permits

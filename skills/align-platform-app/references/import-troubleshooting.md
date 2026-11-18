@@ -21,10 +21,10 @@ platform-contract drift, production runtime behavior, or import packaging.
 - [Auth Or API Calls Fail](#auth-or-api-calls-fail)
 - [Role Appears Changed But Permissions Did Not](#role-appears-changed-but-permissions-did-not)
 - [Migrated App Still Shows Logout](#migrated-app-still-shows-logout)
-- [Database Startup Or Schema Fails](#database-startup-or-schema-fails)
+- [Data Calls Or Collection Ensure Fail](#data-calls-or-collection-ensure-fail)
 - [Migrated Business Rows Reappear Automatically](#migrated-business-rows-reappear-automatically)
-- [Runtime Seed Dates Fail On First Load](#runtime-seed-dates-fail-on-first-load)
-- [Artifact Args Fail At Deploy](#artifact-args-fail-at-deploy)
+- [Seed Records Missing Or Rejected](#seed-records-missing-or-rejected)
+- [Artifact Fails At Deploy](#artifact-fails-at-deploy)
 - [Build Passes But A Promise Is Used As A Map](#build-passes-but-a-promise-is-used-as-a-map)
 - [Import Package Fails](#import-package-fails)
 
@@ -32,8 +32,11 @@ platform-contract drift, production runtime behavior, or import packaging.
 
 A warning such as `Module "fs" has been externalized for browser compatibility`
 means a client or mixed route, router, component, shared wrapper, or transitive
-dependency statically imports Node-only code. Move `fs`/`path`/`url`/`pg` and
-bootstrap/seed work into the scaffold's server-only boundaries or services. Keep
+dependency statically imports Node-only code (also `node:async_hooks` /
+`node:crypto` from a value import of `@tier0/sdk-v2/data` or `@/lib/data`). Move
+`fs`/`path`/`url` work and data access into the scaffold's server-only
+boundaries or services, and import declarations from
+`@tier0/sdk-v2/data/define` in client code. Keep
 `src/start.ts`, API handlers, and `createServerFn` handler bodies server-only; do
 not make the client graph depend on their implementations.
 
@@ -62,7 +65,11 @@ Check:
 
 - `server.mjs` still points to the built server entry.
 - `artifact.toml` still runs `node server.mjs` in production and checks
-  `/api/health`.
+  `/api/health`, and its `include` lists every file `server.mjs` imports
+  (`server-url.mjs` from v34).
+- Same-origin POSTs rejected as cross-origin after deployment mean
+  `server.mjs` still builds the request URL from `Host`; use the target's
+  `requestBaseUrl(...)` from `server-url.mjs`.
 - Build output exists where the runtime expects it.
 - Browser-only libraries are not executed during SSR.
 - Client and mixed modules do not statically pull Node-only dependencies into the
@@ -80,8 +87,8 @@ Do not edit invariant tests, `scripts/post-build-verify.mjs`,
 `scripts/gate-integrity.mjs`, `scripts/runtime-audit.mjs`,
 `scripts/route-smoke.mjs`, or `scripts/gate-integrity.json` to make a migrated
 App pass. When the task is an upstream gate update, use the complete verified
-upstream file/hash set as explained in `platform-contract.md`. At this snapshot, only
-`src/lib/template-state.test.mjs` is App-adaptable.
+upstream file/hash set as explained in `platform-contract.md`. The App build
+does not run `src/lib/template-state.test.mjs`; leave it unchanged.
 
 The locked verifier includes route-nesting, navigation, lifecycle/content, role,
 and responsive contracts. Read the failing assertion and fix App route/UI code;
@@ -142,47 +149,61 @@ Check:
 
 ## Tier0 SDK Files Or SSR Import Fails
 
-Confirm the target uses the selected scaffold SDK version and matching lockfile;
-follow the selected scaffold version and never downgrade a newer SDK merely
-to match the 0.5.3 compatibility baseline described here. When migrating older notification calls,
-follow [SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends. Import
-`loadTier0Files` or other lazy helpers from `@/lib/tier0`, then await the loader
-inside the concrete server action. Do not top-level import
-`@tier0/sdk/openapi`, `@tier0/sdk/files`, or `@tier0/sdk/mq`; do not move the SDK
-into `ssr.noExternal`, and do not replace it with hand-written REST/MQ fallback
-clients.
+Browser `client.streams` is retired: move calls behind authenticated App server
+routes following [SDK Upgrades](platform-contract.md#unified-sdk-and-stream-migration).
+Never import Node-only loaders into pages. A missing local tarball means the App
+still has an old `file:vendor/...` SDK spec; set the selected scaffold's exact
+npm version and reconcile the lockfile instead of restoring the archive.
+
+Confirm the target uses `@tier0/sdk-v2` at the selected scaffold version with a
+matching lockfile, and that no `@tier0/sdk` (v1) import remains. A type error
+or `is not a function` on `source.list`, `stream.programs.get`, `agent.nodes`,
+`recordInsertMany` or similar after the move to 0.3.0 is a retired method;
+follow [SDK Upgrades](platform-contract.md#sdk-upgrades). Import
+`loadTier0Sdk`, `loadTier0Files` or the other lazy helpers from `@/lib/tier0`,
+then await the loader inside the concrete server action. Do not top-level import
+server SDK modules (`@tier0/sdk-v2` root for server operations),
+`@tier0/sdk-v2/openapi`, `@tier0/sdk-v2/files` or
+`@tier0/sdk-v2/mq`; do not move the SDK into `ssr.noExternal`, and do not replace
+it with hand-written REST/MQ fallback clients. A value import of
+`@tier0/sdk-v2/data` outside services, `src/lib/data` and `src/start.ts` pulls
+Node-only code into the browser bundle; components import declarations from
+`@tier0/sdk-v2/data/define` instead. When migrating notification calls, follow
+[SDK Upgrades](platform-contract.md#sdk-upgrades) to preserve silent sends.
 
 ## MQTT Authentication Fails
 
 For `Not authorized`, CONNACK code 5, repeated reconnects, or OpenAPI succeeding
-while MQTT fails, distinguish SDK compatibility from invalid credentials:
+while MQTT fails, distinguish configuration from invalid credentials:
 
-1. Read `npm ls @tier0/sdk` in the app runtime, not only `package.json`. Check
-   injected key presence, non-secret type and workspace-encoded format without
-   printing the key. A workspace-encoded non-service key below SDK 0.5.2 needs
-   an upgrade; use the selected scaffold SDK version (at least 0.5.3) for the complete
-   MQTT fixes described here. An
-   OpenAPI HTTP 401 alone does not prove an old SDK: HTTP sends the key opaquely.
-2. When the SDK compatibility script is available, run it from the application
-   root using its actual path in the package or injected SDK Skill. First check
-   that `skills/tier0-sdk/scripts/check-api-key-compat.mjs` exists: the published
-   0.5.3 package lacks that script and the PR's final diagnostic guidance. A
-   missing script is a packaging limitation, not an authentication failure;
-   continue with the version/key checks here. Do not vendor a platform Skill
-   into the App. A successful diagnostic only checks local compatibility.
-3. Reconcile the dependency range and authoritative lockfile for an authorized
-   upgrade. Let managed preview install/restart, then check the actual installed
-   version again. Do not race managed installation with `npm install`.
-4. If the version already supports this key type, inspect injection into the
-   failing runtime, key revocation/expiry/permissions, broker endpoint and
-   `ws`/`wss`, then backend support for the key type. For 0.5.2, also consider
-   the 0.5.3 connect-time password and embedded-port fixes when those paths
-   are used. Do not repeatedly recommend upgrades after those are covered.
-5. Keep credentials and workspace-derived username/clientId out of logs,
+1. Read `npm ls @tier0/sdk-v2` in the app runtime, not only `package.json`.
+   Check injected key presence and non-secret type without printing the key.
+   v2 derives the MQTT identity from a workspace-encoded key
+   (`sk-<type>-ws<base36>_<secret>`) and rejects a key it cannot parse unless
+   username, clientId and password are all passed explicitly; there is no
+   Enterprise fallback. An OpenAPI HTTP 401 alone says nothing about MQTT: HTTP
+   sends the key opaquely.
+2. Inspect injection into the failing runtime (`TIER0_MQTT_HOST`,
+   `TIER0_MQTT_PORT`, `TIER0_API_KEY`), key revocation/expiry/permissions, the
+   broker endpoint and `ws`/`wss`, then backend support for the key type.
+   Hosted Apps cannot call `mqttAuth.create()`; report incompatible injection
+   instead of inventing a second credential. SDK helpers consume the key;
+   App code does not read or expose it.
+3. Let managed preview install/restart after an authorized dependency change,
+   then check the actual installed version again. Do not race managed
+   installation with `npm install`.
+4. Keep credentials and workspace-derived username/clientId out of logs,
    business settings and hard-coded workarounds. Preserve intentional custom
    identity only when the deployment calls for it. Disconnect before changing
    connection credentials; retry the affected connection/subscription and
    report separately when runtime verification is unavailable.
+
+A connection can succeed while a topic is refused. For v28 check every topic
+comes from `appTopic()` under this App's matching preview/deployed namespace.
+Other Apps, the opposite runtime and arbitrary topics are refused. Local
+development lacks `TIER0_RUNTIME`, so `appTopic()` throws; do not spoof it.
+Browser MQTT tokens are retired: the App server subscribes and forwards only
+what the authenticated visitor may see through an App route.
 
 ## Auth Or API Calls Fail
 
@@ -207,27 +228,32 @@ authorization rule, and related metadata entry was migrated.
 Issue a new request or refresh after platform assignment or preview view-as
 changes. Then verify:
 
-- Preview uses one `X-Tier0-Preview-Role`.
-- Deployed mode unions permissions across every
-  `X-Tier0-Business-Roles` value. `X-Tier0-Active-Role` is primary display
-  metadata only.
+- Preview uses the selected view-as set in the visitor header, with permission
+  union across all assigned roles.
+- Both runtimes use `app_roles` from the front door's `X-Tier0-Visitor`.
+  `active_role` only orders the assigned roles for display. Do not restore
+  `X-Tier0-Business-Roles` or other legacy header fallbacks.
 - `can(user.roles, action)` and route guards use the assigned-role set, not
   `primaryRole`.
 - A trusted unknown Tier0 role contributes zero permissions without erasing
   known-role permissions.
 - An explicit deployed empty role set stays empty. Preview without a selected
   view-as role likewise has zero roles and permissions; never add a fallback.
-- An unknown legacy/untrusted role fails closed.
+- Missing, malformed or wrong-App visitor headers fail authentication.
+  Check trusted front-door ingress; never accept a client-supplied identity.
 
 Remove stale client role stores and query/body/header/Cookie overrides. Confirm
 every business role is synchronized across `PERMISSION_MATRIX`,
-`ROLE_METADATA`, and `roles.json`, and every `role_key` matches
-`^[a-z]+(_[a-z]+)*$`.
+`ROLE_METADATA`, and `roles.json`, every `role_key` matches
+`^[a-z]+(_[a-z]+)*$`, and every entry has a non-empty `name`. An import warning
+`roles_invalid` / `roles_failed` or `roles[i].name is required` means no role
+was linked; fix the file as in
+[Platform Role Registration](platform-contract.md#platform-role-registration)
+and sync again.
 
-The first version supports at most three materially distinct business roles
-total, with no reserved role or implicit grant. If the source model exceeds that cap,
-stop and obtain an
-explicit user/platform-approved consolidation or phased migration. Do not make
+The current template recommends three roles for a first version; it does not
+cap migrated business roles. Preserve distinct scopes, with no reserved role or
+implicit grant. More than three roles alone is not a blocker. Do not make
 the build pass by silently removing roles, broadening access, merging distinct
 scopes without approval, or leaving a registered role with zero permissions.
 
@@ -239,50 +265,76 @@ code, and logout/select-role endpoints. Keep `/api/auth/me` and the hidden
 `/login` auth-error bridge when present in the current template. Do not read,
 write, or clear the Gateway login Cookie. Logout is platform-owned for every App.
 
-## Database Startup Or Schema Fails
+## Data Calls Or Collection Ensure Fail
 
-- An API 500 with `Failed query: create schema if not exists ...` or
-  `permission denied for database ...` (PostgreSQL `42501`) can surface as
-  `Couldn't load data` / `Internal error`. Inspect the failed SQL and server error before assigning a
-  cause; the frontend message alone does not identify a schema-permission issue.
-- When legacy `src/services/bootstrap.ts` or another startup/request path issues
-  `CREATE SCHEMA`, remove that statement, including its `IF NOT EXISTS` form.
-  The platform provisions `DB_SCHEMA`; the App account need not have database-level
-  schema-creation permission. Preserve idempotent table/index bootstrap inside
-  that existing schema. Do not add an admin connection, grant database-level
-  `CREATE`, or remove `DB_SCHEMA` as a workaround.
-- If the injected schema is actually absent, report a platform provisioning or
-  environment mismatch. Do not recreate it in App code or silently switch schemas.
-- Declare tables/enums through `appSchema` in `src/db/schema.ts` and pass table
-  objects to `bootstrapModule()`. Use `db:push:check` before guarded sync;
-  do not turn on destructive sync merely to get startup working.
-- Confirm runtime queries, `bootstrapModule()`, and any `db:push` verification use
-  the same platform-injected `DB_SCHEMA`, with `public` only as the documented
-  fallback when it is absent.
-- Verify with the preview App account: first access initializes business tables
-  and indexes in the existing schema, the previously failing API succeeds, and
-  repeat access (plus a restart when controllable) remains idempotent. Confirm
-  startup/request paths no longer issue `CREATE SCHEMA`; a build alone does not
-  prove the permission failure is fixed.
+For `403 active hosted App data policy required`, follow
+[first-ensure-and-runtime-blockers.md](first-ensure-and-runtime-blockers.md).
+Context cannot distinguish an absent policy from a disabled one. Check App
+binding and ensure dry-run with the real declarations; never treat this context
+error alone as proof that an administrator must initialize the App. Explicit
+`APP_GRANT_REVOKED` must not be bypassed. Runtime failures leave dependent
+acceptance checks pending, not all source reconstruction.
+
+Read the `DataError` (`status`, `code`, `reason`, `details`) in the server log
+before assigning a cause; the frontend message alone does not identify it. The
+mapping is in the scaffold's `docs/platform-integration.md` → Errors.
+
+- `npm run build` rejects a declaration UNS cannot store, an invalid index or an
+  invalid seed document, naming the replacement. Change the declaration; do
+  not edit the data contract gate.
+- `DATA_NOT_CONFIGURED` (503): `TIER0_API_HOST` / `TIER0_API_KEY` are missing
+  in that runtime. They are platform-injected; report the injection gap instead
+  of adding values to `.env.example` or UI.
+- `SCHEMA_CONFLICT` fails the request in Preview (a deployment logs it and
+  keeps serving the existing collection): the declaration cannot be joined with
+  storage. Follow the per-reason hint — usually a new field name instead of a
+  type change — and never `deleteMany` or recreate the collection to clear it.
+- A 503 (`APP_NOT_READY` right after an import, `DEPENDENCY_UNAVAILABLE`,
+  `OUTCOME_UNKNOWN`, `HTTP_502/503/504` during a rollout, `DATA_TIMEOUT`,
+  `DATA_UNREACHABLE`) is a platform state the data layer already resent where
+  `retry.safe` allowed: retry later, and do not add an App retry loop. A 502
+  from a UNS 401 is a platform credential problem, not the user's session.
+- `OVERLOADED` (429) that reaches the App means it sends too many data
+  requests: combine a screen's reads into one `data.queryBatch` and drop
+  per-record loops. `QUERY_TIMEOUT` is not resent: narrow the query with an
+  indexed condition.
+- A type error on `findPage(...).total` or a `countDocuments` result comes from
+  a v9 service on SDK 0.2.0 or later: counts are `{ count, capped }`; answer list pages
+  with `toQueryResult`.
+- `APP_PERMISSION_MISSING` with `missingPermission: "uns.delete"` means deletes
+  need that permission on the App key; model removal as a status or ask an
+  admin. `COLLECTION_NOT_GRANTED` / `COLLECTION_NOT_FOUND` trigger one automatic
+  re-ensure; if they persist, the grant or collection was removed by an admin.
+- `BATCH_LIMIT_EXCEEDED` (400): independent writes may be split into chunks of
+  at most 200. Chunks are not one transaction: if a business operation requires
+  all-or-nothing across more than 200 steps, redesign the operation or report
+  the limit; never silently weaken atomicity.
+- Leftover Drizzle/`pg` code from an older data layer (`src/db/**`,
+  `bootstrapModule()`, `DATABASE_URL` / `DB_SCHEMA`) has no place in the
+  current scaffold;
+  replace it with collections rather than restoring a database connection.
 
 ## Migrated Business Rows Reappear Automatically
 
-Keep the current scaffold's idempotent table/index bootstrap in the platform-provisioned
-schema, but remove
-seed callbacks that insert demo, sample, or baseline rows for migrated durable
-business entities during normal startup or a first request. Retained legacy rows
-must enter through an explicit validated import; development/test fixtures must
-run only through an explicit development or test action.
+A service or startup path is inserting demo, sample, or baseline rows. Remove
+it: baseline records belong only in the declaration's `seed`, written once when
+the collection is created, and services never insert rows because a list is
+empty. Development/test fixtures run only through an explicit development or
+test action.
 
-## Runtime Seed Dates Fail On First Load
+## Seed Records Missing Or Rejected
 
-Use `seedDate(offsetDays)` for Drizzle `date()` columns and
-`seedTimestamp(offsetDays, utcHour?)` for `timestamp()` columns. Write runtime
-baseline data through typed transactional `tx.insert()` / `tx.update()` /
-`tx.delete()` builders. Do not use raw SQL for data writes or pass the numeric
-return value of `Date#setDate()`, `setUTCDate()`, or `setTime()`.
+Seeds are written only when ensure creates the collection; editing `seed` later
+never reseeds an existing collection, and a failed seed chunk is logged and not
+retried on later starts. Dates come from `seedDate(offsetDays)` (`YYYY-MM-DD`)
+and `seedTimestamp(offsetDays, utcHour?)` (ISO instant) in
+`src/data/seed-utils.ts`; cross-references use fixed `_id`s through
+`requireSeedRef()`. The build validates every seed against its schema and unique
+indexes, so a rejected seed is fixed in `src/data/collections.ts`. To add rows
+to an existing collection, write them once through the tier0 MCP or an explicit
+action, not by editing `seed`.
 
-## Artifact Args Fail At Deploy
+## Artifact Fails At Deploy
 
 Treat every `artifact.toml` `args` array as literal argv:
 
@@ -292,6 +344,11 @@ Treat every `artifact.toml` `args` array as literal argv:
 - Do not cram a command into one element or place `&&` in plain argv. The
   platform may normalize legacy join-era forms with a warning, but aligned files
   use canonical forms.
+
+A production pod stuck in `ImagePullBackOff` on `node:22-alpine` (or another
+docker.io image) means `artifact.toml` still pins
+`[services.production.run].image`. Delete that line; the platform supplies the
+environment's default runtime image.
 
 ## Build Passes But A Promise Is Used As A Map
 

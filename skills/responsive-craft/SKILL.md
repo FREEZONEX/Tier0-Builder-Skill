@@ -5,7 +5,8 @@ description: >-
   regions, task-driven table-to-card transformations on mobile, or dedicated
   multi-viewport audits and previews. Use for explicit
   breakpoint strategies and cross-viewport behavior; ordinary form overflow,
-  clipped controls, and isolated mobile UI defects belong to ui-repair.
+  clipped controls, and isolated mobile UI defects can be repaired directly
+  using the target project’s design rules and existing components.
 ---
 
 # Responsive Craft

@@ -28,8 +28,8 @@ new scaffold-native modules.
 ## Rules
 
 - Do not edit generated route tree files by hand.
-- Do not put direct database access, platform credentials, or server-only APIs
-  inside legacy client code.
+- Do not put App data access, platform credentials, or server-only APIs inside
+  legacy client code.
 - Do not let legacy code require Next.js runtime APIs in the target client.
 - For imported/migrated apps, do not preserve legacy custom login/register,
   user-visible logout/sign-out, switch-role, role-picker, or impersonation UI,
@@ -38,7 +38,7 @@ new scaffold-native modules.
   while keeping `/api/auth/me` and the hidden `/login` error bridge when present
   in the current Gateway-only template.
 - Treat Gateway identity and assigned roles as read-only. Deployed authorization
-  uses the permission union of all assigned `X-Tier0-Business-Roles`; the primary
+  uses the permission union of `app_roles` in `X-Tier0-Visitor`; the primary
   role is display metadata only. Do not let legacy code select or override roles
   through localStorage, sessionStorage, cookies, query parameters, request
   bodies, or request headers.
@@ -46,16 +46,15 @@ new scaffold-native modules.
   platform-owned for every App.
 - Guard browser-only libraries during SSR.
 - A single adapter may temporarily expose LocalStorage, sessionStorage,
-  IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility and
-  explicit legacy-data export/import.
-- Do not add new durable business writes to that adapter. PostgreSQL becomes the
-  only source of truth as each entity is cut over.
-- Do not catch API/database errors and fall back to legacy local data or report a
+  IndexedDB, Zustand persist, memory mocks, or fixtures for compatibility.
+  Historical data stays outside alignment; never connect to the original
+  database or request connection settings.
+- Do not add new durable business writes to that adapter. Its collection becomes
+  the only source of truth as each entity is cut over.
+- Do not catch API/data-layer errors and fall back to legacy local data or report a
   local write as success. Surface the failure and keep retry semantics explicit.
-- Keep legacy import versioned, validated, idempotent, conflict-aware, and
-  separate from ordinary application reads.
-- Preserve idempotent runtime DDL bootstrap, but do not let the boundary or its
-  adapters auto-insert demo, sample, or baseline rows for migrated durable
+- Baseline records belong in the collection's `seed`; do not let the boundary or
+  its adapters insert demo, sample, or baseline rows for migrated durable
   business entities during startup or a first request.
 - Keep a roleless source roleless. For a role-aware source, preserve every role
   definition, user-role and permission mapping, menu/page/action guard, API
@@ -71,26 +70,26 @@ new scaffold-native modules.
 Start removing the boundary only when:
 
 - Equivalent scaffold-native routes exist.
-- Durable data dependencies use Drizzle schema, the current scaffold runtime
-  bootstrap / `db:push` contract, services, thin APIs, and API-backed clients.
-- Required legacy data has been imported and reconciled, or an intentional reset
-  decision is recorded.
-- No production durable CRUD or DB-failure fallback depends on browser storage,
+- Durable data dependencies use declared collections, services with `data` from
+  `@/lib/data`, thin APIs, and API-backed clients.
+- Historical data does not keep the old runtime adapter alive; the original
+  app and its data stay untouched.
+- No production durable CRUD or data-failure fallback depends on browser storage,
   persisted Zustand slices, IndexedDB, memory mocks, or fixtures.
 - Layout and navigation are native to the target shell, with no user-visible
   logout/sign-out or app-managed role-switch, role-picker, or impersonation
   entry and no App-local session/logout/select-role implementation.
-- Role-aware Apps verify preview single-role view-as, deployed assigned-role
+- Role-aware Apps verify preview view-as role sets, deployed assigned-role
   union, known plus trusted unknown roles, explicit deployed empty roles, preview
-  without a selected role (zero roles and permissions), and legacy untrusted
-  unknown-role rejection. Authorization
+  without a selected role (zero roles and permissions), and invalid/missing/
+  wrong-App visitor headers. No legacy identity-header fallback remains. Authorization
   never uses the primary display role. Roleless Apps contain no invented
   business-role requirement.
 - Normal startup and first-request paths do not auto-insert demo, sample, or
   baseline rows for migrated durable business entities.
 - Global CSS side effects are resolved.
 - Primary workflows have current verification evidence, including reload/restart
-  durability and database failure behavior.
+  durability and data-layer failure behavior.
 
 ## Common Failure Modes
 
@@ -99,7 +98,6 @@ Start removing the boundary only when:
 - Tables render empty because legacy store initialization was never mounted.
 - Actions appear successful but only mutate local storage or an in-memory mock.
 - API failures silently read stale local data, creating split-brain state.
-- Legacy import duplicates records because retries are not idempotent.
 - Global CSS overrides scaffold layout, buttons, or dialogs.
 - Browser-only code executes during SSR and breaks hydration.
 - A legacy personal menu still writes a role cookie or client role state, causing

@@ -2,8 +2,8 @@
 name: align-platform-app
 description: >-
   Migrate imported applications into the Tier0 TanStack Start scaffold, align
-  an existing Tier0 app with upstream scaffold changes, or migrate app-owned
-  browser/mock business persistence to Drizzle/PostgreSQL. Use for explicit
+  an existing Tier0 app with upstream scaffold changes, or move app-owned
+  browser/mock business persistence into Tier0 UNS collections. Use for explicit
   platform alignment, migration, and scaffold upgrades; ordinary feature or
   visual edits alone do not require a full alignment audit. Also use when an
   instruction says "align this app to the latest scaffold" or "追平到最新脚手架",
@@ -14,8 +14,9 @@ description: >-
 
 Preserve the application's business behavior while closing the platform gaps
 within the user's requested scope. The canonical scaffold is
-`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`, unless the
-user chooses a specific ref. A newer template is not permission to overwrite
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
+`feature/cloud-new-architecture-migration` (Tier0 cloud), unless the user
+chooses a specific ref. A newer template is not permission to overwrite
 business routes, schema, role mappings, branding, or intentional design choices.
 
 At import, the platform compares the app's `package.json` top-level
@@ -30,13 +31,13 @@ with the `tier0Scaffold` write-back described under Completion.
 
 ## Choose The Scope
 
-First confirm the app is a Tier0-App-Scaffold app. If it has neither
-`artifact.toml` nor `src/services/bootstrap.ts`, or is otherwise clearly not
-built from the scaffold (for example a static site from another template),
-report "not a Tier0 scaffold app; alignment not applicable" and stop without
-modifying files or writing `tier0Scaffold`. An explicit request to import or
-migrate such an app into the platform shape is the imported app migration
-scope below and still proceeds.
+Identify the source using its marker, Git history, and actual platform files
+(`artifact.toml`, `server.mjs`, Gateway middleware, health/manifest routes).
+A missing marker or one missing file can be the drift to repair; neither an
+`artifact.toml` alone nor its absence proves the app's origin. If the project
+is clearly unrelated to the scaffold and only alignment was requested, report
+"not a Tier0 scaffold app; alignment not applicable" without changing files or
+writing the marker. An explicit import/migration request still proceeds.
 
 - **Imported app migration:** inventory the source and choose direct conversion
   or a temporary compatibility boundary. Read
@@ -47,23 +48,43 @@ scope below and still proceeds.
   and target scaffold commit where possible; an existing `tier0Scaffold.ref`
   in `package.json` identifies the known base. Classify drift as required platform
   contract, app customization, or unrelated change. Patch the requested surfaces
-  and their necessary dependencies; do not start a data migration, rebrand, or
-  full UI rewrite solely because upstream changed. With no known base, inspect
+  and their necessary dependencies. A full v7-to-cloud alignment necessarily
+  replaces the old persistence architecture; a scoped SDK/UI repair does not
+  authorize that cutover or a full UI rewrite. With no known base, inspect
   diffs and callers rather than treating every difference as template drift.
+- **Cross-architecture upgrade:** read
+  [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md).
+  Select the path using both provenance and actual code: v7/Drizzle needs a
+  persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
+  SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
+  service-authorization and change-relay migration before the v28 SDK can run.
+  Already aligned v28–v29 Apps follow the v30 and v30 → v44 sections for the
+  SDK and guidance refresh, without another persistence rewrite.
+  Whether records exist depends on the target
+  collections, not the version. Mixed or partially upgraded apps need a
+  per-surface inventory, not a version-number shortcut.
+- **App-owned server persistence:** when an import or full alignment finds the
+  app's own SQL client, connection pool, ORM, or settings such as `DATABASE_URL`,
+  follow the SQL rewrite in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#drizzle--v7-and-earlier)
+  whatever the app's origin. That database is App-owned persistence, not an
+  external system of record, unless the user says to keep it.
 - **Persistence cutover:** read
-  [local-state-to-drizzle.md](references/local-state-to-drizzle.md) only when
+  [local-state-to-collections.md](references/local-state-to-collections.md) only when
   app-owned durable records actually use browser storage, persisted client
-  stores, in-memory mocks, or fixtures. UI preferences and caches are not durable
-  business records. Preserve external systems of record unless migration of
-  their ownership is explicitly in scope.
+  stores, in-memory mocks, or fixtures; server-side databases follow the entry
+  above. UI preferences and caches are not durable business records. Preserve
+  external systems of record unless migration of their ownership is explicitly
+  in scope.
 - **Review only:** inspect and report evidence and proposed changes without
   modifying the app or registering platform metadata.
 
 Honor already-authorized updates without repeatedly asking for permission.
-If a needed choice changes business behavior, loses data, broadens access, or
-expands the requested scope, identify the concrete decision and continue
-independent work while awaiting it. Never silently consolidate source roles or
-reset legacy data to make a gate pass.
+If a needed choice changes business behavior, loses existing data, broadens
+access, or expands the requested scope, identify the concrete decision and
+continue independent work while awaiting it. Records left untouched in the
+original app or environment are not lost and need no decision. Never silently
+consolidate source roles, or delete or reset existing records, to make a gate
+pass.
 
 ## Establish The Baseline
 
@@ -82,50 +103,127 @@ When implementation, docs, and locked tests disagree, trace actual behavior and
 record the conflict. Do not grant extra access, delete business behavior, or
 weaken a gate to reconcile contradictory guidance.
 
+## Initialization, Blockers, and Historical Data
+
+Read [first-ensure-and-runtime-blockers.md](references/first-ensure-and-runtime-blockers.md)
+for first initialization or a platform/API blocker. A context 403 saying
+`active hosted App data policy required` can mean no policy yet or a disabled
+policy; verify identity and the real declarations with ensure dry-run before
+assigning a cause. Context success is not a prerequisite for first ensure.
+Never override an explicit revoked grant or disabled policy.
+
+Continue independent source reconstruction and available checks while runtime
+verification is blocked. A context 403 or unconfirmed collection permissions
+block only runtime acceptance. Do not stop at a migration plan, keep the old
+data source to protect historical records or because the target API is
+blocked, or write a completion marker without required runtime evidence.
+
+For every pre-v13 source, historical records are whatever the target
+collections actually hold, including any the platform's export carried over.
+Do not connect to the original database or environment or request connection
+configuration.
+During import or full alignment, convert App-owned SQL callers and remove their
+connection setup before invoking migrated routes, loaders, or startup hooks;
+legacy modules can connect on import. Do not exercise a route that still reaches
+the old database, and 500 turning into 503 is not a fix.
+When import or full alignment finds App-owned SQL persistence, the opening
+plan tells the user all three points: the original database is neither
+connected to nor changed; historical data does not migrate with alignment, and
+if needed the user imports it separately on the UNS side, outside Builder;
+reconstruction is unaffected and does not wait for any data. Do not guide an
+export, describe import or manual-entry steps, or import historical data
+yourself. The original deployment and its data stay untouched; rewriting this
+App's source is the alignment itself. Report "source rewritten" and "runtime
+acceptance pending/passed" separately.
+
 ## Apply The Relevant Contracts
 
 - Keep the existing TanStack Start project; do not reinitialize it or introduce
   Next.js patterns. Preserve the scaffold production entry, health/manifest,
   router/root, Gateway and Vite boundaries; reconcile changes to these files
   deliberately when platform/runtime alignment is the task. Never hand-edit
-  generated `src/routeTree.gen.ts`.
+  generated `src/routeTree.gen.ts`. `artifact.toml` sets no production run
+  `image`: the platform supplies each environment's runtime image, so delete a
+  hardcoded `[services.production.run].image` such as `node:22-alpine`.
 - Preserve route semantics. A nested list/detail resource needs an outlet and
   index/detail routes; a standalone detail uses trailing-`_` opt-out. Navigation
   leaves must resolve to unique real routes. Use `apiUrl()` for local APIs.
 - Gateway owns login, logout, identity, and role assignment. Remove imported
   App-local sessions, logout and role-picker implementations in a full migration.
   Authorize with `user.roles` permission union, never `primaryRole`. Preview
-  without a selected role has zero roles/permissions; there is no admin fallback.
-  Every defined role must be represented in matrix, metadata, and `roles.json`.
-  The current first-version gate allows three business roles total; `admin`, if
-  business-defined, counts as one. Preserve roleless sources without inventing
+  carries the developer's view-as role set with the same union; without a
+  selected role it has zero roles/permissions; there is no admin fallback.
+  Read identity only through the target's `X-Tier0-Visitor` parser: the front
+  door strips client-supplied Tier0 headers before setting it. Do not retain
+  legacy identity-header fallbacks, token verifiers or JWKS configuration.
+  `app_roles` supplies every assigned role; `active_role` only orders display.
+  Every defined role must be represented in matrix, metadata, and `roles.json`;
+  each `roles.json` entry needs a non-empty `name`, not `display_name`.
+  The current template recommends at most three roles for a first version;
+  this is advisory, not a cap on migrating existing business roles. Preserve roleless sources without inventing
   privileges. Use the reference's environment-specific auth checks when affected.
-- For data changes, declare tables/enums via `appSchema` in `src/db/schema.ts`.
-  The platform provisions the schema: remove runtime `CREATE SCHEMA`, including
-  `IF NOT EXISTS`, while preserving idempotent table/index setup in `DB_SCHEMA`.
-  Pass declared tables to `bootstrapModule()` and await its module promise
-  before querying. Follow the reference's guarded `db:push` workflow.
-- HTTP routes authenticate/validate and call services; services own database
-  queries, invariants, transactions, and supported lifecycle transitions. Durable
-  writes must survive reloads, and database errors must not fall back to browser
-  state or fixtures. Migrated business data enters through explicit import;
-  ordinary startup must not silently repopulate demo rows. Do not impose blanket
-  CRUD on ledgers, audit events, or other domain objects with restricted actions.
+- For data changes, declare collections with `defineCollection` from
+  `@tier0/sdk-v2/data/define` in `src/data/collections.ts` and list them in
+  `collections`; the schema is a storage schema limited to the subset in the
+  scaffold's AGENTS.md → App Data. The App ensures every declared collection on
+  first data access; there is no SQL database, migration or `db:push` step.
+  Preview and the deployed App share the same collections, ensure only widens,
+  and narrowing or description changes go through `schema:replace` via the tier0
+  MCP. Baseline records are the declaration's `seed`, written once when the
+  collection is created.
+  New collections require a `directoryPath` from the workspace root; inspect
+  existing directories and use the actual ISA-95 equipment/business hierarchy,
+  with shared data at a suitable common ancestor. Do not invent missing levels
+  or default to one root-level App folder. An App/business-module directory is
+  valid within the known scope, e.g. Factory → Line → MES → Work orders.
+  Each path has 1–16 business-name segments,
+  each at most 63 characters. Preserve existing aliases, locations and grants;
+  old aliases may omit the path, and changing a declaration does not move them.
+  Resolve the business scope before creating missing aliases. Include paths
+  when preparing declarations for a new environment, and verify the actual
+  ensure payload with `npm run data:schema` and a dry-run before first creation.
+- HTTP routes authenticate/validate and call services; services own data access
+  (`data` from `@/lib/data`), invariants, `data.transact` steps, and supported
+  lifecycle transitions. All data calls act as the App; services must receive
+  the authenticated visitor and enforce read filters, write authorization and
+  field visibility. The platform no longer narrows App data by employee.
+  Keep `runWithAbortSignal` in request middleware and use `runDetached` only
+  for work that must outlive the request; carry its business authorization
+  deliberately. Align `canSeeChange` in `src/lib/change-visibility.ts` with
+  those service rules so record IDs do not reveal inaccessible records.
+  Durable writes must survive reloads, and data-layer
+  errors (`DataError`) must not fall back to browser state or fixtures.
+  Services never insert baseline rows on startup or when a list is empty. Do
+  not impose blanket CRUD on ledgers, audit events, or other domain objects
+  with restricted actions.
 - Keep Node-only modules out of client/mixed import graphs. Load Tier0 SDK
-  modules lazily inside server actions through `@/lib/tier0`. Use runtime
-  `resolveAppId()` for platform App identity, not the human name, schema name,
-  or a hard-coded UUID. Application files use platform File Storage.
-- When updating SDK dependencies, reconcile the package range and lockfile with
-  the selected scaffold target; do not downgrade a newer SDK to 0.5.3. SDK
-  0.5.3 is the baseline for the MQTT fixes described here. Preserve intentional
-  silent notifications with `channels: []`; omitted channels now enable Web & Desktop plus Mobile.
-  Read [the SDK upgrade contract](references/platform-contract.md#sdk-upgrades)
-  for channel, test-mode and MQTT migration details. For MQTT authentication
-  failures, check installed SDK/key compatibility before replacing credentials
-  or overriding identity. Skill replacement alone
-  does not change the installed SDK. Before a platform API-key type change,
-  apply the [existing-App compatibility prerequisite](references/platform-contract.md#existing-app-api-key-type-changes);
-  do not automatically switch credentials while upgrade/verification is blocked.
+  modules lazily inside server actions through `@/lib/tier0`; values from
+  `@tier0/sdk-v2/data` stay in services, `src/lib/data` and `src/start.ts`,
+  while any file may import declarations from `@tier0/sdk-v2/data/define`. Use
+  runtime `resolveAppId()` for platform App identity, not the human name or a
+  hard-coded UUID. Application files use platform File Storage.
+- The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec from the
+  selected scaffold (npm `0.15.0` at v44), reconcile the authoritative
+  lockfile and delete any old local SDK archive. `client.streams` and
+  `Tier0MQClient` run only on the App server; browser pages call
+  authenticated App routes. MQTT topics
+  must use `appTopic()` under `apps/<TIER0_APP_ID>/<preview|deployed>/`.
+  Fixed platform capabilities remain constrained by the key and workspace
+  plan. Stream requests need request grants; Stream messages use published
+  manifests. Before linking an external collection or expanding access, follow
+  the [external collection grant management workflow](references/platform-contract.md#fixed-app-capabilities-and-external-collections).
+  Grant changes apply from the next request without republishing. An app
+  on `@tier0/sdk` (v1) moves to it: replace the dependency, re-point imports to
+  the v2 entries, and rewrite calls whose v1 APIs no longer exist (UNS v1, Flow,
+  project members, `getTier0UnsApi` / `getTier0FlowApi` / `getTier0SystemApi`).
+  Read [the SDK contract](references/platform-contract.md#sdk-upgrades) and the
+  Skills shipped in `node_modules/@tier0/sdk-v2/skills/` before rewriting SDK
+  calls. Skill replacement alone does not change the installed SDK. For MQTT
+  authentication failures, check the installed SDK and key type before
+  replacing credentials or overriding identity. Delete App code that blocks on
+  the `published` flag of `members.listApp` (a 409, an error, or a "publish
+  first" message) and keep the rest of that feature as it was; the SDK contract
+  has the member-query rules.
 - For affected UI, read current `DESIGN.md` and compose the existing primitives.
   Ordinary `_app` roots use `page-shell` for shared responsive padding; avoid
   duplicate outer insets. Station/review/monitor keep their own spacing.
@@ -138,18 +236,31 @@ weaken a gate to reconcile contradictory guidance.
   and an identical `public/app-icon.png`, plus root `cover.png` when registering
   a cover. Register root paths only; report local files and remote metadata sync
   separately. Sizes, dimensions, and identity details live in the reference.
+- Root `AGENTS.md` is scaffold-inherited guidance that every later session
+  reads, not historical documentation. A full alignment or migration replaces
+  it with the target scaffold's `AGENTS.md` and moves every App-owned section
+  of the old file under `## App-Specific Rules`. App-owned sections are those
+  absent from `AGENTS.md` at the known base ref; with no known base, every
+  section that is not scaffold text. Edit them sentence by sentence, never
+  dropping a whole section: delete, or rewrite to the collection equivalent,
+  only sentences about data storage, SQL, bootstrap, or the App's own data API
+  mechanics; keep business rules such as roles and permissions, status labels
+  and colors, field meanings, layout, copy, App name, static assets, and
+  attachment limits as written.
 
 ## Verify The Changed Behavior
 
-Use the scaffold's full `npm run build`, including automatic postbuild checks;
-`vite build` alone is insufficient. Keep locked tests and verification scripts
-intact. For a requested upstream gate update, take the verified matching upstream
-files/hash set together; do not edit their assertions or hash values merely to
-accept failing app code. Only `template-state.test.mjs` is App-adaptable under
-the current baseline. Nonblocking UI advisories are not build failures.
+Use the scaffold's full `npm run build`; its automatic postbuild checks are the
+App's gate, and `vite build` alone is insufficient. Keep locked tests and
+verification scripts intact. For a requested upstream gate update, take the
+verified matching upstream files/hash set together; do not edit their assertions
+or hash values merely to accept failing app code. Leave
+`src/lib/template-state.test.mjs` as the template ships it: it asserts the blank
+template and runs only in scaffold CI, not in the App build. Nonblocking UI
+advisories are not build failures.
 
 Managed preview owns dependency installation and process startup. Use
-`preview_start` / logs / restart when available; do not race it with manual
+`preview_restart` and the selected scaffold's state/log files; do not race it with manual
 installs or dev servers. In an unmanaged environment use the authoritative
 lockfile. Distinguish exact install, full build, and runtime results; an install
 that changes the lockfile does not prove the original lockfile works.
@@ -157,16 +268,20 @@ that changes the lockfile does not prove the original lockfile works.
 Scale further verification to affected behavior:
 
 - **Routes/UI:** run `npm run smoke:routes -- <local-url> [/changed-route ...]`
-  when preview supplies a URL, inspect hydration/browser errors, exercise changed
+  using the ready preview port from `/dev/shm/.tier0/preview/state.json`;
+  inspect hydration/browser errors, exercise changed
   interactions, and check affected mobile layouts. The container-local URL is a
   self-check address, not the user-facing preview link.
 - **Roles/auth:** test relevant Preview, deployed union/empty/unknown roles,
-  untrusted legacy roles, and unauthenticated cases from the contract reference.
+  malformed/missing/wrong-App visitor headers, machine identities rejected,
+  and unauthenticated cases from the contract reference. Verify service data
+  scope and change-event visibility separately from menu/action permissions.
 - **Persistence:** prove supported operations through HTTP, validation and
   authorization failures, reload/restart durability where controllable, and
-  visible database failures without local fallback. Use a disposable or explicitly
-  authorized test environment for writes; do not disrupt a live database to
-  simulate an outage. Verify import reconciliation when data is retained.
+  visible data-layer failures (`DataError`) without local fallback. Preview
+  writes land in the same collections as the deployed App, so write test
+  records only where authorized and clean them up; never `deleteMany` or
+  recreate a collection to reset it.
 - **Runtime/deploy:** when changed or delivering a full migration, verify
   production entry, host/port binding, health, manifest, SSR and client assets
   under the target environment. A static build does not prove deployability.
@@ -179,20 +294,50 @@ For failures, load only the relevant section of
 [import-troubleshooting.md](references/import-troubleshooting.md).
 Use `preview-runtime-stability` for managed preview failures only when injected;
 otherwise inspect available logs/tools and report unavailable verification.
-Use `migrate-node-red-app` for Node-RED-specific migration only when available;
-absence does not justify inventing its instructions or deleting flows.
+
+## Preview Member Repair
+
+For a scoped member-picker repair, preserve business code and data while
+updating the selected SDK dependency and lockfile together.
+Use the SDK version the selected scaffold pins (0.15.0 at v44).
+For pre-v27 Apps this also requires the coordinated auth/data/stream migration
+in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
+Do not install this SDK alone into code that still uses removed SDK APIs.
+If a narrow repair does not authorize that migration, keep a compatible SDK
+and report the concrete upgrade dependency instead of expanding the scope.
+Remove only publish-state guards that block draft member selection; retain
+business-role checks and filters. Refresh injected SDK/Builder guidance and
+restart the managed preview so both dependencies and process environment reload.
+Do not mark a narrow SDK repair as a full scaffold alignment.
+
+Verify a never-deployed App with an assigned draft role: the App's server call
+must send draft scope automatically and return the assigned active members,
+including group inheritance. Check production scope separately. If the
+preview process lacks its platform runtime injection, or Gateway/SYS does not
+forward scope, report that platform prerequisite instead of setting runtime
+variables in App source or telling the user to publish. Build success is not
+runtime membership acceptance.
 
 ## Completion
 
 Report the source/target baseline, scope actually changed, behavior preserved,
-verification passed/failed/not run, and remaining concrete blockers. A partial
-scaffold update need not complete unrelated migration work; a full migration
+verification passed/failed/not run, remaining concrete blockers, and each
+`AGENTS.md` App-Specific Rules sentence deleted or rewritten, with why. A
+partial scaffold update need not complete unrelated migration work; a full migration
 cannot be called complete while its required runtime or persistence checks remain
 blocked. Distinguish local edits/packages from platform registration, deployment,
 and remote publication. Keep retained compatibility boundaries and intentional
 app divergence explicit so the next update does not overwrite them.
 
-After every verification passes, and only then, set the app's `package.json`
+For full alignment, verify every applicable target contract before writing
+its marker, including the root `AGENTS.md` rule above: when the old file had
+App-owned sections, `## App-Specific Rules` exists and is not empty. A scoped
+repair or partial upgrade keeps the previous marker (or leaves it absent), even
+if its own checks pass; otherwise the platform would mistake a mixed
+architecture for a fully aligned app. Required checks that could not run are
+pending, not passes.
+
+After full alignment verification passes, and only then, set the app's `package.json`
 top-level `tier0Scaffold` to the exact object in `package.json` of the inspected
 scaffold commit: copy `version` (integer) and `ref` (commit hex) as-is; never
 invent, bump, or derive them. If that scaffold `package.json` has no
