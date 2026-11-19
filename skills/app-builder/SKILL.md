@@ -120,6 +120,12 @@ technical message behind "Details" (target scaffold `docs/ui-rules.md`,
 warning icons or `error.message` text, do not show a failed load as "No data",
 and do not pick wording by HTTP status or English error text.
 
+The App follows the platform language. Write every visible string in a
+`defineCopy` table read with `useCopy` (shared labels through `useUiText()`)
+in each `APP_SUPPORTED_LOCALES` language, with `APP_DEFAULT_LOCALE` set to the
+product language (target scaffold `AGENTS.md`, "App Identity and Product
+Copy", and `docs/ui-rules.md`, "Product copy and language").
+
 Before declaring data, inspect and reuse existing business directories through
 the authorized Tier0 metadata tools. Give each new collection a `directoryPath`
 from the workspace root (1–16 real business-name segments, each ≤63 characters).

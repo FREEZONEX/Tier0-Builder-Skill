@@ -2,14 +2,14 @@
 
 用于需求整理、工业企业应用构建、平台迁移、响应式设计和预览排障的 Agent Skills。每个技能包含 `SKILL.md`，以及配套的参考文档或脚本，可下载到本地供支持 Agent Skills 的 AI 编程工具使用。
 
-本分支 `feature/cloud-new-architecture-migration` 对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 同名分支（v44，App 数据存于 Tier0 UNS collections），平台 SDK 使用脚手架精确锁定的 npm 版本 `@tier0/sdk-v2` 0.15.0。具体 commit 和锁文件校验值见 align 的 latest-template-source。SDK 的使用技能随 SDK 包安装（入口 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`，下设领域子 Skill），不在本仓库维护。
+`main` 分支对应 Tier0 云端新架构：目标脚手架为 Tier0-App-Scaffold 的 `main`（v45，App 数据存于 Tier0 UNS collections），平台 SDK 使用脚手架精确锁定的 npm 版本 `@tier0/sdk-v2` 0.18.0。具体 commit 和锁文件校验值见 align 的 latest-template-source。SDK 的使用技能随 SDK 包安装（入口 `node_modules/@tier0/sdk-v2/skills/tier0-sdk-v2/SKILL.md`，下设领域子 Skill），不在本仓库维护。
 
 ## 快速安装到 Codex
 
 在 Codex 对话中复制发送以下内容即可，无需自行寻找安装目录：
 
 ```text
-请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 feature/cloud-new-architecture-migration 分支安装以下技能到本地用户技能目录：
+请使用 skill-installer，从 https://github.com/FREEZONEX/Tier0-Builder-Skill 的 main 分支安装以下技能到本地用户技能目录：
 skills/app-srs
 skills/app-builder
 skills/align-platform-app
@@ -23,7 +23,7 @@ skills/preview-runtime-stability
 只需要一个技能时，也可以发送具体目录链接。例如：
 
 ```text
-请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/feature/cloud-new-architecture-migration/skills/responsive-craft 到本地。
+请使用 skill-installer 安装 https://github.com/FREEZONEX/Tier0-Builder-Skill/tree/main/skills/responsive-craft 到本地。
 ```
 
 安装完成后，在下一轮对话中使用技能；若技能列表未更新，重启 Codex。技能安装只添加本地工作指引，不会自动安装项目依赖、配置平台账号或部署应用。
@@ -47,11 +47,11 @@ skills/preview-runtime-stability
 安装了 Git 的用户可以在终端执行：
 
 ```sh
-git clone -b feature/cloud-new-architecture-migration https://github.com/FREEZONEX/Tier0-Builder-Skill.git
+git clone -b main https://github.com/FREEZONEX/Tier0-Builder-Skill.git
 cd Tier0-Builder-Skill
 ```
 
-也可以在仓库页面切换到 `feature/cloud-new-architecture-migration` 分支后点击 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
+也可以在仓库页面切换到 `main` 分支后点击 **Code → Download ZIP**，解压后进入仓库目录。公开仓库的下载不需要 GitHub 登录。
 
 ### 2. 复制技能到工具识别的目录
 
@@ -119,11 +119,11 @@ Codex CLI / IDE 扩展也支持通过 `/skills` 或 `$技能名` 选择技能，
 
 ## 上传到 test Agent-Console（维护者）
 
-`scripts/console-upload.sh` 用 Agent-Console 的管理接口上传，代替在页面上手动拖 zip。内容只取 `origin/feature/cloud-new-architecture-migration`，不会打包本地未提交的改动，上传前会打印 commit。
+`scripts/console-upload.sh` 用 Agent-Console 的管理接口上传，代替在页面上手动拖 zip。内容只取 `origin/main`，不会打包本地未提交的改动，上传前会打印 commit。
 
 ```bash
 scripts/console-upload.sh skill align-platform-app app-builder   # 每个 skill 打一个 zip 导入，再逐文件比对 sha256
-scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin 云分支
+scripts/console-upload.sh scaffold [<ref>]                       # 默认 Tier0-App-Scaffold 的 origin/main
 scripts/console-upload.sh scaffold --dry-run                     # 只打包、检查限制、调 GET，不写入
 scripts/console-upload.sh categories                             # 只把启用中、仍指向上一版脚手架模板的 App 分类切到当前默认模板
 ```

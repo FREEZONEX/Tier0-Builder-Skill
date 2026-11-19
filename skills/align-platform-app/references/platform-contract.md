@@ -22,7 +22,7 @@
 ## Target Shape
 
 The target is the existing Tier0 TanStack Start scaffold, aligned to the latest
-`FREEZONEX/Tier0-App-Scaffold` `feature/cloud-new-architecture-migration` branch
+`FREEZONEX/Tier0-App-Scaffold` `main` branch
 unless the user explicitly asks to pin a specific commit. Keep the scaffold's platform contract intact while importing
 or updating app functionality.
 
@@ -33,7 +33,8 @@ Required target invariants:
 - Keep `src/router.tsx`, `src/start.ts`, and `src/routes/__root.tsx` unless a
   user explicitly asks for platform-level changes. A kept App `__root.tsx` must
   still call `useVisitorSync()` from v44; without it role changes silently stop
-  reaching the page.
+  reaching the page. From v45 it also wraps `<Outlet />` and `<Toaster />` in
+  the one `LocaleProvider`; without it the App stays in `APP_DEFAULT_LOCALE`.
 - Keep `/api/health` and `/api/manifest` route behavior intact.
 - Do not edit generated `src/routeTree.gen.ts` directly.
 - Do not add Next.js framework patterns.
@@ -59,8 +60,8 @@ Required target invariants:
 
 ## SDK Upgrades
 
-From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.15.0`
-at v44). Copy that dependency spec and reconcile the authoritative lockfile
+From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.18.0`
+at v45). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
@@ -445,8 +446,14 @@ inspect actual affected layouts rather than treating heuristics as hard failures
 Keep App identity centralized in `src/lib/app-chrome.ts`:
 
 - Set `APP_NAME` to the real business App name.
-- Set `APP_LOCALE` with the name so document language, native inputs, and shared
-  copy stay consistent.
+- Set `APP_DEFAULT_LOCALE` to the product language with the name; keep
+  `APP_SUPPORTED_LOCALES` unless the product asks for other languages, and
+  `APP_FOLLOW_PLATFORM_LANGUAGE` switches following the platform language
+  (v45). Write UI copy as the target's `AGENTS.md` ("App Identity and Product
+  Copy") and `docs/ui-rules.md` ("Product copy and language") describe:
+  `defineCopy` tables in every supported locale, read with `useCopy` /
+  `useUiText`. `APP_NAME`, navigation and role labels stay in
+  `APP_DEFAULT_LOCALE`.
 - Replace placeholder product and shell copy.
 - Preserve an existing valid brand during alignment; do not rebrand merely
   because the upstream placeholder changed.

@@ -5,7 +5,7 @@
 #   console-upload.sh scaffold [<ref>] [--dry-run]
 #   console-upload.sh categories [--dry-run]
 #
-# Content comes only from origin/feature/cloud-new-architecture-migration
+# Content comes only from origin/main
 # (or the given scaffold ref), never from the working tree. After setting a
 # new default template, scaffold moves enabled App categories from the old
 # default to it; categories does only that step, from the newest older
@@ -13,7 +13,7 @@
 # and calls only GET endpoints.
 set -euo pipefail
 
-BRANCH=feature/cloud-new-architecture-migration
+BRANCH=main
 KUBECONFIG_FILE=$HOME/Tier0-Aliyun-Dev/kubeconfig-liangyuqing-tier0-dev-ack.conf
 KUBE_CONTEXT=tier0-dev-ack-liangyuqing
 SCAFFOLD_REPO=${SCAFFOLD_REPO:-$HOME/Documents/Projects/Tier0-App-Scaffold}

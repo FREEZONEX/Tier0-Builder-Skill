@@ -48,7 +48,9 @@ Use this before reporting a generated app or substantial change as complete.
 
 ## UI
 
-- One product language unless bilingual output was requested.
+- Every visible string comes from a `defineCopy` table or `useUiText()`, written
+  in each `APP_SUPPORTED_LOCALES` language; `APP_DEFAULT_LOCALE` is the product
+  language (target scaffold `docs/ui-rules.md`, "Product copy and language").
 - Main pages have a clear visual center and enough hierarchy/accent to avoid a
   flat all-white admin surface.
 - Business workspaces feel like modern enterprise software; station/monitor

@@ -2,11 +2,11 @@
 
 ## Canonical Repository
 
-`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch
-`feature/cloud-new-architecture-migration` (Tier0 cloud).
-Inspected on 2026-11-17 at `c6d922ba8281a1b1fe7cc62303ac4e9e81b514e6`
-(scaffold PR #155). Its `package.json.tier0Scaffold` is
-`{ "version": 44, "ref": "31ab5c5" }`. Since v30 (`5d1fc93`), v32 accepts
+`https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`
+(Tier0 cloud; the cloud branch merged into it in scaffold PR #162).
+Inspected on 2026-11-19 at `e31c932698d5293ec086759b87534018b4b0ae01`
+(scaffold PR #163). Its `package.json.tier0Scaffold` is
+`{ "version": 45, "ref": "c51194c" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -40,22 +40,35 @@ reloads it (`reloadVisitor()`) when `requestJson` gets a 401/403 on a write,
 when the `useRecordChanges` stream reconnects and on the runtime's `resumed`,
 so the role line and every gate follow the server's current roles (scaffold
 PR #155). v44 also carries scaffold PR #154, merged after v43 without its own
-stamp: the Shell hides the role line when no role names are present. v31 was an
+stamp: the Shell hides the role line when no role names are present. v45
+moves to SDK 0.18.0 and makes the App follow the platform language:
+`APP_LOCALE` in `src/lib/app-chrome.ts` becomes `APP_SUPPORTED_LOCALES`,
+`APP_DEFAULT_LOCALE` and `APP_FOLLOW_PLATFORM_LANGUAGE`; `uiText()` becomes
+`useUiText()` / `UiText` in the new `src/lib/locale.tsx`, whose
+`LocaleProvider` in `src/routes/__root.tsx` maps the platform language; page
+copy comes from `defineCopy` tables read with `useCopy` (scaffold `AGENTS.md`,
+"App Identity and Product Copy", and `docs/ui-rules.md`, "Product copy and
+language"; scaffold PR #163). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.15.0"` (since v43), an
+The dependency is `"@tier0/sdk-v2": "0.18.0"` (since v45), an
 exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
 v32–v34, it accepts only employee visitors. Install it with npm from that spec
 and reconcile the lockfile: `resolved`
-`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.15.0.tgz`, integrity
-`sha512-HzRun6NFFS+Dv2iRsHDxB9pL6CmUx70esvl7JEL1bTHnQZlI5A2iAcFwduPWABT5mZfFY2vZEhuDDKoLDOF13Q==`.
+`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.18.0.tgz`, integrity
+`sha512-GOJkAIGSB1s9sm2BirM0liiX7Ggp7M/JXhNWHEzTjteQl6iNdmG3sQKVVxoiC+WwfMSXP3WEcoduWhP5SgffaQ==`.
 It keeps SDK 0.10.1's Backend contract
 `07ef8cd30a5465a98c8e6ee0892d02360aee8761` and updates the Source/Stream
 public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
 request contracts may omit both `sideEffect` and `idempotency`. 0.13.0–0.15.0
 add overlays synchronized from committed Backend `baee1fa`, `8bab074`,
 `1db8a2471` (128 declared collections) and `4cfe83c11` (member `avatarUrl`);
-features that need a newer Backend are refused by older servers without a
+0.16.0 syncs Backend `a7af6aaa63` (aggregation `$in`, per-row `$lookup`) and
+drops fixed read count caps with `02e63badee`, 0.17.0 adds the `$last`,
+`$stdDevPop` and `$stdDevSamp` accumulators, and 0.18.0 adds
+`getPlatformLanguage()` / `onPlatformLanguage()` to
+`@tier0/sdk-v2/page-runtime`, sent by front-door page runtime 2.2.0 and later.
+Features that need a newer Backend are refused by older servers without a
 fallback.
 Source compatibility is not evidence of deployment or live authorization.
 
@@ -107,7 +120,7 @@ Do not propagate the stale paragraphs or infer production readiness from them.
 
 Prefer a clean reference checkout and preserve the app's working changes.
 Inspect the remote with `git ls-remote` or fetch into a suitable repository,
-then record the exact `origin/feature/cloud-new-architecture-migration` SHA. Read files using that commit, not a
+then record the exact `origin/main` SHA. Read files using that commit, not a
 moving branch across multiple requests. If a temporary clone is needed, use a
 unique directory rather than overwriting a fixed `/tmp` checkout.
 
