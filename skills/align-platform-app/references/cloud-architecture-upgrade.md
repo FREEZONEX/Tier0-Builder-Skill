@@ -8,20 +8,20 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-19 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- Cloud `feature/cloud-new-architecture-migration`:
-  `c6d922ba8281a1b1fe7cc62303ac4e9e81b514e6`, marker
-  `{ "version": 44, "ref": "31ab5c5" }`; runtime deployment not verified.
+- Cloud `main` (`feature/platform-language` until it merges):
+  `500dcb9832206cc1ec72f0bfa965ef6faeb947ed`, marker
+  `{ "version": 45, "ref": "c51194c" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v44 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v45 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.15.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.18.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -29,7 +29,7 @@ Compared on 2026-11-17 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v44 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v45 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,13 +246,13 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v44
+## Cloud Apps At v30 → v45
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v44 SDK. Bring these over together:
+this section; install only the v45 SDK. Bring these over together:
 
-- SDK (v35, v37, v43): set `@tier0/sdk-v2` to the target's exact npm version
-  (`0.15.0`) and reconcile the lockfile so its entry resolves from the npm
+- SDK (v35, v37, v43, v45): set `@tier0/sdk-v2` to the target's exact npm version
+  (`0.18.0`) and reconcile the lockfile so its entry resolves from the npm
   registry. Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the
   v32–v34 `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses
   it. Check the lockfile entry against
@@ -348,9 +348,23 @@ this section; install only the v44 SDK. Bring these over together:
   without it `reloadVisitor()` does nothing and the page keeps the roles it
   loaded with. Take the role-line change in `src/components/Shell.tsx`
   (scaffold PR #154) the same way.
+- Platform language (v45): take the target's locale block of
+  `src/lib/app-chrome.ts` (`APP_SUPPORTED_LOCALES`, `APP_DEFAULT_LOCALE`,
+  `APP_FOLLOW_PLATFORM_LANGUAGE`, `resolveAppLocale`, `defineCopy`,
+  `CopyMessage`, `UI_COPY`), the new `src/lib/locale.tsx`,
+  `tests/locale.test.tsx` with its `test:components` entry, the
+  `LocaleProvider` in `src/routes/__root.tsx` (also in a customized root), the
+  shared primitives that now read `useUiText()` / `UiText` (`Shell.tsx`,
+  `AsyncView`, `FormDialog`, `ConfirmDialog`, `OfflineBanner`, the Monitor,
+  Review and Station layouts), `tests/component-kit.test.ts`, and the locked
+  `scripts/ui-advisories.mjs` with `scripts/gate-integrity.json`, merging where
+  the App edited them. Set `APP_DEFAULT_LOCALE` to the App's old `APP_LOCALE`,
+  replace App calls to `uiText()` with `useUiText()`, and move page strings
+  into `defineCopy` tables as the target's `docs/ui-rules.md` ("Product copy
+  and language") describes.
 - Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
-  `avatarUrl`, v44 the visitor reload),
+  `avatarUrl`, v44 the visitor reload, v45 "App Identity and Product Copy"),
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v44 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v45 marker only after
   full verification.

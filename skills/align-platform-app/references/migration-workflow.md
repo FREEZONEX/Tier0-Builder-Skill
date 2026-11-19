@@ -43,10 +43,12 @@ Inspect these source areas before editing target code:
 - Data layer: schema files, migrations, seed data, local JSON stores, browser
   storage reliance, and backend persistence assumptions.
 - Assets: public paths, imported images, fonts, CSS resets, CDN references.
-- App identity/design: product name, locale, in-App icon, platform App metadata,
+- App identity/design: product name, languages, in-App icon, platform App metadata,
   default scaffold copy, design tokens, shared UI/form/table/data primitives.
 - Environment: `.env*`, `import.meta.env`, `process.env`, hard-coded hosts.
-- i18n/theme: locale files, RTL/LTR logic, theme tokens, CSS variables.
+- i18n/theme: locale files and message catalogs, the languages they cover and
+  the one shown first, locale switchers or stored locale, RTL/LTR logic, theme
+  tokens, CSS variables.
 - Legacy runtime/deployment assets: containers, reverse proxies, old ports/base
   paths/hosts, schedulers, credentials, reset endpoints, and retired backend
   documentation. Inventory first; do not delete based on a keyword match alone.
@@ -74,7 +76,12 @@ Write a short migration map when the source is non-trivial:
 - source local/mock data -> collection cutover or an explicitly retained
   ephemeral state category
 - source asset path -> target asset path
-- source App name/locale/icon -> `app-chrome` identity and platform metadata
+- source App name/icon -> `app-chrome` identity and platform metadata
+- source languages -> `APP_SUPPORTED_LOCALES` (adding any the target lacks),
+  the language it shows first -> `APP_DEFAULT_LOCALE`, its message catalogs and
+  inline strings -> page `defineCopy` tables in every supported locale; its own
+  locale state gives way to the target's `LocaleProvider` (target
+  `docs/ui-rules.md`, "Product copy and language")
 - source env var -> platform/runtime source or removed setting
 
 ## 2. Strategy Selection
@@ -152,7 +159,8 @@ Prefer this sequence:
    primary display role. Three roles is first-version guidance, not a migration
    cap. Preserve every materially distinct source role, with no reserved or
    fallback role; never silently drop, broaden, collapse, or zero-permission one.
-10. Finish App identity: real name and locale in `app-chrome`, placeholder copy
+10. Finish App identity: real name and `APP_DEFAULT_LOCALE` in `app-chrome`,
+    copy in `defineCopy` tables for every supported locale, placeholder copy
     removed, and—when generated or rebranded—the same platform-ready
     root `icon.png` copied byte-for-byte to `public/app-icon.png`, then
     registered from the root path. Persist any registered cover as root
@@ -268,7 +276,8 @@ For the whole app, verify:
   `primaryRole`.
 - Platform assignment or preview view-as changes take effect on a new request or
   refresh; the App never writes role state optimistically.
-- App name/locale/icon and platform metadata meet the current identity contract.
+- App name, languages, copy tables, icon and platform metadata meet the current
+  identity contract.
   A generated icon is a 512x512 PNG no larger than 2 MB and the same image is
   used in-App and for platform synchronization.
 - No prohibited framework imports were added.
