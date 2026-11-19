@@ -4,8 +4,8 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`
 (Tier0 cloud; the cloud branch merged into it in scaffold PR #162).
-Inspected on 2026-11-19 at `500dcb9832206cc1ec72f0bfa965ef6faeb947ed`
-(branch `feature/platform-language`). Its `package.json.tier0Scaffold` is
+Inspected on 2026-11-19 at `e31c932698d5293ec086759b87534018b4b0ae01`
+(scaffold PR #163). Its `package.json.tier0Scaffold` is
 `{ "version": 45, "ref": "c51194c" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
@@ -48,7 +48,7 @@ moves to SDK 0.18.0 and makes the App follow the platform language:
 `LocaleProvider` in `src/routes/__root.tsx` maps the platform language; page
 copy comes from `defineCopy` tables read with `useCopy` (scaffold `AGENTS.md`,
 "App Identity and Product Copy", and `docs/ui-rules.md`, "Product copy and
-language"). v31 was an
+language"; scaffold PR #163). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
 The dependency is `"@tier0/sdk-v2": "0.18.0"` (since v45), an

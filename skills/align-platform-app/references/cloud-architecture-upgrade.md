@@ -12,8 +12,8 @@ Compared on 2026-11-19 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
-- Cloud `main` (`feature/platform-language` until it merges):
-  `500dcb9832206cc1ec72f0bfa965ef6faeb947ed`, marker
+- Cloud `main`:
+  `e31c932698d5293ec086759b87534018b4b0ae01` (scaffold PR #163), marker
   `{ "version": 45, "ref": "c51194c" }`; runtime deployment not verified.
 
 | Surface | Old main / v7 | Cloud / v45 | Migration consequence |
@@ -348,7 +348,7 @@ this section; install only the v45 SDK. Bring these over together:
   without it `reloadVisitor()` does nothing and the page keeps the roles it
   loaded with. Take the role-line change in `src/components/Shell.tsx`
   (scaffold PR #154) the same way.
-- Platform language (v45): take the target's locale block of
+- Platform language (v45, scaffold PR #163): take the target's locale block of
   `src/lib/app-chrome.ts` (`APP_SUPPORTED_LOCALES`, `APP_DEFAULT_LOCALE`,
   `APP_FOLLOW_PLATFORM_LANGUAGE`, `resolveAppLocale`, `defineCopy`,
   `CopyMessage`, `UI_COPY`), the new `src/lib/locale.tsx`,
@@ -358,10 +358,15 @@ this section; install only the v45 SDK. Bring these over together:
   `AsyncView`, `FormDialog`, `ConfirmDialog`, `OfflineBanner`, the Monitor,
   Review and Station layouts), `tests/component-kit.test.ts`, and the locked
   `scripts/ui-advisories.mjs` with `scripts/gate-integrity.json`, merging where
-  the App edited them. Set `APP_DEFAULT_LOCALE` to the App's old `APP_LOCALE`,
-  replace App calls to `uiText()` with `useUiText()`, and move page strings
-  into `defineCopy` tables as the target's `docs/ui-rules.md` ("Product copy
-  and language") describes.
+  the App edited them. `APP_LOCALE` and `uiText()` are gone: fix each
+  `npm run typecheck` error by setting `APP_DEFAULT_LOCALE` to the old
+  `APP_LOCALE` value and calling `useUiText()` instead of `uiText()`.
+  Following the platform language is on, so the shared primitives switch
+  language while hard-coded page text does not. Move every visible page string
+  into `defineCopy` tables written in every supported locale, as the target's
+  `docs/ui-rules.md` ("Product copy and language") describes. Then check that
+  no page keeps a hard-coded visible string, and view the App once with the
+  platform in Chinese and once in English: no page may mix languages.
 - Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
   `avatarUrl`, v44 the visitor reload, v45 "App Identity and Product Copy"),
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
