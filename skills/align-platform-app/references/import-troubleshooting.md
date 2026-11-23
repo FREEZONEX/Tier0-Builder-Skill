@@ -296,8 +296,13 @@ mapping is in the scaffold's `docs/platform-integration.md` → Errors.
   from a UNS 401 is a platform credential problem, not the user's session.
 - `OVERLOADED` (429) that reaches the App means it sends too many data
   requests: combine a screen's reads into one `data.queryBatch` and drop
-  per-record loops. `QUERY_TIMEOUT` is not resent: narrow the query with an
-  indexed condition.
+  per-record loops. `QUERY_TIMEOUT` is not resent: narrow the query as
+  `repair` suggests and read the collection's `slowShapes` in
+  `/uns/app/context`; do not add query indexes to the declaration (v46).
+- `INDEX_PREPARING` (503 with `Retry-After`, nothing ran): a `$lookup` into a
+  large collection waits for the platform to build its join index (about
+  30 s, longer than the data layer waits). Retry shortly; do not add an index
+  or replace the join.
 - A type error on `findPage(...).total` or a `countDocuments` result comes from
   a v9 service on SDK 0.2.0 or later: counts are `{ count, capped }`; answer list pages
   with `toQueryResult`.

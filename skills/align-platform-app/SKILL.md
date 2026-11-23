@@ -58,7 +58,7 @@ writing the marker. An explicit import/migration request still proceeds.
   persistence rewrite, v8 replaces its local client, and v9–v11 reconcile
   SDK/runtime contracts. Apps before v27 also need the coordinated visitor,
   service-authorization and change-relay migration before the v28 SDK can run.
-  Already aligned v28–v29 Apps follow the v30 and v30 → v45 sections for the
+  Already aligned v28–v29 Apps follow the v30 and v30 → v46 sections for the
   SDK and guidance refresh, without another persistence rewrite.
   Whether records exist depends on the target
   collections, not the version. Mixed or partially upgraded apps need a
@@ -170,7 +170,12 @@ acceptance pending/passed" separately.
   Preview and the deployed App share the same collections, ensure only widens,
   and narrowing or description changes go through `schema:replace` via the tier0
   MCP. Baseline records are the declaration's `seed`, written once when the
-  collection is created.
+  collection is created. `indexes` declares only unique business keys and
+  TTL: from v46 the platform creates, rebuilds and drops query indexes from
+  real filters, sorts and `$lookup` joins, so never declare plain or `gin`
+  indexes for lists or add one before a `$lookup`. A slow query is fixed in
+  the query code from the collection's `slowShapes` in `/uns/app/context`,
+  not by changing `indexes`.
   New collections require a `directoryPath` from the workspace root; inspect
   existing directories and use the actual ISA-95 equipment/business hierarchy,
   with shared data at a suitable common ancestor. Do not invent missing levels
@@ -203,7 +208,7 @@ acceptance pending/passed" separately.
   runtime `resolveAppId()` for platform App identity, not the human name or a
   hard-coded UUID. Application files use platform File Storage.
 - The platform SDK is `@tier0/sdk-v2`; copy the exact dependency spec from the
-  selected scaffold (npm `0.18.0` at v45), reconcile the authoritative
+  selected scaffold (npm `0.18.0` at v46), reconcile the authoritative
   lockfile and delete any old local SDK archive. `client.streams` and
   `Tier0MQClient` run only on the App server; browser pages call
   authenticated App routes. MQTT topics
@@ -299,7 +304,7 @@ otherwise inspect available logs/tools and report unavailable verification.
 
 For a scoped member-picker repair, preserve business code and data while
 updating the selected SDK dependency and lockfile together.
-Use the SDK version the selected scaffold pins (0.18.0 at v45).
+Use the SDK version the selected scaffold pins (0.18.0 at v46).
 For pre-v27 Apps this also requires the coordinated auth/data/stream migration
 in [cloud-architecture-upgrade.md](references/cloud-architecture-upgrade.md#cloud-apps-before-v27).
 Do not install this SDK alone into code that still uses removed SDK APIs.

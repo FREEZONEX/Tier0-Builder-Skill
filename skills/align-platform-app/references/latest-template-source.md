@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`
 (Tier0 cloud; the cloud branch merged into it in scaffold PR #162).
-Inspected on 2026-11-19 at `e31c932698d5293ec086759b87534018b4b0ae01`
-(scaffold PR #163). Its `package.json.tier0Scaffold` is
-`{ "version": 45, "ref": "c51194c" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-24 at `7d3be71147dc17fda51c79f5b34bc3eed1d1d856`
+(scaffold PR #168). Its `package.json.tier0Scaffold` is
+`{ "version": 46, "ref": "774a5ad" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -48,10 +48,22 @@ moves to SDK 0.18.0 and makes the App follow the platform language:
 `LocaleProvider` in `src/routes/__root.tsx` maps the platform language; page
 copy comes from `defineCopy` tables read with `useCopy` (scaffold `AGENTS.md`,
 "App Identity and Product Copy", and `docs/ui-rules.md`, "Product copy and
-language"; scaffold PR #163). v31 was an
+language"; scaffold PR #163). v46 keeps SDK 0.18.0 and hands query indexes to
+the platform: `indexes` in `src/data/collections.ts` declares only unique
+business keys and TTL, and the platform creates, rebuilds and drops query
+indexes from the App's real filters, sorts and `$lookup` joins. A plain
+`{ path }` or `kind: "gin"` entry is still accepted as a hint (`indexStatus`
+reports it `managedBy: "platform"` and `ready`, unique and TTL entries
+`managedBy: "app"`); a workspace holds at most 500 indexes in total, with no
+per-collection or per-App index limit. `/uns/app/context` lists per collection
+the platform's query indexes (`autoIndexes`) and up to 5 slow query shapes
+(`slowShapes`); a `$lookup` into a large collection whose join index is still
+being built answers `INDEX_PREPARING` (503 with `Retry-After`); `$contains`
+goes with an equality or range condition on another field (scaffold
+`AGENTS.md`, "App Data", and `docs/app-data.md`; scaffold PR #168). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.18.0"` (since v45), an
+The dependency is `"@tier0/sdk-v2": "0.18.0"` (since v45, unchanged in v46), an
 exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
 v32–v34, it accepts only employee visitors. Install it with npm from that spec
 and reconcile the lockfile: `resolved`
