@@ -58,8 +58,10 @@ Use this order for each durable entity:
    bounded arrays and reference shared entities by ID plus a display snapshot
    instead of joins. Use the storage-schema subset (no `.nullable()`,
    `.default()`, string formats or length limits — those belong in API input
-   schemas), dates as `YYYY-MM-DD` strings, instants as ISO strings, and indexes
-   for the fields lists filter and sort on. `_id` and `_meta` are system fields.
+   schemas), dates as `YYYY-MM-DD` strings, instants as ISO strings, and
+   `indexes` only for unique business keys and TTL: the platform builds query
+   indexes from real filters, sorts and joins. `_id` and `_meta` are system
+   fields.
 2. **Baseline data:** records the app needs from the start go in the
    declaration's `seed` with fixed `_id`s, cross-referenced through
    `requireSeedRef()` and dated with `seedDate()` / `seedTimestamp()` from

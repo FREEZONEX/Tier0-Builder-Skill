@@ -61,7 +61,7 @@ Required target invariants:
 ## SDK Upgrades
 
 From v35 the scaffold pins `@tier0/sdk-v2` to an exact npm release (`0.18.0`
-at v45). Copy that dependency spec and reconcile the authoritative lockfile
+at v46). Copy that dependency spec and reconcile the authoritative lockfile
 while preserving business dependencies, so the SDK entry resolves from
 registry.npmjs.org. Copy a template lockfile only for an otherwise matching
 graph. Verify lockfile integrity and installed package version separately.
@@ -575,6 +575,20 @@ authoritative; read them before changing data. The essentials for alignment:
   not change collection ownership or grants. The schema is a storage schema limited to the documented
   subset; `npm run build` rejects anything UNS cannot store and validates every
   seed. Keep input rules (formats, lengths, defaults) in API input schemas.
+- `indexes` declares business rules only: unique keys (`{ path, unique: true }`
+  or compound `{ paths, unique: true }`, at most 3 paths) and TTL. From v46 the
+  platform creates, rebuilds and drops query indexes from the App's real
+  filters, sorts and `$lookup` joins: never declare plain or `gin` indexes for
+  lists, and never add one before a `$lookup`; join on the related record's
+  `_id` or business key with no index declaration. Plain entries an older App
+  already declares are accepted as hints (`indexStatus` reports them
+  `managedBy: "platform"` and `ready`; unique and TTL entries are
+  `managedBy: "app"`). A workspace holds at most 500 indexes in total, with no
+  per-collection or per-App index limit. To see why a query is slow, read the
+  collection's `slowShapes` in `/uns/app/context` (next to the platform's
+  `autoIndexes`) and change the query code instead of adding indexes.
+  `$contains` cannot use an index; combine it with an equality or range
+  condition on another field.
 - The App ensures every declared collection on first data access; do not add
   manual ensure calls, import-time data access, or initialization flags to App
   code. Worker-side ensure diagnostics follow
@@ -598,6 +612,11 @@ authoritative; read them before changing data. The essentials for alignment:
   retry loops and passes no idempotency keys. `outcomeUnknown: true`
   (`execution: "unknown"`) means a write may have landed — read back before
   writing again. Branch on `code` / `reason`, never on message text.
+  `INDEX_PREPARING` (503, nothing ran, `retry.afterMs` about 30 s) means a
+  `$lookup` into a large collection waits for the platform to build its join
+  index; the data layer does not wait that long, so `withErrors` answers 503
+  with `Retry-After`. Let the user retry shortly; do not add an index or
+  rewrite the join.
 - App records shown live refresh through `useRecordChanges(aliases, ...)` from
   `@/lib/record-changes`, not `refetchInterval` / `usePolling`; pass aliases from
   pages. `batch.changes` and `batch.reset` invalidate authorized API reads, not

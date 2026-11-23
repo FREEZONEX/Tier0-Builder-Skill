@@ -8,15 +8,15 @@ first; the comparison below is source evidence, not deployed-state evidence.
 
 ## Verified Old and New Sources
 
-Compared on 2026-11-19 in `FREEZONEX/Tier0-App-Scaffold`:
+Compared on 2026-11-24 in `FREEZONEX/Tier0-App-Scaffold`:
 
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `main`:
-  `e31c932698d5293ec086759b87534018b4b0ae01` (scaffold PR #163), marker
-  `{ "version": 45, "ref": "c51194c" }`; runtime deployment not verified.
+  `7d3be71147dc17fda51c79f5b34bc3eed1d1d856` (scaffold PR #168), marker
+  `{ "version": 46, "ref": "774a5ad" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v45 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v46 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
@@ -29,7 +29,7 @@ Compared on 2026-11-19 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v45 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v46 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,10 +246,10 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v45
+## Cloud Apps At v30 → v46
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v45 SDK. Bring these over together:
+this section; install only the v46 SDK. Bring these over together:
 
 - SDK (v35, v37, v43, v45): set `@tier0/sdk-v2` to the target's exact npm version
   (`0.18.0`) and reconcile the lockfile so its entry resolves from the npm
@@ -367,9 +367,29 @@ this section; install only the v45 SDK. Bring these over together:
   `docs/ui-rules.md` ("Product copy and language") describes. Then check that
   no page keeps a hard-coded visible string, and view the App once with the
   platform in Chinese and once in English: no page may mix languages.
+- Platform query indexes (v46, scaffold PR #168): `indexes` in
+  `src/data/collections.ts` declares only unique business keys and TTL; the
+  platform creates, rebuilds and drops query indexes from the App's real
+  filters, sorts and `$lookup` joins. The App's existing plain `{ path }` and
+  `kind: "gin"` entries may be deleted from the declaration or kept: a kept one
+  is accepted as a hint and `indexStatus` reports it `managedBy: "platform"`
+  and `ready`. Add no new ones, and none for a `$lookup` `foreignField`. A
+  `$lookup` into a large collection whose join index is still queued or
+  building answers `INDEX_PREPARING` (503, nothing ran, `retry.afterMs` about
+  30 s); the data layer does not wait that long and `withErrors` answers 503
+  with `Retry-After`, so let the user retry shortly instead of changing
+  `indexes`, replacing the join or adding an App retry loop. When a query is
+  slow, read the collection's `slowShapes` in `/uns/app/context` and change the
+  query code (`advice.code` `notIndexable` means rewrite the query) instead of
+  adding indexes. Combine a `$contains` filter with an equality or range
+  condition on another field. The workspace holds at most 500 indexes in total
+  with no per-collection or per-App limit: `APP_QUOTA_EXCEEDED` no longer
+  reports `indexes`, and `INDEX_QUOTA_EXCEEDED` means unique and TTL indexes
+  alone fill the workspace.
 - Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
-  `avatarUrl`, v44 the visitor reload, v45 "App Identity and Product Copy"),
+  `avatarUrl`, v44 the visitor reload, v45 "App Identity and Product Copy",
+  v46 the unique/TTL-only `indexes` rule in "App Data"), `docs/app-data.md`,
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v45 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v46 marker only after
   full verification.
