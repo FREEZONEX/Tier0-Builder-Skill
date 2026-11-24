@@ -4,9 +4,9 @@
 
 `https://github.com/FREEZONEX/Tier0-App-Scaffold.git`, branch `main`
 (Tier0 cloud; the cloud branch merged into it in scaffold PR #162).
-Inspected on 2026-11-24 at `7d3be71147dc17fda51c79f5b34bc3eed1d1d856`
-(scaffold PR #168). Its `package.json.tier0Scaffold` is
-`{ "version": 46, "ref": "774a5ad" }`. Since v30 (`5d1fc93`), v32 accepts
+Inspected on 2026-11-24 at `858b1fc5bdc8563ed5d23a94f509be83c42ef8fb`
+(scaffold PR #169). Its `package.json.tier0Scaffold` is
+`{ "version": 47, "ref": "80a81b2" }`. Since v30 (`5d1fc93`), v32 accepts
 only employee visitors and removes `src/lib/webhooks.ts`, v33 requires a
 non-empty `name` for every `roles.json` role, v34 adds `server-url.mjs` for
 the forwarded request origin, v35 installs the SDK from npm and deletes
@@ -60,15 +60,18 @@ the platform's query indexes (`autoIndexes`) and up to 5 slow query shapes
 (`slowShapes`); a `$lookup` into a large collection whose join index is still
 being built answers `INDEX_PREPARING` (503 with `Retry-After`); `$contains`
 goes with an equality or range condition on another field (scaffold
-`AGENTS.md`, "App Data", and `docs/app-data.md`; scaffold PR #168). v31 was an
+`AGENTS.md`, "App Data", and `docs/app-data.md`; scaffold PR #168). v47 moves to SDK 0.19.0 and changes no
+App source: the SDK's index readiness checks only unique and TTL
+declarations, it no longer caps declarations at 16 per collection, and it
+reports `INDEX_PREPARING` as a retryable platform state (scaffold PR #169). v31 was an
 intermediate stamp inside the v32 change and never landed separately.
 
-The dependency is `"@tier0/sdk-v2": "0.18.0"` (since v45, unchanged in v46), an
+The dependency is `"@tier0/sdk-v2": "0.19.0"` (since v47), an
 exact npm release. Like 0.11.0 and the local `0.10.1-aenv.13` archive of
 v32–v34, it accepts only employee visitors. Install it with npm from that spec
 and reconcile the lockfile: `resolved`
-`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.18.0.tgz`, integrity
-`sha512-GOJkAIGSB1s9sm2BirM0liiX7Ggp7M/JXhNWHEzTjteQl6iNdmG3sQKVVxoiC+WwfMSXP3WEcoduWhP5SgffaQ==`.
+`https://registry.npmjs.org/@tier0/sdk-v2/-/sdk-v2-0.19.0.tgz`, integrity
+`sha512-x0lVFXsdK7kI78I63bmB1PecKhKgx3oW8HlTYpEdFjdmOqVxGnuXFqzeJw85CJYOXXOnlVj1vvfdyvrfKPJdiw==`.
 It keeps SDK 0.10.1's Backend contract
 `07ef8cd30a5465a98c8e6ee0892d02360aee8761` and updates the Source/Stream
 public schema to Backend `0edf6335c76dfd442a071ee706be3a523c8ecbfb`; Stream
@@ -80,6 +83,13 @@ drops fixed read count caps with `02e63badee`, 0.17.0 adds the `$last`,
 `$stdDevPop` and `$stdDevSamp` accumulators, and 0.18.0 adds
 `getPlatformLanguage()` / `onPlatformLanguage()` to
 `@tier0/sdk-v2/page-runtime`, sent by front-door page runtime 2.2.0 and later.
+0.19.0 checks only unique and TTL declarations in `assertIndexesReady` /
+`requireIndexesReady`, tolerates `indexStatus[].managedBy`, drops the
+16-per-collection declaration cap and adds the retryable `INDEX_PREPARING`
+(Tier0-sdk-v2#112); it also splits the bundled Stream Skill into
+`tier0-sdk-v2-stream-management` and `tier0-sdk-v2-stream-interactions` and adds
+`createDataClient({ onRequest })` diagnostics and `recordExplain`
+`op: "aggregate"` (Backend `b9553f824f`).
 Features that need a newer Backend are refused by older servers without a
 fallback.
 Source compatibility is not evidence of deployment or live authorization.
