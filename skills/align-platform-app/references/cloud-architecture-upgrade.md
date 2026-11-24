@@ -13,15 +13,15 @@ Compared on 2026-11-24 in `FREEZONEX/Tier0-App-Scaffold`:
 - Old `main`: `822dfabf2469bc4d64f6d46f44e79b650fe3ab03`, marker
   `{ "version": 7, "ref": "3a96b2b" }`.
 - Cloud `main`:
-  `7d3be71147dc17fda51c79f5b34bc3eed1d1d856` (scaffold PR #168), marker
-  `{ "version": 46, "ref": "774a5ad" }`; runtime deployment not verified.
+  `858b1fc5bdc8563ed5d23a94f509be83c42ef8fb` (scaffold PR #169), marker
+  `{ "version": 47, "ref": "80a81b2" }`; runtime deployment not verified.
 
-| Surface | Old main / v7 | Cloud / v46 | Migration consequence |
+| Surface | Old main / v7 | Cloud / v47 | Migration consequence |
 | --- | --- | --- | --- |
 | App persistence | `src/db/**`, Drizzle and PostgreSQL | `src/data/collections.ts`, SDK data client via `@/lib/data` | Rewrite declarations and services; preserve business invariants |
 | Initialization | `bootstrapModule`, SQL table/index setup, `db:push` | One ensure of declared collections on first access | Remove SQL bootstrap and scripts; never add a parallel ensure cache |
 | Runtime configuration | `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DB_SCHEMA` | Injected `TIER0_API_HOST` / `TIER0_API_KEY` | Remove app database connection usage; no credential UI |
-| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.18.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
+| SDK | `@tier0/sdk` `^0.5.4` (locked 0.5.4) | `@tier0/sdk-v2` 0.19.0, exact npm version | Rewrite removed APIs; package rename alone is insufficient |
 | Request scope | Gateway auth and CSRF middleware | `X-Tier0-Visitor` plus `runWithAbortSignal(request.signal, ...)` | App services enforce visitor data permissions; platform data calls act as App |
 | Live App records | Request hooks / polling | `useRecordChanges` and authenticated `/api/uns/subscribe` | Events invalidate reads; they do not replace authorized API reads |
 | Preview roles | Single selected role | Selected role set with permission union | Update Gateway/auth helpers and multi-role tests together |
@@ -29,7 +29,7 @@ Compared on 2026-11-24 in `FREEZONEX/Tier0-App-Scaffold`:
 | Verification | SQL/schema contracts | Data declarations, seeds, data-layer and stream tests | Replace retired gates with the complete upstream file/hash set |
 
 The owning evidence is the two commits' `package.json`/lockfile,
-`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v46 (older sources use `gateway.ts`), `artifact.toml`, the
+`src/start.ts`, `src/lib/{visitor,auth,tier0}.ts` at v47 (older sources use `gateway.ts`), `artifact.toml`, the
 added/removed data files, `AGENTS.md`, and `docs/platform-integration.md`.
 Compare these at the chosen commits; do not infer a rollout from a merged source.
 
@@ -246,13 +246,13 @@ Builder grant management with the current installed SDK. Preserve existing
 grants and disabled policies; verify effective access as the App, not only
 as the management caller. SDK installation does not prove Backend rollout.
 
-## Cloud Apps At v30 → v46
+## Cloud Apps At v30 → v47
 
 Apps at v28–v29 first apply the v30 guidance and grant changes above, then
-this section; install only the v46 SDK. Bring these over together:
+this section; install only the v47 SDK. Bring these over together:
 
-- SDK (v35, v37, v43, v45): set `@tier0/sdk-v2` to the target's exact npm version
-  (`0.18.0`) and reconcile the lockfile so its entry resolves from the npm
+- SDK (v35, v37, v43, v45, v47): set `@tier0/sdk-v2` to the target's exact npm version
+  (`0.19.0`) and reconcile the lockfile so its entry resolves from the npm
   registry. Delete old `vendor/tier0-sdk-v2-*.tgz` archives, including the
   v32–v34 `0.10.1-aenv.13` build, and `vendor/` itself when nothing else uses
   it. Check the lockfile entry against
@@ -385,11 +385,14 @@ this section; install only the v46 SDK. Bring these over together:
   condition on another field. The workspace holds at most 500 indexes in total
   with no per-collection or per-App limit: `APP_QUOTA_EXCEEDED` no longer
   reports `indexes`, and `INDEX_QUOTA_EXCEEDED` means unique and TTL indexes
-  alone fill the workspace.
+  alone fill the workspace. From v47 (SDK 0.19.0) the SDK itself also checks
+  only unique and TTL declarations at startup and no longer refuses more than
+  16 declarations per collection; v47 changes no App source beyond the SDK
+  dependency and lockfile.
 - Refresh root `AGENTS.md` (v40 adds "AI Features", v41 the aliases, v43
   `avatarUrl`, v44 the visitor reload, v45 "App Identity and Product Copy",
   v46 the unique/TTL-only `indexes` rule in "App Data"), `docs/app-data.md`,
   `docs/platform-integration.md`, `docs/role-registration.md`, and from v40
   `docs/operator-ux.md`, `docs/ui-rules.md`, `docs/component-kit.md` and
-  `DESIGN.md` as the entrypoint describes, then write the v46 marker only after
+  `DESIGN.md` as the entrypoint describes, then write the v47 marker only after
   full verification.
