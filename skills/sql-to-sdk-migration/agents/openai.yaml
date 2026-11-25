@@ -1,0 +1,4 @@
+interface:
+  display_name: "SQL → SDK 迁移"
+  short_description: "保留业务语义，将 SQL 迁移为数据库端执行的 SDK 查询，并定位性能回退"
+  default_prompt: "使用 $sql-to-sdk-migration 评估并迁移这个 App 的 SQL 查询，保留业务语义、权限和性能，先确认当前 SDK 与后端契约。"

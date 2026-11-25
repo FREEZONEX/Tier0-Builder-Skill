@@ -13,6 +13,7 @@
 skills/app-srs
 skills/app-builder
 skills/align-platform-app
+skills/sql-to-sdk-migration
 skills/replace-design-system
 skills/responsive-craft
 skills/browser-platform-capabilities
@@ -35,6 +36,7 @@ skills/preview-runtime-stability
 | [app-srs](skills/app-srs/SKILL.md) | 将需求整理为应用规格说明，或更新已有规格 |
 | [app-builder](skills/app-builder/SKILL.md) | 按需求和规格构建应用或扩展业务模块，建议与 app-srs 一起安装 |
 | [align-platform-app](skills/align-platform-app/SKILL.md) | 将应用迁移或对齐到 Tier0 脚手架 |
+| [sql-to-sdk-migration](skills/sql-to-sdk-migration/SKILL.md) | 将 SQL 或 ORM 查询迁移到数据 SDK，校验业务结果并排查性能退化 |
 | [replace-design-system](skills/replace-design-system/SKILL.md) | 将用户提供的设计规范写入 DESIGN.md，并同步调整应用样式 |
 | [responsive-craft](skills/responsive-craft/SKILL.md) | 设计和检查多视口布局、滚动及 sticky 行为 |
 | [browser-platform-capabilities](skills/browser-platform-capabilities/SKILL.md) | 实现扫码、拍照、定位、录音、文件读取和剪贴板能力 |
@@ -60,7 +62,7 @@ Codex 支持以下本地技能目录：
 - 用户级：`~/.agents/skills/`，供当前用户的多个项目使用。
 - 项目级：目标项目根目录中的 `.agents/skills/`，仅供该项目使用。
 
-在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 7 个技能到用户目录。已有同名目录或符号链接会被跳过：
+在 macOS / Linux 的终端中，从刚下载的仓库目录执行以下命令，可安装全部 8 个技能到用户目录。已有同名目录或符号链接会被跳过：
 
 ```sh
 (
