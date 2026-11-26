@@ -112,7 +112,7 @@ using the App's role rules. Keep `runWithAbortSignal` in `src/start.ts`;
 `runDetached` is for work that must outlive a request, not an authorization
 mechanism. Do not reintroduce employee delegation or legacy identity headers.
 Baseline records belong in declaration `seed`, written on collection creation, never service startup or empty reads.
-In `indexes` declare only business unique keys and TTL (v46): the platform builds, drops and rebuilds query indexes from live queries, so do not add indexes for filters, sorts or `$lookup`; when a query is slow, read the collection's `slowShapes` in App context and change the query code.
+Keep collections lean for the business scope: embed bounded child items, approval/status history and notes inside the parent document, keep static code tables/enums in code, and declare a separate collection only for an independently managed object or an unbounded log/ledger (do not add join tables, unrequested `audit_logs`, or `counters` collections unless gapless sequential numbering is required). In `indexes` omit entries by default and declare only genuine business unique keys and TTL (v46): all indexes share the workspace's 500-index physical quota (unique = 1, business-field TTL = 2, archived collections keep their indexes, and App declarations evict platform query indexes), so prefer natural `_id` keys instead of redundant `unique` indexes. The platform builds, drops and rebuilds query indexes from live queries, so do not add indexes for filters, sorts or `$lookup`; when a query is slow, read the collection's `slowShapes` in App context and change the query code.
 
 Load client data with `useRequest` / `usePolling` and render it through
 `AsyncView`, which owns load failures: one compact line with Retry, and the

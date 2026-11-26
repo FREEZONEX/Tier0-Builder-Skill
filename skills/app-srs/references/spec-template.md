@@ -162,6 +162,9 @@ Structural constraints:
 ### 3. Data Models
 
 - Define only business-critical fields.
+- Model cohesive business aggregates rather than splitting closely coupled child
+  items, per-record history, static lookup tables, join tables, counters, or
+  unrequested standalone audit logs into separate top-level models.
 - Describe business meaning, not implementation schema details.
 - Include identifiers, status fields, operational quantities, timestamps, references, and validation-relevant values when needed.
 - When a model has a status or lifecycle field, enumerate its states explicitly
