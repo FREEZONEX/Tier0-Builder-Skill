@@ -19,7 +19,10 @@ loop operable:
 | Resource use / fulfillment | select demand -> choose resource -> confirm use/issue/dispatch -> quantity/status change |
 | Recommendation / automation | basis -> affected records -> adjust/confirm -> execution record |
 
-Do not expose these words in product UI unless the loop works.
+Do not expose these words in product UI unless the loop works. Prefer embedding
+bounded history, exception, or adjustment entries on the affected record; only
+create a separate audit/history collection when the SRS requires standalone
+cross-record audit queries.
 
 
 ## Category Surface And Professional Density
